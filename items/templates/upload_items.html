@@ -1,0 +1,189 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Upload XLSX</h4>
+    <span>Formulário de upload de arquivo com produtos para o cliente: {{ client.name }}</span>
+{% endblock title %}
+
+{% block customcss %}
+    <!-- jpro forms css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/demo.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/font-awesome.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/j-pro-modern.css' %}">
+{% endblock customcss %}
+
+
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'clients_list' %}">Clientes</a>
+    </li>
+    <li class="breadcrumb-item"><a href="{% url 'item_list' client_id=client.id %}">Produtos</a>
+    </li>    
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- File upload card start -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Importar Produtos via upload XLSX</h5>
+            </div>
+            <div class="card-block">
+                <div class="j-wrapper j-wrapper-640">                  
+                    <form method="post"
+                        class="j-pro" id="j-pro" enctype="multipart/form-data"
+                        novalidate="">
+                        {% csrf_token %}
+                        <div id="loader" class="preloader5 loader-block" style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            z-index: 9900;
+                            width: 100%;
+                            height: 100%;
+                            justify-content: center;
+                            background-color: rgba(255, 255, 255, 0.8);
+                            margin: 0 !important;
+                            display: none;
+                        ">
+                            <div class="circle-5 l"></div>
+                            <div class="circle-5 m"></div>
+                            <div class="circle-5 r"></div>
+                            
+                        </div>                         
+                        <!-- end /.header-->
+                        <div class="j-content">
+                            <!-- start file -->
+                            <div class="j-unit">
+                                <div class="j-input j-append-big-btn">
+                                    <label class="j-icon-left" for="file_input">
+                                        <i class="icofont icofont-download"></i>
+                                    </label>
+                                    <div class="j-file-button">
+                                        Procurar
+                                        <input type="file" name="csv_file" id="csv_file"
+                                            onchange="document.getElementById('file_input').value = this.value;">
+                                    </div>
+                                    <input type="text" id="file_input"
+                                        readonly=""
+                                        placeholder="nenhum arquivo selecionado">
+                                    <span class="j-hint">Somente XLSX</span>
+                                </div>
+                            </div>
+                            <!-- end file -->
+                            <!-- start response from server -->
+                            <div class="j-response" id="messages">
+                            </div>
+                            <!-- end response from server -->
+                        </div>
+                        <!-- end /.content -->
+                        <div class="j-footer">
+                            <button type="submit"
+                                class="btn btn-primary" id="btn-send">Enviar</button>
+                            <button type="reset"
+                                class="btn btn-default m-r-20">Cancelar</button>
+                        </div>
+                        <!-- end /.footer -->
+                    </form>
+                </div>
+            </div>            
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block anotherjs %}
+    <!-- j-pro js -->
+    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.ui.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.maskedinput.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.j-pro.js' %}?{% now "U" %}"></script>
+
+    <!-- Custom js -->
+    {% comment %} <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/custom/suggestion-form.js' %}"></script> {% endcomment %}
+
+    <script>
+        $(document).ready(function(){
+            var formUrl = "{% url 'items_upload' client_id=client.id %}"
+            
+            $('#j-pro').on('submit', function(event) {
+                event.preventDefault();
+                
+                var formData = new FormData(this);
+                hideDiv();
+                
+                $.ajax({
+                    url: formUrl,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // Manipula a resposta de sucesso
+                        alert('Upload realizado com sucesso!');
+                    },
+                    error: function(xhr, status, error) {
+                        console.log(xhr)
+
+                        if (xhr.status === 500) {
+                            alert('Erro ao processar arquivo');
+                            $('#btn-send').toggleClass( "j-processing", false ).removeAttr( "disabled" );
+                            showDiv();
+                        }                        
+                        
+                        var errors = '<ul class="alert alert-danger">';
+                        $.each(xhr.responseJSON.errors, function(key, value) {
+                            errors += '<li class="error">' + value + '</li>';
+                        });
+                        errors += '</ul>';
+                        $('.j-response').html(errors);
+                        $('#btn-send').toggleClass( "j-processing", false ).removeAttr( "disabled" );
+                        showDiv();
+                    }
+                });
+            });
+            
+           
+			// Validation
+			$( "#j-pro" ).justFormsPro({
+				rules: {
+					csv_file: {
+						validate: true,
+						required: true,
+						size: 10,
+						extension: "xlsx"
+					}
+				},
+				messages: {
+					csv_file: {
+						size_extension: "Somente arquivo XSX. Máx: 10Mb",
+					}
+				}
+			});
+		}); 
+        
+        function hideDiv() {
+            const messagesDiv = document.getElementById('messages');
+            $('#loader').show();
+            $('.j-response').html('');
+            messagesDiv.style.opacity = '0'; // Define a opacidade para 0
+            setTimeout(() => {
+                messagesDiv.style.visibility = 'hidden'; // Define hidden após a transição
+            }, 500); // Tempo correspondente à duração da transição de opacidade
+        } 
+        
+        function showDiv() {
+            const messagesDiv = document.getElementById('messages');
+            $('#loader').hide();
+            messagesDiv.style.visibility = 'visible'; // Remove hidden
+            setTimeout(() => {
+                messagesDiv.style.opacity = '1'; // Define a opacidade para 1
+            }, 10); // Pequeno atraso para permitir que a transição funcione
+        }        
+    </script>
+{% endblock anotherjs %}
+
+

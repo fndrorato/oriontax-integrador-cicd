@@ -1,0 +1,705 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Editar Cliente</h4>
+    <span>Editar dados do cliente</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Clientes</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">Editar Cliente</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block customcss %}
+    <!-- Select 2 css -->
+    <link rel="stylesheet" href="{% static 'bower_components/select2/css/select2.min.css' %}?{% now "U" %}">
+    <!-- Material Icon -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/icon/material-design/css/material-design-iconic-font.min.css' %}">
+
+    <!-- Data Table Css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/datatables.net-bs4/css/dataTables.bootstrap4.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/data-table/css/buttons.dataTables.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css' %}">      
+
+    <!-- sweet alert framework -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/sweetalert/css/sweetalert.css' %}">
+    <!-- animation nifty modal window effects css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/css/component.css' %}">      
+{% endblock customcss %}
+
+
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Product edit card start -->
+        <div class="card">
+            <div class="card-block">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="product-edit">
+                            <ul class="nav nav-tabs nav-justified md-tabs " id="client-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="tab" href="#home" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-edit"></i>
+                                        </div>
+                                        Dados do Cliente</a>
+                                    <div class="slide"></div>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-toggle="tab" href="#stores" role="tab">
+                                        <div class="f-20">
+                                            <i class="zmdi zmdi-local-grocery-store"></i>
+                                        </div>
+                                        Lojas
+                                    </a>
+                                    <div class="slide"></div>
+                                </li> 
+                                <li class="nav-item">
+                                    <a href="{% url 'item_list' client_id=client.pk %}" class="nav-link">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-cart-alt"></i>
+                                        </div>
+                                        Produtos
+                                    </a>
+                                    <div class="slide"></div>
+                                </li>                                                              
+                            </ul>
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <!-- Inicio Tab Dados Cliente -->
+                                <div class="tab-pane active" id="home" role="tabpanel">
+                                    <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                                        {% csrf_token %}
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Nome</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.name.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.name|add_class:"form-control"|attr:"placeholder:Nome Fantasia" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Núm. Lojas</label>
+                                                <div class="col-sm-8 col-lg-10">
+                                                    <span class="messages text-danger">{{ form.num_stores.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.num_stores|add_class:"form-control"|attr:"type:Number" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-3">                                                
+                                                <label class="col-sm-8 col-lg-12 col-form-label">Possui proveito econômico?</label>
+                                                <div class="col-sm-4 col-lg-4">
+                                                    <div class="checkbox-fade fade-in-primary">
+                                                        <label>
+                                                            {{ form.economic_benefit|add_class:"form-check-input" }}
+                                                            <span class="cr">
+                                                                <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                                            </span>
+                                                            <span></span>
+                                                        </label>
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                            
+                                        </div> 
+
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="col-sm-4 col-lg-12 col-form-label">Data do Contrato</label>
+                                                <div class="col-sm-8 col-lg-10">
+                                                    <span class="messages text-danger">{{ form.date_contract.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.date_contract|add_class:"form-control date"|attr:"placeholder:dd/mm/yyyy"|attr:"data-mask:99/99/9999" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-4 col-lg-12 col-form-label">Data do Envio</label>
+                                                <div class="col-sm-8 col-lg-10">
+                                                    <span class="messages text-danger">{{ form.date_send.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.date_send|add_class:"form-control date"|attr:"placeholder:dd/mm/yyyy"|attr:"data-mask:99/99/9999" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-4 col-lg-12 col-form-label">Primeira Carga</label>
+                                                <div class="col-sm-8 col-lg-10">
+                                                    <span class="messages text-danger">{{ form.first_load_date.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.first_load_date|add_class:"form-control date"|attr:"placeholder:dd/mm/yyyy"|attr:"data-mask:99/99/9999" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                                                                        
+                                            <div class="col-md-3">                                                
+                                                <label class="col-sm-8 col-lg-8 col-form-label">Dia do envio</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.day_sent.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.day_sent|add_class:"form-control"}}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                            
+                                        </div>   
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Sistema Utilizado</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.erp.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.erp|add_class:"form-control"}}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Contabilidade</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.accounting_name.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.accounting|add_class:"form-control"}}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                        </div>    
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Comercial Responsável</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.commercial_responsible.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.commercial_responsible|add_class:"form-control"|attr:"placeholder:Responsável Comercial" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Proprietário</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.owner.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.owner|add_class:"form-control"|attr:"placeholder:Nome do propietário" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                        </div>   
+
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Telefone</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.contact.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.contact|add_class:"form-control telphone_with_code"|attr:"placeholder:(99) 99999-9999"|attr:"data-mask:(99) 99999-9999" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Email</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.email.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.email|add_class:"form-control"|attr:"placeholder:E-mail"|attr:"type:email" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Analista Responsável</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.user.errors }}</span>
+                                                    <select name="user" id="id_user" class="form-control" required>
+                                                        {% for user in users %}
+                                                            <option value="{{ user.id }}" {% if form.user and user.id == form.user %}selected{% endif %}>
+                                                                {{ user.get_full_name }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>                                                
+                                            </div>                                            
+                                        </div>                                                                                   
+
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-center m-t-20">
+                                                    <input type="submit" onClick="showLoading('form-create-user')" value="Salvar" class="btn btn-primary waves-effect waves-light m-r-10" id="btn-save">
+                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <!-- End Tab Dados Usuario -->
+                                <!-- Inicio Tab Lojas -->
+                                <div class="tab-pane" id="stores" role="tabpanel">                                   
+                                    <div class="card">
+                                        <div class="card-block">
+                                            <div class="text-right m-b-20">
+                                                <button type="button" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target="#data-store">
+                                                    <i class="icofont icofont-plus-circle"></i>
+                                                    Nova Loja
+                                                </button>
+                                            </div>                                            
+                                            <div class="dt-responsive table-responsive">
+                                                <table id="simpletable" class="table table-striped table-bordered nowrap">
+                                                    <thead>
+                                                    <tr>
+                                                        <th class="text-center">Nome</th>
+                                                        <th class="text-center">CNPJ</th>
+                                                        <th class="text-center">Cidade</th>
+                                                        <th class="text-center">Ação</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% if stores %}
+                                                            {% for store in stores %}
+                                                                <tr>
+                                                                    <td class="text-center align-middle">{{ store.corporate_name }}</td>
+                                                                    <td class="text-center align-middle">{{ store.cnpj }}</td>
+                                                                    <td class="text-center align-middle">{{ store.city }} - {{store.city.uf_estado}}</td>
+                                                                    <td class="text-center align-middle">
+                                                                        <button onclick="loadStoreData({{ store.id }})" data-toggle="modal" data-target="#data-store" type="button" class="btn btn-primary btn-md waves-effect waves-light text-white text-center">
+                                                                            <i class="icofont icofont-ui-edit"></i>
+                                                                        </button> 
+
+                                                                        <button type="button" class="btn btn-danger btn-md waves-effect waves-light text-white text-center btn-delete" data-id="{{ store.id }}">
+                                                                            <i class="icofont icofont-trash"></i>
+                                                                        </button>                                                                         
+                                                                    </td>
+                                                                </tr>                                    
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                        
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Tab Lojas -->                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product edit card end -->
+    </div>
+</div>
+
+<!-- Register modal start -->
+<div id="data-store" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="storeModalLabel">Dados da Loja</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="message" class="text-center"></div>
+                <form class="md-float-material" id="store-form" method="POST" action="{% url 'store_create' client_id=client.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="client" id="client_id" value="{{ client.pk }}"> 
+                    <input type="hidden" name="store_id" id="store_id" value="">              
+                    <div class="row">
+                        <label class="col-sm-6 col-lg-4 col-form-label">Razão Social</label>
+                        <div class="col-md-12">
+                            {{ store_form.corporate_name|add_class:"form-control"|attr:"placeholder:Razão Social" }}
+                        </div>
+                        <span class="md-line"></span>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-6 col-lg-4 col-form-label">CNPJ</label>
+                        <div class="col-md-12">
+                            {{ store_form.cnpj|add_class:"form-control cnpj"|attr:"placeholder:99.999.999/9999-99"|attr:"data-mask:99.999.999/9999-99" }}
+                        </div>
+                        <span class="md-line"></span>
+                    </div>     
+
+                    <div class="row">
+                        <label class="col-sm-6 col-lg-4 col-form-label">Cidade</label>
+                        <div class="col-md-12">
+                            <select class="col-sm-12" id="id_city" name="city">
+                                {% comment %} <option value="3620194" selected="selected">select2
+                                </option> {% endcomment %}
+                            </select>
+                            {% comment %} {{ store_form.city|add_class:"col-sm-12"|attr:"id:id_city" }}                        {% endcomment %}
+                        </div>
+                        <span class="md-line"></span>
+                    </div>    
+                    
+                    <div class="row">
+                        <label class="col-sm-6 col-lg-4 col-form-label">Rota de conexão</label>
+                        <div class="col-md-12">
+                            {{ store_form.connection_route|add_class:"form-control"|attr:"placeholder:Rota da Conexão" }}
+                        </div>
+                        <span class="md-line"></span>
+                    </div>  
+                    <div class="row">
+                        <div class="col-md-12 col-form-label">
+                            <div class="checkbox-fade fade-in-primary">
+                                <label>
+                                    {{ store_form.is_active|add_class:"form-check-input" }}
+                                    <span class="cr">
+                                        <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                    </span>
+                                    <span>Loja Ativa</span>
+                                </label>
+                            </div>
+                        </div>
+                        <span class="md-line"></span>
+                    </div>                                           
+
+                    <div class="row m-t-15">
+                        <div class="col-md-12">
+                            <input type="submit" id="btn-reg-store" class="btn btn-primary btn-md btn-block waves-effect text-center btn-register" value="Registrar Loja">
+                            <input type="submit" id="btn-up-store" class="btn btn-primary btn-md btn-block waves-effect text-center btn-update" value="Atualizar Loja">
+                        </div>
+                    </div>                    
+                </form>
+                <!-- end of form -->                
+            </div>
+            
+            
+        </div>
+    </div>
+</div>
+<!-- Register modal end-->
+{% endblock %}
+
+{% block anotherjs %}
+    <!-- Masking js -->
+    <script src="{% static 'assets/pages/form-masking/inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/jquery.inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/autoNumeric.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/form-mask.js' %}?{% now "U" %}"></script>
+
+    <!-- Select 2 js -->
+    <script type="text/javascript" src="{% static 'bower_components/select2/js/select2.full.min.js' %}"></script>
+    <!-- sweet alert js -->
+    <script type="text/javascript" src="{% static 'bower_components/sweetalert/js/sweetalert.min.js' %}"></script>
+    {% comment %} <script type="text/javascript" src="{% static 'assets/js/modal.js' %}"></script> {% endcomment %}
+
+    <!-- data-table js -->
+    <script src="{% static 'bower_components/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js' %}"></script>
+    <script src="https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt_BR.json"></script>
+
+    <script>
+        var table_stores;
+
+        $(document).ready(function() {
+            $("#btn-up-store").hide();
+            $(".cnpj").inputmask({ mask: "99.999.999/9999-99"});
+
+            table_stores = $('#simpletable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
+                },
+            });             
+
+            // Inicializando o Select2
+            $('#id_city').select2({
+                ajax: {
+                    url: '{% url "city_search" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1,
+                placeholder: 'Selecione a cidade',
+                allowClear: true,
+                language: {
+                    inputTooShort: function () {
+                        return 'Por favor, insira 1 ou mais caracteres';
+                    },
+                    noResults: function () {
+                        return 'Nenhum resultado encontrado';
+                    },
+                    searching: function () {
+                        return 'Procurando...';
+                    }
+                }                
+            });
+
+            //$('#store-form').on('submit', function(event) {
+            $('.btn-register').click(function(event) {
+                event.preventDefault();
+                $('#message').html('');
+                var form = $('#store-form');
+                var formData = form.serialize();
+                
+                $.ajax({
+                    type: 'POST',
+                    url: form.attr('action'),
+                    data: formData,
+                    beforeSend: function() {
+                        $('.theme-loader').show();
+                        $('.theme-loader').animate({
+                            'opacity': '1',
+                        }, 200);                        
+                    },                  
+                    success: function(response) {
+                        var items_store_url = '/clientes/store/items/'+response.pk
+                        table_stores.row.add([
+                            response.corporate_name,
+                            response.cnpj,
+                            response.city_name,
+                            '<a href="'+items_store_url+'" class="btn btn-info btn-md btn-outline-info"><i class="icofont icofont-cart-alt"></i>itens da loja</a>',
+                            '<button onclick="loadStoreData('+response.pk+')" data-toggle="modal" data-target="#data-store" type="button" class="btn btn-primary btn-md waves-effect waves-light text-white text-center">' +
+                            '    <i class="icofont icofont-ui-edit"></i>'  +
+                            '</button>' +
+                            '<button type="button" class="btn btn-danger btn-md waves-effect waves-light text-white text-center btn-delete" data-id="'+response.pk+'">' +
+                            '    <i class="icofont icofont-trash"></i>' +
+                            '</button>'
+                        ]).draw(false);    
+                        
+                        $('#message').html('<div class="alert alert-success" style="margin-bottom: 0rem;">' + response.message + '</div>');
+                        form[0].reset();
+                        $('#id_city').val(null).trigger('change');
+                        swal(
+                            'Parabéns!',
+                            'A loja foi cadastrada.',
+                            'success'
+                        );                        
+                    },
+                    error: function(xhr) {
+                        var errors = xhr.responseJSON;
+                        var errorMessages = '';
+                        $.each(errors, function(key, value) {
+                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
+                        });
+                        $('#message').html(errorMessages);
+                    },
+                    complete: function() {
+                        $('.theme-loader').animate({
+                            'opacity': '0',
+                        }, 200);  
+                        $('.theme-loader').hide(); 
+                    }                 
+                });
+            });
+
+            $('.btn-update').click(function(event) {
+                event.preventDefault();
+                $('#message').html('');
+                var form = $('#store-form');
+                var formData = form.serialize();
+                var storeId = $('#store-form').find('input[name="store_id"]').val();
+                
+                $.ajax({
+                    type: 'POST',
+                    url: form.attr('action') + storeId + '/update/',
+                    data: formData,
+                    beforeSend: function() {
+                        $('.theme-loader').show();
+                        $('.theme-loader').animate({
+                            'opacity': '1',
+                        }, 200);                        
+                    },                  
+                    success: function(response) {   
+                        
+                        $('#message').html('<div class="alert alert-success" style="margin-bottom: 0rem;">' + response.message + '</div>');
+                        form[0].reset();
+                        $('#id_city').val(null).trigger('change');
+                        swal(
+                            'Parabéns!',
+                            'A loja foi atualizada.',
+                            'success'
+                        );   
+                        
+                        refreshPageWithActiveTab();
+                    },
+                    error: function(xhr) {
+                        var errors = xhr.responseJSON;
+                        var errorMessages = '';
+                        $.each(errors, function(key, value) {
+                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
+                        });
+                        $('#message').html(errorMessages);
+                    },
+                    complete: function() {
+                        $('.theme-loader').animate({
+                            'opacity': '0',
+                        }, 200);  
+                        $('.theme-loader').hide(); 
+                    }                 
+                });
+            });            
+            
+            // Preencher o campo hidden com client_id ao abrir o modal
+            $('#data-store').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var clientId = button.data('client-id');
+                var modal = $(this);
+                var form = $('#store-form');
+                form[0].reset();
+                $('#id_city').val(null).trigger('change');                
+                modal.find('#message').html('');
+
+                $("#btn-up-store").hide();
+                $('#btn-up-store').prop('disabled', true);
+                $("#btn-reg-store").show(); 
+                $('#btn-reg-store').prop('disabled', false);               
+            });
+
+            // Handler para o botão de exclusão
+            $('.btn-delete').click(function() {
+                var storeId = $(this).data('id');
+                var row = $(this).closest('tr');
+
+                swal({
+                    title: 'Tem certeza?',
+                    text: 'Você não poderá reverter isso!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sim, excluir!',
+                    cancelButtonText: 'Cancelar'
+                    }, 
+                    function(isConfirm) {
+                        if (isConfirm) {
+                            // showLoading('form-create-user')
+                            var load_url = "{% url 'store_create' client_id=client.pk %}delete/" + storeId;
+                            var token = '{% csrf_token %}'
+                            var match = token.match(/value="([^"]*)"/);
+                            var csrfToken = match ? match[1] : null;
+                            $.ajax({
+                                url: load_url,
+                                type: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': csrfToken  // Inclui o token CSRF no cabeçalho da requisição
+                                },                                
+                                data: {
+                                    'csrfmiddlewaretoken': csrfToken // Inclua o token CSRF
+                                },
+                                beforeSend: function() {
+                                    $('.theme-loader').show();
+                                    $('.theme-loader').animate({
+                                        'opacity': '1',
+                                    }, 200);                        
+                                },                                
+                                success: function(response) {
+                                    if (response.success) {
+                                        // Remova a linha da tabela
+                                        row.remove();
+    
+                                        swal(
+                                            'Excluído!',
+                                            'A loja foi excluída.',
+                                            'success'
+                                        );
+                                    } else {
+                                        swal(
+                                            'Erro!',
+                                            'Ocorreu um erro ao excluir a loja.',
+                                            'error'
+                                        );
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    swal(
+                                        'Erro!',
+                                        'Ocorreu um erro ao excluir a loja.',
+                                        'error'
+                                    );
+                                },
+                                complete: function() {
+                                    $('.theme-loader').animate({
+                                        'opacity': '0',
+                                    }, 200);  
+                                    $('.theme-loader').hide(); 
+                                }  
+                            });
+                        } else {
+                            swal("Cancelado", "Loja não excluída.", "error");
+                        }
+                    }
+                );                
+            });            
+
+        });        
+
+        function loadStoreData(storeId) {
+            var form = $('#store-form');
+
+            $('.theme-loader').show(); 
+            $('.theme-loader').animate({
+                'opacity': '1',
+            }, 200);              
+
+            var load_url = "{% url 'store_create' client_id=client.pk %}detail/" + storeId;
+            $.ajax({
+                url: load_url,
+                dataType: 'json',
+                success: function (data) {
+                    // Preenche os campos do formulário com os dados da loja
+                    $('.theme-loader').hide(); 
+                    $('#store_id').val(storeId);
+                    $('input[name="corporate_name"]').val(data.corporate_name);
+                    // Para o campo select2, certifique-se de que a opção existe
+                    // Exemplo de uso da função
+                    var newOption = new Option(data.city_name, data.city_id, true, true);
+                    $('#id_city').append(newOption); // Adiciona a nova opção
+ 
+                    $('input[name="cnpj"]').val(data.cnpj);
+                    $('input[name="connection_route"]').val(data.connection_route);
+                    $('input[name="is_active"]').prop('checked', data.is_active);
+
+                    $("#btn-up-store").show();
+                    $('#btn-up-store').prop('disabled', false);
+                    $("#btn-reg-store").hide();
+                    $('#btn-reg-store').prop('disabled', true);
+
+                }
+            });
+        } 
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            // Restore the active tab if it was saved in localStorage
+            var activeTab = localStorage.getItem('activeTab');
+            if (activeTab) {
+                $('#client-tabs a[href="' + activeTab + '"]').tab('show');
+                localStorage.removeItem('activeTab'); // Clear it after using
+            }
+        });
+
+        // Function to refresh the page and keep the active tab
+        function refreshPageWithActiveTab() {
+            // Save the active tab to localStorage
+            var activeTab = $('#client-tabs .nav-link.active').attr('href');
+            localStorage.setItem('activeTab', activeTab);
+
+            // Refresh the page
+            location.reload();
+        }        
+             
+      </script>  
+{% endblock anotherjs %}
+
+

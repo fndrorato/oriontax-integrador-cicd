@@ -1,0 +1,661 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+<h4>Atualizar Produto: {{ item.description }}</h4>
+<span>Atualização do produto para o cliente: {{ client_name }}</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'clients_list' %}">Clientes</a>
+    </li>
+    <li class="breadcrumb-item"><a href="{% url 'item_list' client_id=client.id %}">Produtos</a>
+    </li>    
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Product edit card start -->
+        <div class="card">
+            <div class="card-block">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="product-edit">
+                            <ul class="nav nav-tabs nav-justified md-tabs " role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="tab" href="#product" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-edit"></i>
+                                        </div>
+                                        Dados do Produto</a>
+                                    <div class="slide"></div>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-toggle="tab" href="#tab_integrantes" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-document-search"></i>
+                                        </div>
+                                        Log</a>
+                                    <div class="slide"></div>
+                                </li>
+                            </ul>
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <!-- Inicio Tab Dados product -->
+                                <!-- <form class="md-float-material card-block"> -->
+                                <div class="tab-pane active" id="product" role="tabpanel">
+                                    <form class="md-float-material card-block"  method="POST" id="form-create">
+                                        {% csrf_token %}
+                                        <input type="hidden" value="{{ client.id }}" name="client" id="id_client">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Código</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.code.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.code|add_class:"form-control"|attr:"placeholder:Código do Produto"|attr:"id:id_code"|attr:"readonly" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Código de Barras</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.barcode.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.barcode|add_class:"form-control"|attr:"placeholder:Código de Barras" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="col-sm-4 col-lg-6 col-form-label">Descrição</label>
+                                                <div class="col-md-12">
+                                                    <span class="messages text-danger">{{ form.description.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.description|add_class:"form-control"|attr:"placeholder:Descrição do produto" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>                                             
+                                        </div>   
+                                        
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">NCM</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.ncm.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.ncm|add_class:"form-control"|attr:"placeholder:NCM (8 dígitos)"|attr:"min-length:8"|attr:"max-length:8" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CEST</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cest.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.cest|add_class:"form-control"|attr:"placeholder:CEST"|attr:"min-length:7"|attr:"max-length:7" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CFOP</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cfop.errors }}</span>
+                                                    {{ form.cfop|add_class:"form-control" }}
+                                                </div>                                                
+                                            </div> 
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CST do ICMS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.icms_cst.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.icms_cst|add_class:"form-control"|attr:"id:id_icms_cst"|attr:"disabled:true" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>                                                                                       
+                                        </div> 
+                                        
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Alíquota Integral</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.icms_aliquota.errors }}</span>
+                                                    <div class="input-group">
+                                                        <select id="id_icms_aliquota" class="form-control">
+                                                            <option value="" selected="">---------</option>
+                                                            {% for icms_aliquota in form.icms_aliquota.field.queryset %}
+                                                                <option value="{{ icms_aliquota.code }}" >{{ icms_aliquota.code }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        {{ form.icms_aliquota|add_class:"form-control d-none"|attr:"id:hidden_icms_aliquota" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Alíquota Reduzida</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.icms_aliquota_reduzida.errors }}</span>
+                                                    <div class="input-group">
+                                                        <select id="id_icms_aliquota_reduzida" class="form-control">
+                                                            <optio value="">---------</option>
+                                                            {% for value, label in icms_aliquota_reduzida_choices %}
+                                                                <option value="{{ value }}">{{ label }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        {{ form.icms_aliquota_reduzida|add_class:"form-control d-none"|attr:"id:hidden_icms_aliquota_reduzida" }}
+                                                    </div>
+                                                </div>                                               
+                                            </div>                                            
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Protege</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.protege.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.protege|add_class:"form-control" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CBENEF</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cbenef.errors }}</span>
+                                                    <div class="input-group">
+                                                        <select id="id_cbenef" name="cbenef" class="form-control">
+                                                            <option value="" selected="">---------</option>
+                                                            {% for cbenef in form.cbenef.field.queryset %}
+                                                                <option value="{{ cbenef.code }}" {% if cbenef.icms_cst %}data-icms-cst="{{ cbenef.icms_cst.code }}"{% endif %}>{{ cbenef.code }} - {{ cbenef.description }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                               
+                                        </div> 
+                                        
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CST do PIS/COFINS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.piscofins_cst.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.piscofins_cst|add_class:"form-control"|attr:"id:id_piscofins_cst" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Alíquota do PIS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.pis_aliquota.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.pis_aliquota|add_class:"form-control"|attr:"id:id_pis_aliquota"|attr:"type:hidden" }}
+                                                        <input type="text" class="form-control" id="aux_pis_aliquota"  disabled>
+                                                    </div>
+                                                </div>                                                
+                                            </div>  
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Alíquota do COFINS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cofins_aliquota.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.cofins_aliquota|add_class:"form-control"|attr:"id:id_cofins_aliquota"|attr:"type:hidden" }}
+                                                        <input type="text" class="form-control" id="aux_cofins_aliquota"  disabled>
+                                                    </div>
+                                                </div>                                                
+                                            </div>  
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Natureza da Receita</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.naturezareceita.errors }}</span>
+                                                    <select id="id_naturezareceita" name="naturezareceita" class="form-control">
+                                                        <option value="" selected="">---------</option>
+                                                        {% for naturezareceita in form.naturezareceita.field.queryset %}
+                                                            <option value="{{ naturezareceita.id }}" {% if naturezareceita.piscofins_cst %}data-piscofins-cst="{{ naturezareceita.piscofins_cst.code }}"{% endif %} {% if naturezareceita.id == item.naturezareceita.id %}selected{% endif %}>
+                                                                {{ naturezareceita.code }} - {{ naturezareceita.description }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>                                                    
+                                                </div>                                                
+                                            </div>                                                                                                                                
+                                        </div>                                          
+
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-center m-t-20">
+                                                    <input type="submit"  value="Salvar" class="btn btn-primary waves-effect waves-light m-r-10" id="btn-save">
+                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <!-- End Tab Dados Usuario -->
+                                <!-- Inicio Tab Log 
+                                <div class="tab-pane" id="tab_integrantes" role="tabpanel">
+                                    <form class="md-float-material card-block">
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-all-caps"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Title">
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-underline"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Label Name">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-ui-keyboard"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Keyword">
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-copy-alt"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Description">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-center m-t-20">
+                                                    <button type="button" class="btn btn-primary waves-effect waves-light m-r-10">Save</button>
+                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Discard</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                 End Tab Log -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product edit card end -->
+    </div>
+</div>
+{% endblock %}
+
+{% block anotherjs %}
+<script>
+    $(document).ready(function() {
+
+        // Disable icms_cst initially
+        if ($('#id_cfop').length && $('#id_cfop').val()) {
+            $('#id_icms_cst').prop('disabled', false);
+            $('#id_icms_aliquota').prop('disabled', false);
+            $('#id_icms_aliquota_reduzida').prop('disabled', false);
+            $('#id_cbenef').prop('disabled', false);
+        } else {
+            $('#id_icms_cst').prop('disabled', true);
+            $('#id_icms_aliquota').prop('disabled', true);
+            $('#id_icms_aliquota_reduzida').prop('disabled', true);
+            $('#id_cbenef').prop('disabled', true);
+        }        
+
+        $('#aux_pis_aliquota').val($('#id_pis_aliquota').val());
+        $('#aux_cofins_aliquota').val($('#id_cofins_aliquota').val());
+        $('#id_icms_aliquota').val($('#hidden_icms_aliquota').val());
+        $('#id_icms_aliquota_reduzida').val($('#hidden_icms_aliquota_reduzida').val());        
+
+        runNaturezaReceita();
+        runAliquotaReduzida();        
+
+        if ($('#id_piscofins_cst').length && $('#id_piscofins_cst').val()) {
+            $('#id_naturezareceita').prop('disabled', false);
+        } else {
+            $('#id_naturezareceita').prop('disabled', true);
+            $('#id_naturezareceita').val('')
+        }
+    
+
+        $('#id_cfop').change(function() {
+            var selectedCfop = $(this).val();
+            var icmsCstField = $('#id_icms_cst');
+    
+            // Enable icms_cst field only if cfop is selected
+            if (selectedCfop) {
+                icmsCstField.prop('disabled', false);
+            } else {
+                icmsCstField.prop('disabled', true);
+            }
+    
+            // Reset icms_cst, icms_aliquota, icms_aliquota_reduzida fields
+            icmsCstField.val('');
+            $('#id_icms_aliquota').val('');
+            $('#id_icms_aliquota_reduzida').val('');
+    
+            // Fetch ICMS CST options based on selected CFOP
+            if (selectedCfop == '5405') {
+                // Only allow ICMS CST 60 for CFOP 5405
+                icmsCstField.find('option').each(function() {
+                    if ($(this).val() != '60') {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+                });
+            } else {
+                // Do not allow ICMS CST 60 for other CFOPs
+                icmsCstField.find('option').each(function() {
+                    if ($(this).val() == '60') {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+                });
+            }
+        });
+    
+        $('#id_icms_cst').change(function() {
+            var selectedIcmsCst = $(this).val();
+        
+            // Clear ICMS Alíquota options
+            $('#id_icms_aliquota').val('');
+            $('#id_icms_aliquota_reduzida').val('');
+
+            if (selectedIcmsCst == '') {
+                $('#id_icms_aliquota').val('');$('#id_icms_aliquota').val('');
+                $('#id_icms_aliquota_reduzida').val('');
+                $('#id_cbenef').val('');
+                return;
+            }
+        
+            // Enable or disable ICMS Alíquota Reduzida based on selected ICMS CST
+            if (selectedIcmsCst == '20') {
+                $('#id_icms_aliquota_reduzida option.added').prop('disabled', true);
+                $('#id_icms_aliquota_reduzida').prop('disabled', false);
+            } else {
+                $('#id_icms_aliquota_reduzida').prop('disabled', true);
+            }
+        
+            // If selected ICMS CST is 40 or 60
+            if (selectedIcmsCst == '40' || selectedIcmsCst == '60') {
+                $('#id_icms_aliquota').val('0').prop('disabled', true);
+                $('#id_icms_aliquota_reduzida').val('0').prop('disabled', true);                
+            } else {
+                $('#id_icms_aliquota').prop('disabled', false);
+            }
+            setHiddenFields();
+
+            const cbenefSelect = document.getElementById('id_cbenef');
+            let isCbenefRequired = false;            
+        
+            $('#id_cbenef').prop('disabled', false);
+            $('#id_cbenef').val('');
+            $('#id_cbenef option').each(function() {
+                var optionIcmsCst = $(this).data('icms-cst');
+                if (optionIcmsCst == selectedIcmsCst) {
+                    $(this).prop('disabled', false);
+                    isCbenefRequired = true;
+                } else {
+                    $(this).prop('disabled', true);
+                }
+            });
+
+            if (isCbenefRequired) {
+                cbenefSelect.setAttribute('required', 'required');
+            } else {
+                cbenefSelect.removeAttribute('required');
+            }             
+        });
+        
+        $('#id_icms_aliquota').change(function() {
+            var selectedIcmsCst = $('#id_icms_cst').val();
+            var selectedIcmsAliquota = $(this).val();
+        
+            if (selectedIcmsCst != '20') {
+                var found = false;
+                $('#id_icms_aliquota_reduzida option').each(function() {
+                    if ($(this).val() == selectedIcmsAliquota) {
+                        found = true;
+                        $('#id_icms_aliquota_reduzida').val(selectedIcmsAliquota);
+                        setHiddenFields();
+                        return false; // Break the loop
+                    }
+                });
+        
+                if (!found) {
+                    $('#id_icms_aliquota_reduzida').append(
+                        $('<option>', {
+                            value: selectedIcmsAliquota,
+                            text: selectedIcmsAliquota,
+                            class: 'added'
+                        })
+                    ).val(selectedIcmsAliquota);
+
+                    $('#hidden_icms_aliquota_reduzida').append(
+                        $('<option>', {
+                            value: selectedIcmsAliquota,
+                            text: selectedIcmsAliquota,
+                            class: 'added'
+                        })
+                    ).val(selectedIcmsAliquota);                    
+                    setHiddenFields();
+                }
+            }
+            setHiddenFields();
+        }); 
+
+        $('#id_icms_aliquota_reduzida').change(function() {
+            setHiddenFields();
+        });        
+        
+        $('#id_piscofins_cst').change(function() {
+            var selectedPisCst = $(this).val();
+    
+            // Fazer chamada AJAX para buscar a alíquota
+            $.ajax({
+                url: '{% url "get_piscofins_aliquota" %}',
+                data: {
+                    'piscofins_cst': selectedPisCst
+                },
+                dataType: 'json',
+                success: function(data) {
+                    if (data.pis_aliquota !== undefined) {
+                        $('#id_pis_aliquota').val(data.pis_aliquota);
+                        $('#id_cofins_aliquota').val(data.cofins_aliquota);
+                        $('#aux_pis_aliquota').val(data.pis_aliquota);
+                        $('#aux_cofins_aliquota').val(data.cofins_aliquota);                    
+                    } else {
+                        $('#id_pis_aliquota').val('');
+                        $('#id_cofins_aliquota').val('');
+                        $('#aux_pis_aliquota').val('');
+                        $('#aux_cofins_aliquota').val('');                    
+                    }
+                },
+                error: function() {
+                    alert('Erro ao buscar a alíquota. Tente novamente.');
+                }
+            });
+            
+            const naturezareceitaSelect = document.getElementById('id_naturezareceita');
+            let isNaturezaReceitaRequired = false;
+
+            $('#id_naturezareceita').prop('disabled', false);
+            $('#id_naturezareceita').val('');
+            $('#id_naturezareceita option').each(function() {
+                var optionPisCofinsCst = $(this).data('piscofins-cst');
+                if (optionPisCofinsCst == selectedPisCst) {
+                    $(this).prop('disabled', false);
+                    isNaturezaReceitaRequired = true;
+                } else {
+                    $(this).prop('disabled', true);
+                }
+            });  
+            
+            if (isNaturezaReceitaRequired) {
+                naturezareceitaSelect.setAttribute('required', 'required');
+            } else {
+                naturezareceitaSelect.removeAttribute('required');
+            }            
+        }); 
+
+        $('#form-create').submit(function(event) {
+            showLoader();
+            var codeItem = $('#id_code').val();
+            var clientId = $('#id_client').val();
+            var selectedIcmsCst = $('#id_icms_cst').val();
+            var selectedIcmsAliquota = $('#id_icms_aliquota').val();
+            var selectedIcmsAliquotaReduzida = $('#id_icms_aliquota_reduzida').val();
+            var cest = $('#id_cest').val();
+            var ncm = $('#id_ncm').val();
+            var selectedCfop = $('#id_cfop').val();
+        
+            validateCode(codeItem, clientId).then(function(isValid) {
+                if (!isValid) {
+                    alert('Código do produto já existe para esse cliente.');
+                    event.preventDefault();
+                    hideLoader();
+                    return false;
+                } else {
+                    // Validação do CEST
+                    if (cest && !/^\d{7}$/.test(cest)) {
+                        alert('CEST deve ter 7 dígitos.');
+                        event.preventDefault(); // Impedir envio do formulário
+                        hideLoader();
+                        return false; // Parar a execução
+                    }
+        
+                    // Validação do NCM
+                    if (!/^\d{8}$/.test(ncm)) {
+                        alert('NCM deve ter 8 dígitos.');
+                        event.preventDefault(); // Impedir envio do formulário
+                        return false; // Parar a execução
+                    }
+        
+                    // Validação de CFOP e ICMS CST
+                    if (selectedCfop == '5405' && selectedIcmsCst != '60') {
+                        alert('Quando o CFOP é 5405, o ICMS CST deve ser 60.');
+                        event.preventDefault(); // Impedir envio do formulário
+                        hideLoader();
+                        return false; // Parar a execução
+                    }
+        
+                    // Revalidar condições
+                    if (selectedIcmsCst != '20' && selectedIcmsAliquota != selectedIcmsAliquotaReduzida) {
+                        alert('ICMS Alíquota Reduzida deve ser igual a ICMS Alíquota quando ICMS CST não for 20.');
+                        event.preventDefault(); // Impedir envio do formulário
+                        hideLoader();
+                        return false; // Parar a execução
+                    }
+        
+                    // Definir campos ocultos
+                    // setHiddenFields();
+                    $('#form-create').off('submit').submit();
+                }
+            }).catch(function(error) {
+                hideLoader();
+                alert(error);
+                event.preventDefault();
+            });
+        
+            event.preventDefault(); // Impedir envio do formulário para aguardar validação
+        });
+        
+        
+        function validateCode(code, client) {
+            return true;
+        }  
+        
+        function runNaturezaReceita() {
+            var selectedPisCst = $('#id_piscofins_cst').val();
+            const naturezareceitaSelect = document.getElementById('id_naturezareceita');
+            let isNaturezaReceitaRequired = false;
+
+            $('#id_naturezareceita option').each(function() {
+                var optionPisCofinsCst = $(this).data('piscofins-cst');
+                if (optionPisCofinsCst == selectedPisCst) {
+                    $(this).prop('disabled', false);
+                    isNaturezaReceitaRequired = true;
+                } else {
+                    $(this).prop('disabled', true);
+                }
+            });  
+
+            if (isNaturezaReceitaRequired) {
+                naturezareceitaSelect.setAttribute('required', 'required');
+            } else {
+                naturezareceitaSelect.removeAttribute('required');
+                $('#id_naturezareceita').prop('disabled', false);
+                $('#id_naturezareceita').val('');                
+            }             
+        }        
+
+        function runAliquotaReduzida() {
+            var selectedIcmsCst = $('#id_icms_cst').val();
+            var selectedIcmsAliquota = $('#id_icms_aliquota').val();
+        
+            if (selectedIcmsCst != '20') {
+                var found = false;
+                $('#id_icms_aliquota_reduzida option').each(function() {
+                    if ($(this).val() == selectedIcmsAliquota) {
+                        console.log('encontrou')
+                        found = true;
+                        $('#id_icms_aliquota_reduzida').val(selectedIcmsAliquota);
+                        setHiddenFields();
+                        return false; // Break the loop
+                    }
+                });
+        
+                if (!found) {
+                    $('#id_icms_aliquota_reduzida').append(
+                        $('<option>', {
+                            value: selectedIcmsAliquota,
+                            text: selectedIcmsAliquota,
+                            class: 'added'
+                        })
+                    ).val(selectedIcmsAliquota);
+                   
+                    setHiddenFields();
+                }
+
+                $('#id_icms_aliquota_reduzida').prop('disabled', true);
+            } else {
+                // If selected ICMS CST is 40 or 60
+                if (selectedIcmsCst == '40' || selectedIcmsCst == '60') {
+                    $('#id_icms_aliquota').prop('disabled', true);
+                    $('#id_icms_aliquota_reduzida').prop('disabled', true);
+                }               
+            }
+            setHiddenFields();           
+        }
+    });
+
+    function showLoader(){
+        $('.theme-loader').show();
+        $('.theme-loader').animate({
+            'opacity': '1',
+        }, 200);      
+    }
+
+    function hideLoader() {
+        $('.theme-loader').animate({
+            'opacity': '0',
+        }, 200);  
+        $('.theme-loader').hide(); 
+    }
+
+
+    
+
+    function setHiddenFields() {
+        $('#hidden_icms_aliquota').val($('#id_icms_aliquota').val());
+        $('#hidden_icms_aliquota_reduzida').val($('#id_icms_aliquota_reduzida').val());        
+    }
+    
+ 
+    
+        
+</script>
+{% endblock anotherjs %}
+
+

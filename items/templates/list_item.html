@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    <h4>Produtos</h4>
+    <span>Listagem de produtos cadastrados</span>
+{% endblock title %}
+
+{% block customcss %}
+    <!-- Data Table Css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/datatables.net-bs4/css/dataTables.bootstrap4.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/data-table/css/buttons.dataTables.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css' %}">  
+{% endblock customcss %}
+
+
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'clients_list' %}">Clientes</a>
+    </li>
+    <li class="breadcrumb-item"><a href="{% url 'client_update' pk=client_id %}">Lojas</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">Produtos</a>
+    </li>    
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Zero config.table start -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Lista de Produtos: {{ client_name }} </h5>
+                
+                <a href="{% url 'item_create' client_id=client.id %}" type="button" class="btn btn-primary waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                    <i class="icofont icofont-plus-circle m-r-5"></i>
+                    Adicionar Produto
+                </a>
+
+                <a href="{% url 'items_upload' client_id=client.id %}" type="button" class="btn btn-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                    <i class="icofont icofont-upload-alt m-r-5"></i> 
+                    Importar Produtos
+                </a>
+
+                <a href="{% url 'download_file' 'ArquivoModelo.xlsx' %}" type="button" class="btn btn-info waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                    <i class="icofont icofont-download-alt m-r-5"></i> 
+                    Baixar Modelo
+                </a> 
+                
+                <a href="{% url 'export_items_to_excel' client.id %}" type="button" class="btn btn-info waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                    <i class="icofont icofont-save m-r-5"></i>
+                    Exportar Cadastros
+                </a>                
+                                                                   
+                <span>Lista dos produtos cadastrados do cliente: {{ client_name }}</span>
+
+            </div>
+            <div class="card-block">                  
+                <div class="dt-responsive table-responsive">
+                    <table id="simpletable" class="table compact table-striped table-bordered nowrap " style="font-size: x-small;padding: 0rem;">
+                        <thead style="font-size: xx-small;">
+                        <tr>
+                            <th class="text-center" style="padding-right: 0;">Código</th>
+                            <th class="text-center" style="padding-right: 0;">Cód.Barras</th>
+                            <th class="text-center" style="padding-right: 0;">Descrição</th>
+                            <th class="text-center" style="padding-right: 0;">NCM</th>
+                            <th class="text-center" style="padding-right: 0;">CEST</th>
+                            <th class="text-center" style="padding-right: 0;">CFOP</th>
+                            <th class="text-center" style="padding-right: 0;">CST Icms</th>
+                            <th class="text-center" style="padding-right: 0;">Aliq.Icms</th>
+                            <th class="text-center" style="padding-right: 0;">Aliq.IcmsRed</th>
+                            <th class="text-center" style="padding-right: 0;">CBENEF</th>
+                            <th class="text-center" style="padding-right: 0;">Protege</th>
+                            <th class="text-center" style="padding-right: 0;">CST PIS/COFINS</th>
+                            <th class="text-center" style="padding-right: 0;">Aliq.PIS</th>
+                            <th class="text-center" style="padding-right: 0;">Aliq.COFINS</th>
+                            <th class="text-center" style="padding-right: 0;">Nat.Receita</th>
+                            <th class="text-center" style="padding-right: 0;">Ação</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% if items %}
+                                {% for item in items %}
+                                    <tr>
+                                        <td class="text-center align-middle">{{ item.code }} </td>
+                                        <td class="text-center align-middle">{{ item.barcode }}</td>
+                                        <td class="text-center align-middle">{{ item.description }}</td>
+                                        <td class="text-center align-middle">{{ item.ncm }}</td>
+                                        <td class="text-center align-middle">{{ item.cest }}</td>
+                                        <td class="text-center align-middle">{{ item.cfop }}</td>
+                                        <td class="text-center align-middle">{{ item.icms_cst }}</td>
+                                        <td class="text-center align-middle">{{ item.icms_aliquota }}</td>
+                                        <td class="text-center align-middle">{{ item.icms_aliquota_reduzida }}</td>
+                                        <td class="text-center align-middle">{{ item.cbenef }}</td>
+                                        <td class="text-center align-middle">{{ item.protege }}</td>
+                                        <td class="text-center align-middle">{{ item.piscofins_cst.code }}</td>
+                                        <td class="text-center align-middle">{{ item.pis_aliquota }}</td>
+                                        <td class="text-center align-middle">{{ item.cofins_aliquota }}</td>
+                                        <td class="text-center align-middle">{{ item.naturezareceita.code }}</td>
+                                        <td class="text-center align-middle">                                             
+                                            <a href="{% url 'item_update' client_id=client.id pk=item.id %}" type="button" class="text-center color-black">
+                                                <i class="icofont icofont-ui-edit"></i>
+                                            </a> 
+                                        </td>                                        
+                                    </tr>                                    
+                                {% endfor %}
+                            {% endif %}
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Zero config.table end -->
+    </div>
+</div>
+{% endblock content %}
+
+{% block anotherjs %}
+<!-- data-table js -->
+<script src="{% static 'bower_components/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'bower_components/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+<script src="{% static 'bower_components/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'bower_components/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js' %}"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt_BR.json"></script>
+
+<script>
+    $(document).ready(function() {
+        $('#simpletable').DataTable({
+            select: true,
+            language: {
+                url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
+            },
+        });      
+    });
+</script>
+{% endblock anotherjs %}
+
+
+

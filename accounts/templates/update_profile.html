@@ -1,0 +1,124 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Editar Dados Pessoais</h4>
+    <span>Editar dados pessoais</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Dados Pessoais</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Product edit card start -->
+        <div class="card">
+            <div class="card-block">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="product-edit">
+                            <ul class="nav nav-tabs nav-justified md-tabs " role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="tab" href="#user_tab" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-edit"></i>
+                                        </div>
+                                        Meus Dados</a>
+                                    <div class="slide"></div>
+                                </li>
+                            </ul>
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <!-- Inicio Tab Dados Usuario -->
+                                <!-- <form class="md-float-material card-block"> -->
+                                <div class="tab-pane active" id="user_tab" role="tabpanel">
+                                    <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                                        {% csrf_token %}
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Primeiro Nome</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ user_form.first_name.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-ui-user"></i></span>
+                                                    {{ user_form.first_name|add_class:"form-control"|attr:"placeholder:Primeiro nome" }}
+                                                </div>
+                                            </div>                                    
+                                        </div>
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Último Nome</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ user_form.last_name.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-man-in-glasses"></i></span>
+                                                    {{ user_form.last_name|add_class:"form-control"|attr:"placeholder:Sobrenome" }}
+                                                </div>
+                                            </div>                                    
+                                        </div>                          
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Telefone:</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ form.phone.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-ui-cell-phone"></i></span>
+                                                    {{ form.phone|add_class:"form-control telphone_with_code"|attr:"placeholder:(99) 99999-9999"|attr:"data-mask:(99) 99999-9999" }}
+                                                </div>
+                                            </div>                                    
+                                        </div>
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Data de Nascimento</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ form.birth_date.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-calendar"></i></span>
+                                                    {{ form.birth_date|add_class:"form-control date"|attr:"placeholder:dd/mm/yyyy"|attr:"data-mask:99/99/9999" }}
+                                                </div>
+                                            </div>                                    
+                                        </div>
+                                                                             
+
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-center m-t-20">
+                                                    <input type="submit" onClick="showLoading('form-create-user')" value="Salvar" class="btn btn-primary waves-effect waves-light m-r-10" id="btn-save">
+                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <!-- End Tab Dados Usuario -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product edit card end -->
+    </div>
+</div>
+{% endblock %}
+
+{% block anotherjs %}
+    <!-- Masking js -->
+    <script src="{% static 'assets/pages/form-masking/inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/jquery.inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/autoNumeric.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/form-mask.js' %}?{% now "U" %}"></script>
+
+    {% comment %} <script>
+        function showLoading2() {
+            console.log('entrou no loading')
+            $('.theme-loader').animate({
+                'opacity': '1',
+            }, 200); 
+        }        
+    </script> {% endcomment %}
+{% endblock anotherjs %}
+
+

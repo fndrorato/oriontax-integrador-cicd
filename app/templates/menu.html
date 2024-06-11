@@ -1,0 +1,180 @@
+<nav class="pcoded-navbar">
+    <div class="pcoded-inner-navbar">
+        <ul class="pcoded-item pcoded-left-item">
+            <li class="pcoded-hasmenu">
+                <a href="{% url 'home' %}">
+                    <span class="pcoded-micon"><i class="feather icon-map"></i></span>
+                    <span class="pcoded-mtext">Dashboard</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+            </li>
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-shopping-cart"></i></span>
+                    <span class="pcoded-mtext">Clientes</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class=" ">
+                        <a href="{% url 'clients_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Listar Clientes</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                    
+                    <li class=" ">
+                        <a href="{% url 'client_create' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Novo Cliente</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-unlock"></i></span>
+                    <span class="pcoded-mtext">Usuários</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class=" ">
+                        <a href="{% url 'users_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Listar Usuários</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                    
+                    <li class=" ">
+                        <a href="{% url 'new_user' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Novo Usuário</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-cpu"></i></span>
+                    <span class="pcoded-mtext">Sistemas ERP</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class=" ">
+                        <a href="{% url 'erps_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Listar Sistemas</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                    
+                    <li class=" ">
+                        <a href="{% url 'new_erp' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Novo Sistema</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-clipboard"></i></span>
+                    <span class="pcoded-mtext">Impostos</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class="pcoded-hasmenu">
+                        <a href="javascript:void(0)">
+                            <span class="pcoded-micon"><i class="ti-home"></i></span>
+                            <span class="pcoded-mtext" data-i18n="nav.dash.main">ICMS</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                        <ul class="pcoded-submenu">
+                            <li class=" ">
+                                <a href="{% url 'icmscst_list' %}" data-i18n="nav.animations.main">
+                                    <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                                    <span class="pcoded-mtext">CST do ICMS</span>
+                                    <span class="pcoded-mcaret"></span>
+                                </a>
+                            </li>
+                            <li class=" ">
+                                <a href="{% url 'icmsaliquota_list' %}" data-i18n="nav.animations.main">
+                                    <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                                    <span class="pcoded-mtext">Alíquota do ICMS</span>
+                                    <span class="pcoded-mcaret"></span>
+                                </a>
+                            </li>   
+                            <li class=" ">
+                                <a href="{% url 'icmsaliquotareduzida_list' %}" data-i18n="nav.animations.main">
+                                    <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                                    <span class="pcoded-mtext">Alíquota Reduzida</span>
+                                    <span class="pcoded-mcaret"></span>
+                                </a>
+                            </li> 
+                        </ul>
+                    </li>
+                    <li class=" ">
+                        <a href="{% url 'cfop_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">CFOP</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                    
+                    <li class=" ">
+                        <a href="{% url 'cbenef_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">CBENEF</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>  
+                    <li class=" ">
+                        <a href="{% url 'protege_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Protege</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>
+                    <li class=" ">
+                        <a href="{% url 'piscofinscst_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">CST PIS/COFINS</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li> 
+
+                    <li class=" ">
+                        <a href="{% url 'naturezareceita_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Natureza da Receita</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                      
+                </ul>                
+            </li> 
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-settings"></i></span>
+                    <span class="pcoded-mtext">Configurações</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class=" ">
+                        <a href="{% url 'task_create_execution_time' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Horário Execução</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li> 
+                    <li class=" ">
+                        <a href="{% url 'accountings_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Contabilidade</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                     
+                </ul>
+            </li>                       
+        </ul>
+    </div>
+</nav>

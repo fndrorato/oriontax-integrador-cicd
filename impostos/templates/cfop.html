@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>CFOP</h4>
+    <span>Listagem de CFOPs Cadastrados</span>
+{% endblock title %}
+
+{% block customcss %}
+    <!-- Data Table Css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/datatables.net-bs4/css/dataTables.bootstrap4.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/data-table/css/buttons.dataTables.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css' %}">  
+    <!-- sweet alert framework -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/sweetalert/css/sweetalert.css' %}">    
+{% endblock customcss %}
+
+
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Impostos</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">CFOP</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Zero config.table start -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Lista de CFOP</h5>
+                <span>Lista dos CFOPs cadastrados.</span>
+            </div>
+            <div class="card-block">
+                <div class="text-right m-b-20">
+                    <button type="button" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target="#data-modal">
+                        <i class="icofont icofont-plus-circle"></i>
+                        Novo CFOP
+                    </button>
+                </div>                  
+                <div class="dt-responsive table-responsive">
+                    <table id="simpletable" class="table table-striped table-bordered nowrap">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="text-center">CFOP</th>
+                            <th class="text-center">Descrição</th>
+                            <th class="text-center">Tipo</th>
+                            <th class="text-center">Ação</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% if cfops %}
+                                {% for cfop in cfops %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td class="text-center align-middle">{{ cfop.cfop }}</td>
+                                        <td class="text-center align-middle">{{ cfop.description }}</td>
+                                        <td class="text-center align-middle">
+                                            {% if cfop.operation == 'E' %}
+                                                Entrada
+                                            {% elif cfop.operation == 'S' %}
+                                                Saída
+                                            {% else %}
+                                                <!-- Se o campo estiver vazio ou tiver outro valor, exiba um espaço em branco -->
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <button onclick="loadData({{ cfop.cfop }})" data-toggle="modal" data-target="#data-modal" type="button" class="btn btn-primary btn-md waves-effect waves-light text-white text-center">
+                                                <i class="icofont icofont-ui-edit"></i>
+                                            </button> 
+
+                                            <button type="button" class="btn btn-danger btn-md waves-effect waves-light text-white text-center btn-delete" data-id="{{ cfop.cfop }}">
+                                                <i class="icofont icofont-trash"></i>
+                                            </button>  
+                                        </td>
+                                    </tr>                                    
+                                {% endfor %}
+                            {% endif %}
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Zero config.table end -->
+    </div>
+</div>
+<!-- Register modal start -->
+<div id="data-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Dados do CFOP</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="message" class="text-center"></div>
+                <form class="md-float-material" id="tax-form" method="POST" action="{% url 'cfop_list' %}">
+                    {% csrf_token %}       
+                    <input type="hidden" id="cfop_id" name="cfop_id">      
+                    <div class="row">
+                        <label class="col-sm-6 col-lg-4 col-form-label">CFOP</label>
+                        <div class="col-md-12">
+                            {{ form.cfop|add_class:"form-control"|attr:"placeholder:CFOP (4 dígitos)" }}
+                        </div>
+                        <span class="md-line"></span>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-6 col-lg-4 col-form-label">Descrição</label>
+                        <div class="col-md-12">
+                            {{ form.description|add_class:"form-control" }}
+                        </div>
+                        <span class="md-line"></span>
+                    </div>      
+                    
+                    <div class="row">
+                        <label class="col-sm-6 col-lg-4 col-form-label">Tipo de Operação</label>
+                        <div class="col-md-12">
+                            {{ form.operation|add_class:"form-control"}}
+                        </div>
+                        <span class="md-line"></span>
+                    </div>  
+                                          
+
+                    <div class="row m-t-15">
+                        <div class="col-md-12">
+                            <input type="submit" id="btn-reg" class="btn btn-primary btn-md btn-block waves-effect text-center btn-register" value="Salvar Dados">
+                            <input type="submit" id="btn-up" class="btn btn-primary btn-md btn-block waves-effect text-center btn-update" value="Atualizar Dados">
+                        </div>
+                    </div>                    
+                </form>
+                <!-- end of form -->                
+            </div>
+            
+            
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block anotherjs %}
+    <!-- data-table js -->
+    <script src="{% static 'bower_components/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js' %}"></script>
+    <script src="https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt_BR.json"></script>
+
+    <!-- sweet alert js -->
+    <script type="text/javascript" src="{% static 'bower_components/sweetalert/js/sweetalert.min.js' %}"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#simpletable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
+                },
+            }); 
+            
+            $('.btn-register').click(function(event) {
+                event.preventDefault();
+                $('#message').html('');
+                var form = $('#tax-form');
+                var formData = form.serialize();
+                
+                $.ajax({
+                    type: 'POST',
+                    url: form.attr('action') + 'new/',
+                    data: formData,
+                    beforeSend: function() {
+                        $('.theme-loader').show();
+                        $('.theme-loader').animate({
+                            'opacity': '1',
+                        }, 200);                        
+                    },                  
+                    success: function(response) {
+                        swal(
+                            'Parabéns!',
+                            'Novo CFOP cadastrado.',
+                            'success'
+                        );   
+                        location.reload();                     
+                    },
+                    error: function(xhr) {
+                        var errors = xhr.responseJSON;
+                        var errorMessages = '';
+                        $.each(errors, function(key, value) {
+                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
+                        });
+                        $('#message').html(errorMessages);
+                    },
+                    complete: function() {
+                        $('.theme-loader').animate({
+                            'opacity': '0',
+                        }, 200);  
+                        $('.theme-loader').hide(); 
+                    }                 
+                });
+            });   
+            
+            $('.btn-update').click(function(event) {
+                event.preventDefault();
+                $('#message').html('');
+                var form = $('#tax-form');
+                var formData = form.serialize();
+                var cfopId = $('#tax-form').find('input[name="cfop_id"]').val();
+                
+                $.ajax({
+                    type: 'POST',
+                    url: form.attr('action') + cfopId + '/update/',
+                    data: formData,
+                    beforeSend: function() {
+                        $('.theme-loader').show();
+                        $('.theme-loader').animate({
+                            'opacity': '1',
+                        }, 200);                        
+                    },                  
+                    success: function(response) {   
+                        
+                        $('#message').html('<div class="alert alert-success" style="margin-bottom: 0rem;">' + response.message + '</div>');
+                        form[0].reset();
+                        $('#id_city').val(null).trigger('change');
+                        swal(
+                            'Parabéns!',
+                            'CFOP foi atualizado.',
+                            'success'
+                        );   
+                        
+                        location.reload(); 
+                    },
+                    error: function(xhr) {
+                        var errors = xhr.responseJSON;
+                        var errorMessages = '';
+                        $.each(errors, function(key, value) {
+                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
+                        });
+                        $('#message').html(errorMessages);
+                    },
+                    complete: function() {
+                        $('.theme-loader').animate({
+                            'opacity': '0',
+                        }, 200);  
+                        $('.theme-loader').hide(); 
+                    }                 
+                });
+            });            
+            
+            // Preencher o campo hidden com client_id ao abrir o modal
+            $('#data-modal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var modal = $(this);
+                var form = $('#tax-form');
+                form[0].reset();           
+                modal.find('#message').html('');
+
+                $("#btn-up").hide();
+                $('#btn-up').prop('disabled', true);
+                $("#btn-reg").show();     
+                $('#btn-up').prop('disabled', false);           
+            });
+
+            // Handler para o botão de exclusão
+            $('.btn-delete').click(function() {
+                var cfopId = $(this).data('id');
+                var row = $(this).closest('tr');
+
+                swal({
+                    title: 'Tem certeza?',
+                    text: 'Você não poderá reverter isso!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sim, excluir!',
+                    cancelButtonText: 'Cancelar'
+                    }, 
+                    function(isConfirm) {
+                        if (isConfirm) {
+                            // showLoading('form-create-user')
+                            var load_url = "{% url 'cfop_list' %}delete/" + cfopId;
+                            var token = '{% csrf_token %}'
+                            var match = token.match(/value="([^"]*)"/);
+                            var csrfToken = match ? match[1] : null;
+                            $.ajax({
+                                url: load_url,
+                                type: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': csrfToken  // Inclui o token CSRF no cabeçalho da requisição
+                                },                                
+                                data: {
+                                    'csrfmiddlewaretoken': csrfToken // Inclua o token CSRF
+                                },
+                                beforeSend: function() {
+                                    $('.theme-loader').show();
+                                    $('.theme-loader').animate({
+                                        'opacity': '1',
+                                    }, 200);                        
+                                },                                
+                                success: function(response) {
+                                    if (response.success) {
+    
+                                        swal(
+                                            'Excluído!',
+                                            'CFOP foi excluído.',
+                                            'success'
+                                        );
+                                        location.reload(); 
+                                    } else {
+                                        swal(
+                                            'Erro!',
+                                            'Ocorreu um erro ao excluir o CFOP.',
+                                            'error'
+                                        );
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    swal(
+                                        'Erro!',
+                                        'Ocorreu um erro ao excluir o CFOP.',
+                                        'error'
+                                    );
+                                },
+                                complete: function() {
+                                    $('.theme-loader').animate({
+                                        'opacity': '0',
+                                    }, 200);  
+                                    $('.theme-loader').hide(); 
+                                }  
+                            });
+                        } else {
+                            swal("Cancelado", "CFOP não excluído.", "error");
+                        }
+                    }
+                );                
+            });             
+        });
+
+        function loadData(cfopId) {
+            var form = $('#tax-form');
+
+            $('.theme-loader').show(); 
+            $('.theme-loader').animate({
+                'opacity': '1',
+            }, 200);              
+
+            var load_url = "{% url 'cfop_list' %}detail/" + cfopId;
+            $.ajax({
+                url: load_url,
+                dataType: 'json',
+                success: function (data) {
+                    // Preenche os campos do formulário com os dados da loja
+                    $('.theme-loader').hide(); 
+                    $('#cfop_id').val(cfopId);
+                    $('input[name="cfop"]').val(data.cfop);
+                    $('input[name="description"]').val(data.description);
+                    $('input[name="operation"]').val(data.operation);
+                    $("#btn-up").show();
+                    $('#btn-up').prop('disabled', false);
+                    $("#btn-reg").hide();
+                    $('#btn-reg').prop('disabled', true);
+
+                }
+            });
+        }         
+    </script>
+{% endblock anotherjs %}
+
+
+

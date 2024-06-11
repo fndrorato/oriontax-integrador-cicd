@@ -1,0 +1,405 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Atualizar Produto: {{ item.description }}</h4>
+    <span>Atualização do produto para o cliente: {{ client_name }} | {{ corporate_name }}</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'clients_list' %}">Clientes</a>
+    </li>
+    <li class="breadcrumb-item"><a href="{% url 'client_update' pk=client_id %}">Lojas</a>
+    </li>
+    <li class="breadcrumb-item"><a href="{% url 'item_list' store_id=store.id %}">Produtos</a>
+    </li>    
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Product edit card start -->
+        <div class="card">
+            <div class="card-block">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="product-edit">
+                            <ul class="nav nav-tabs nav-justified md-tabs " role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="tab" href="#product" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-edit"></i>
+                                        </div>
+                                        Dados do Produto</a>
+                                    <div class="slide"></div>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-toggle="tab" href="#tab_integrantes" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-document-search"></i>
+                                        </div>
+                                        Log</a>
+                                    <div class="slide"></div>
+                                </li>
+                            </ul>
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <!-- Inicio Tab Dados product -->
+                                <!-- <form class="md-float-material card-block"> -->
+                                <div class="tab-pane active" id="product" role="tabpanel">
+                                    <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                                        {% csrf_token %}
+                                        <input type="hidden" value="{{ store.id }}" name="store" id="id_store">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Código</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.code.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.code|add_class:"form-control"|attr:"placeholder:Código do Produto" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Código de Barras</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.barcode.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.barcode|add_class:"form-control"|attr:"placeholder:Código de Barras" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                        </div>  
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <label class="col-sm-4 col-lg-6 col-form-label">Descrição</label>
+                                                <div class="col-md-12">
+                                                    <span class="messages text-danger">{{ form.description.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.description|add_class:"form-control"|attr:"placeholder:Descrição do produto" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>                                           
+                                        </div>  
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">NCM</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.ncm.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.ncm|add_class:"form-control"|attr:"placeholder:NCM (8 dígitos)"|attr:"min-length:8"|attr:"max-length:8" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CEST</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cest.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.cest|add_class:"form-control"|attr:"placeholder:CEST"|attr:"min-length:7"|attr:"max-length:7" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CFOP</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cfop.errors }}</span>
+                                                    {{ form.cfop|add_class:"form-control" }}
+                                                </div>                                                
+                                            </div>                                            
+                                        </div> 
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CST do ICMS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.icms_cst.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.icms_cst|add_class:"form-control"|attr:"id:id_icms_cst"|attr:"disabled:true" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Alíquota Integral</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.icms_aliquota.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.icms_aliquota|add_class:"form-control"|attr:"id:id_icms_aliquota" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Alíquota Reduzida</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.icms_aliquota_reduzida.errors }}</span>
+                                                    {{ form.icms_aliquota_reduzida|add_class:"form-control"|attr:"id_icms_aliquota_reduzida" }}
+                                                </div>                                                
+                                            </div>                                            
+                                        </div>    
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Protege</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.protege.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.protege|add_class:"form-control" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CBENEF</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cbenef.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.cbenef|add_class:"form-control" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                           
+                                        </div> 
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CST do PIS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.pis_cst.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.pis_cst|add_class:"form-control"|attr:"id:id_pis_cst" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Alíquota do PIS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.pis_aliquota.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.pis_aliquota|add_class:"form-control"|attr:"id:id_pis_aliquota" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                           
+                                        </div>  
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">CST do COFINS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cofins_cst.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.cofins_cst|add_class:"form-control"|attr:"id:id_cofins_cst" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Alíquota do COFINS</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cofins_aliquota.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.cofins_aliquota|add_class:"form-control"|attr:"id_cofins_aliquota" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>  
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Natureza da Receita</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.naturezareceita.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.naturezareceita|add_class:"form-control" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                                                                      
+                                        </div>                                         
+
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-center m-t-20">
+                                                    <input type="submit" onClick="showLoading('form-create-user')" value="Salvar" class="btn btn-primary waves-effect waves-light m-r-10" id="btn-save">
+                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <!-- End Tab Dados Usuario -->
+                                <!-- Inicio Tab Equipe 
+                                <div class="tab-pane" id="tab_integrantes" role="tabpanel">
+                                    <form class="md-float-material card-block">
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-all-caps"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Title">
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-underline"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Label Name">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-ui-keyboard"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Keyword">
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-copy-alt"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Description">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-center m-t-20">
+                                                    <button type="button" class="btn btn-primary waves-effect waves-light m-r-10">Save</button>
+                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Discard</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                 End Tab Equipe Usuario -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product edit card end -->
+    </div>
+</div>
+{% endblock %}
+
+{% block anotherjs %}
+<script>
+    $(document).ready(function() {
+        // Disable icms_cst initially
+        if ($('#id_cfop')) {
+            alert('cfop verd')
+            $('#id_icms_cst').prop('disabled', false);
+            $('#id_icms_aliquota_reduzida').prop('disabled', false);
+        } else {
+            alert('cfop falso')
+            $('#id_icms_cst').prop('disabled', true);
+            $('#id_icms_aliquota_reduzida').prop('disabled', true);
+        }
+    
+        $('#id_cfop').change(function() {
+            var selectedCfop = $(this).val();
+            var icmsCstField = $('#id_icms_cst');
+    
+            // Enable icms_cst field only if cfop is selected
+            if (selectedCfop) {
+                icmsCstField.prop('disabled', false);
+            } else {
+                icmsCstField.prop('disabled', true);
+            }
+    
+            // Reset icms_cst, icms_aliquota, icms_aliquota_reduzida fields
+            icmsCstField.val('');
+            $('#id_icms_aliquota').val('');
+            $('#id_icms_aliquota_reduzida').val('');
+    
+            // Fetch ICMS CST options based on selected CFOP
+            if (selectedCfop == '5405') {
+                // Only allow ICMS CST 60 for CFOP 5405
+                icmsCstField.find('option').each(function() {
+                    if ($(this).val() != '60') {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+                });
+            } else {
+                // Do not allow ICMS CST 60 for other CFOPs
+                icmsCstField.find('option').each(function() {
+                    if ($(this).val() == '60') {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+                });
+            }
+        });
+    
+        $('#id_icms_cst').change(function() {
+            var selectedIcmsCst = $(this).val();
+    
+            // Clear ICMS Alíquota options
+            $('#id_icms_aliquota').val('');
+            $('#id_icms_aliquota_reduzida').val('');
+    
+            // Fetch ICMS Alíquota options based on selected ICMS CST
+            if (selectedIcmsCst == '20') {
+                // Enable ICMS Alíquota Reduzida for ICMS CST 20
+                $('#id_icms_aliquota_reduzida').prop('disabled', false);
+            } else {
+                // Disable ICMS Alíquota Reduzida for other ICMS CST
+                $('#id_icms_aliquota_reduzida').prop('disabled', true);
+            }
+        });
+    
+        // Additional validation rules can be added here
+    }); 
+    
+    $('#id_pis_cst').change(function() {
+        var selectedPisCst = $(this).val();
+
+        // Fazer chamada AJAX para buscar a alíquota
+        $.ajax({
+            url: '{% url "get_piscofins_aliquota" %}',
+            data: {
+                'piscofins_cst': selectedPisCst
+            },
+            dataType: 'json',
+            success: function(data) {
+                if (data.aliquota !== undefined) {
+                    $('#id_pis_aliquota').val(data.aliquota);
+                } else {
+                    $('#id_pis_aliquota').val('');
+                    alert(data.error);
+                }
+            },
+            error: function() {
+                alert('Erro ao buscar a alíquota. Tente novamente.');
+            }
+        });
+    });
+    
+    $('#id_cofins_cst').change(function() {
+        var selectedCofinsCst = $(this).val();
+
+        // Fazer chamada AJAX para buscar a alíquota
+        $.ajax({
+            url: '{% url "get_piscofins_aliquota" %}',
+            data: {
+                'piscofins_cst': selectedCofinsCst
+            },
+            dataType: 'json',
+            success: function(data) {
+                if (data.aliquota !== undefined) {
+                    $('#id_cofins_aliquota').val(data.aliquota);
+                } else {
+                    $('#id_cofins_aliquota').val('');
+                    alert(data.error);
+                }
+            },
+            error: function() {
+                alert('Erro ao buscar a alíquota. Tente novamente.');
+            }
+        });
+    });    
+    
+        
+</script>
+{% endblock anotherjs %}
+
+

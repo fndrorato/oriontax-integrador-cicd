@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+    <h4>Dashboard OrionTax</h4>
+
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Dashboard OrionTax</a>
+    </li>
+{% endblock breadcrumb %}
+
+
+{% block content %}
+
+    <div class="row">
+        <!-- statustic-card start -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-c-yellow text-white">
+                <div class="card-block">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <p class="m-b-5">Clientes</p>
+                            <h4 class="m-b-0">{{ clients|length }}</h4>
+                        </div>
+                        <div class="col col-auto text-right">
+                            <i class="feather icon-user f-50 text-c-yellow"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-c-green text-white">
+                <div class="card-block">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <p class="m-b-5">Lojas</p>
+                            <h4 class="m-b-0">{{ total_stores }}</h4>
+                        </div>
+                        <div class="col col-auto text-right">
+                            <i class="feather icon-home f-50 text-c-green"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-c-blue text-white">
+                <div class="card-block">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <p class="m-b-5">Média de Produtos/Cliente</p>
+                            <h4 class="m-b-0">{{ media_items }}</h4>
+                        </div>
+                        <div class="col col-auto text-right">
+                            <i class="feather icon-shopping-cart f-50 text-c-blue"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-c-pink text-white">
+                <div class="card-block">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <p class="m-b-5">Produtos com problema</p>
+                            <h4 class="m-b-0">-</h4>
+                        </div>
+                        <div class="col col-auto text-right">
+                            <i class="feather icon-book f-50 text-c-pink"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- statustic-card start -->        
+        <div class="col-lg-12">
+            <!-- Hover table card start -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>Cadastros</h5>
+                </div>
+                <div class="card-block table-border-style">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Cliente</th>
+                                    <th>Analista</th>
+                                    <th class="text-center">Núm Lojas</th>
+                                    <th class="text-center">Cadastros</th>
+                                    <th class="text-center">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client_info in clients %}
+                                    <tr>
+                                        <th scope="row">{{ forloop.counter }}</th>
+                                        <td>{{ client_info.client.name }}</td>
+                                        <td>{{ client_info.client.user.get_full_name }}</td>
+                                        <td class="text-center">{{ client_info.store_count }}</td>
+                                        <td class="text-center">{{ client_info.item_count }}</td>
+                                        <td class="text-center">
+                                            <a href="{% url 'item_list' client_id=client_info.client.id %}" type="button" class="btn btn-primary btn-mini waves-effect waves-light text-white">
+                                                <i class="icofont icofont-ui-edit"></i>
+                                                ver cadastros
+                                            </a>                                             
+                                        </td>
+                                    </tr>
+                                {% endfor %}                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Hover table card end -->
+        </div>
+    </div>
+{% endblock content %}
+

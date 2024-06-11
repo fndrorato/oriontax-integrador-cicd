@@ -1,0 +1,244 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Editar Usuário</h4>
+    <span>Editar dados do usuário</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Usuários</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">Editar Usuário</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Product edit card start -->
+        <div class="card">
+            <div class="card-block">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="product-edit">
+                            <ul class="nav nav-tabs nav-justified md-tabs " role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="tab" href="#user_tab" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-edit"></i>
+                                        </div>
+                                        Dados do Usuário</a>
+                                    <div class="slide"></div>
+                                </li>
+                                {% comment %} <li class="nav-item">
+                                    <a class="nav-link" data-toggle="tab" href="#tab_integrantes" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-document-search"></i>
+                                        </div>
+                                        Integrantes da Equipe</a>
+                                    <div class="slide"></div>
+                                </li> {% endcomment %}
+                            </ul>
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <!-- Inicio Tab Dados Usuario -->
+                                <!-- <form class="md-float-material card-block"> -->
+                                <div class="tab-pane active" id="user_tab" role="tabpanel">
+                                    <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                                        {% csrf_token %}
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Primeiro Nome</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ form.first_name.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-ui-user"></i></span>
+                                                    {{ form.first_name|add_class:"form-control"|attr:"placeholder:Primeiro nome" }}
+                                                </div>
+                                            </div>                                    
+                                        </div>
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Último Nome</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ form.last_name.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-man-in-glasses"></i></span>
+                                                    {{ form.last_name|add_class:"form-control"|attr:"placeholder:Sobrenome" }}
+                                                </div>
+                                            </div>                                    
+                                        </div>
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">E-mail</label>
+                                            <div class="col-sm-8 col-lg-10 mb-0">
+                                                <span class="messages text-danger">{{ form.email.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-ui-email"></i></span>
+                                                    {{ form.email|add_class:"form-control"|attr:"placeholder:E-mail" }}
+                                                </div>
+                                                
+                                            </div>                                    
+                                        </div>                           
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Telefone:</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ profile_form.phone.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-ui-cell-phone"></i></span>
+                                                    {{ profile_form.phone|add_class:"form-control telphone_with_code"|attr:"placeholder:(99) 99999-9999"|attr:"data-mask:(99) 99999-9999" }}
+                                                </div>
+                                            </div>                                    
+                                        </div>
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Data de Nascimento</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ profile_form.birth_date.errors }}</span>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-calendar"></i></span>
+                                                    {{ profile_form.birth_date|add_class:"form-control date"|attr:"placeholder:dd/mm/yyyy"|attr:"data-mask:99/99/9999" }}
+                                                </div>
+                                            </div>                                    
+                                        </div>
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Perfil de Usuário</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <div class="input-group">
+                                                    <select class="form-control" id="group" name="group" required="True">
+                                                        {% for group in groups %}
+                                                            <option value="{{ group.name }}" {% if selected_group and group == selected_group %}selected{% endif %}>
+                                                                {{ group.name }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    {{ groups.errors }}
+                                                </div>
+                                            </div>                                    
+                                        </div> 
+
+                                        {% if selected_group and selected_group.name == "analista" %}
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Supervisor Responsável</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <div class="input-group">
+                                                    <select id="id_supervisor" name="supervisor" class="form-control" required="True">
+                                                        <option value=""></option>
+                                                        {% for user in supervisor_users %}
+                                                            <option value="{{ user.id }}" {% if profile_form.instance.supervisor and profile_form.instance.supervisor.id == user.id %}selected{% endif %}>
+                                                                {{ user.get_full_name }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>                                    
+                                        </div>  
+                                        {% endif %}   
+                                        
+                                        {% if selected_group and selected_group.name == 'supervisor' %}
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Gerente Responsável</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <div class="input-group">
+                                                    <select id="id_manager" name="manager" class="form-control" required="True">
+                                                        <option value=""></option>
+                                                        {% for user in gerente_users %}
+                                                            <option value="{{ user.id }}" {% if profile_form.instance.manager and profile_form.instance.manager.id == user.id %}selected{% endif %}>
+                                                                {{ user.get_full_name }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>                                    
+                                        </div>  
+                                        {% endif %} 
+
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Status Usuário:</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <span class="messages text-danger">{{ profile_form.is_active.errors }}</span>
+                                                <div class="checkbox-fade fade-in-primary">
+                                                    <label>
+                                                        {{ form.is_active|add_class:"form-check-input" }}
+                                                        <span class="cr">
+                                                            <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                                        </span>
+                                                        <span>Usuário ativo</span>
+                                                    </label>
+                                                </div>
+                                            </div>                                    
+                                        </div>                                                                                
+
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-center m-t-20">
+                                                    <input type="submit" onClick="showLoading('form-create-user')" value="Salvar" class="btn btn-primary waves-effect waves-light m-r-10" id="btn-save">
+                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <!-- End Tab Dados Usuario -->
+                                <!-- Inicio Tab Equipe 
+                                <div class="tab-pane" id="tab_integrantes" role="tabpanel">
+                                    <form class="md-float-material card-block">
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-all-caps"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Title">
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-underline"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Label Name">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-ui-keyboard"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Keyword">
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="icofont icofont-copy-alt"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Description">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-center m-t-20">
+                                                    <button type="button" class="btn btn-primary waves-effect waves-light m-r-10">Save</button>
+                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Discard</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                 End Tab Equipe Usuario -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product edit card end -->
+    </div>
+</div>
+{% endblock %}
+
+{% block anotherjs %}
+    <!-- Masking js -->
+    <script src="{% static 'assets/pages/form-masking/inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/jquery.inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/autoNumeric.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/form-mask.js' %}?{% now "U" %}"></script>
+{% endblock anotherjs %}
+
+

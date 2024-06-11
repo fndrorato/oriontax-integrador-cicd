@@ -1,0 +1,132 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Novo Usuário</h4>
+    <span>Cadastrar um novo usuário para o sistema</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Usuários</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">Novo Usuário</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Product edit card start -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Dados do Usuário</h5>
+            </div>
+            <div class="card-block">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                            {% csrf_token %}
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Primeiro Nome</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ user_form.first_name.errors }}</span>
+                                    <div class="input-group">
+                                        <span class="input-group-addon"><i class="icofont icofont-ui-user"></i></span>
+                                        {{ user_form.first_name|add_class:"form-control"|attr:"placeholder:Primeiro nome" }}
+                                    </div>
+                                </div>                                    
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Último Nome</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ user_form.last_name.errors }}</span>
+                                    <div class="input-group">
+                                        <span class="input-group-addon"><i class="icofont icofont-man-in-glasses"></i></span>
+                                        {{ user_form.last_name|add_class:"form-control"|attr:"placeholder:Sobrenome" }}
+                                    </div>
+                                </div>                                    
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">E-mail</label>
+                                <div class="col-sm-8 col-lg-10 mb-0">
+                                    <span class="messages text-danger">{{ user_form.email.errors }}</span>
+                                    <div class="input-group">
+                                        <span class="input-group-addon"><i class="icofont icofont-ui-email"></i></span>
+                                        {{ user_form.email|add_class:"form-control"|attr:"placeholder:E-mail" }}
+                                    </div>
+                                    
+                                </div>                                    
+                            </div>                           
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Telefone:</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ profile_form.phone.errors }}</span>
+                                    <div class="input-group">
+                                        <span class="input-group-addon"><i class="icofont icofont-ui-cell-phone"></i></span>
+                                        {{ profile_form.phone|add_class:"form-control telphone_with_code"|attr:"placeholder:(99) 99999-9999"|attr:"data-mask:(99) 99999-9999" }}
+                                    </div>
+                                </div>                                    
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Data de Nascimento</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ profile_form.birth_date.errors }}</span>
+                                    <div class="input-group">
+                                        <span class="input-group-addon"><i class="icofont icofont-calendar"></i></span>
+                                        {{ profile_form.birth_date|add_class:"form-control date"|attr:"placeholder:dd/mm/yyyy"|attr:"data-mask:99/99/9999" }}
+                                    </div>
+                                </div>                                    
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Perfil de Usuário</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <div class="input-group">
+                                        <select class="form-control" id="id_group" name="group" required="True">
+                                            <option value="">Selecione um perfil do usuário</option>
+                                            {% for group_name in group_choices %}
+                                                <option value="{{ group_name }}">{{ group_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {{ form.groups.errors }}
+                                    </div>
+                                </div>                                    
+                            </div>                                                                                                                                            
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="text-center m-t-20">
+                                        <input type="submit" onClick="showLoading('form-create-user')" value="Salvar" class="btn btn-primary waves-effect waves-light m-r-10" id="btn-save">
+                                        <button type="button" class="btn btn-warning waves-effect waves-light">Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product edit card end -->
+    </div>
+</div>
+{% endblock %}
+
+{% block anotherjs %}
+    <!-- Masking js -->
+    <script src="{% static 'assets/pages/form-masking/inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/jquery.inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/autoNumeric.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/form-mask.js' %}?{% now "U" %}"></script>
+
+    {% comment %} <script>
+        function showLoading2() {
+            console.log('entrou no loading')
+            $('.theme-loader').animate({
+                'opacity': '1',
+            }, 200); 
+        }        
+    </script> {% endcomment %}
+{% endblock anotherjs %}
+
+

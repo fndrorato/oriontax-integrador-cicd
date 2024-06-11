@@ -1,0 +1,86 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Horário de Execução do Sistema</h4>
+    <span>Defina o horário que será executado automaticamente o sistema de integração</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Agendamento de Execução</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Product edit card start -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Programação da Tarefa</h5>
+            </div>
+            <div class="card-block">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                            {% csrf_token %}
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Horário de Execução</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.execution_time.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.execution_time|add_class:"form-control"|attr:"type:time" }}
+                                    </div>
+                                </div>                                    
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Descrição</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <div class="input-group">
+                                        {{ form.description|add_class:"form-control"|attr:"placeholder:Descrição do da tarefa programada"|attr:"rows:6"|attr:"cols:50" }}
+                                        {{ form.description.errors }}
+                                    </div>
+                                </div>                                    
+                            </div>  
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Última de Execução</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.last_execution.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.last_execution|add_class:"form-control"|attr:"type:datetime-local"|attr:"disabled:true" }}
+                                    </div>
+                                </div>                                    
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Próxima de Execução</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.next_execution.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.next_execution|add_class:"form-control"|attr:"type:datetime-local"|attr:"disabled:true" }}
+                                    </div>
+                                </div>                                    
+                            </div>                                                        
+                            
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="text-center m-t-20">
+                                        <input type="submit" onClick="showLoading('form-create-user')" value="Salvar" class="btn btn-primary waves-effect waves-light m-r-10" id="btn-save">
+                                        <button type="button" class="btn btn-warning waves-effect waves-light">Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product edit card end -->
+    </div>
+</div>
+{% endblock %}
+
+
+

@@ -1,0 +1,170 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Editar Contabilidade</h4>
+    <span>Editar dados de uma contabilidade</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'accountings_list' %}">Contabilidade</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">Editar Contabilidade</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block customcss %}
+    <!-- Select 2 css -->
+    <link rel="stylesheet" href="{% static 'bower_components/select2/css/select2.min.css' %}?{% now "U" %}">
+{% endblock customcss %}
+
+
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Product edit card start -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Dados da Contabilidade</h5>
+            </div>
+            <div class="card-block">
+                {% if message %}
+                    <div class="alert alert-success border-success">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <i class="icofont icofont-close-line-circled"></i>
+                        </button>
+                        {{ message }}
+                    </div>                
+                {% endif %}                
+                <div class="row">
+                    <div class="col-sm-12">
+                        <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                            {% csrf_token %}
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Nome</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.name.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.name|add_class:"form-control"|attr:"placeholder:Nome da Contabilidade" }}
+                                    </div>
+                                </div>                                    
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Contato</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.contact.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.contact|add_class:"form-control"|attr:"placeholder:Pessoa para contato" }}
+                                    </div>
+                                </div>                                    
+                            </div>                            
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Cidade</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.city.errors }}</span>
+                                    <div class="input-group">
+                                        <select class="form-control" id="id_city" name="city" required>
+                                            <option value="{{ city.id }}">{{ city.nome }} - {{ city.uf_estado }}</option>
+                                        </select>
+                                    </div>                                                                        
+                                    
+                                </div>
+                                <span class="md-line"></span>
+                            </div>    
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">E-mail</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.email.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.email|add_class:"form-control"|attr:"placeholder:Email da contabilidade"|attr:"type:Email" }}
+                                    </div>
+                                </div>                                    
+                            </div>  
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Telefone</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.phone.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.phone|add_class:"form-control telphone_with_code"|attr:"placeholder:(99) 99999-9999"|attr:"data-mask:(99) 99999-9999" }}
+                                    </div>
+                                </div>                                    
+                            </div>                                                                                                                                                                                                
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="text-center m-t-20">
+                                        <input type="submit" onClick="showLoading('form-create-user')" value="Salvar" class="btn btn-primary waves-effect waves-light m-r-10" id="btn-save">
+                                        <button type="button" class="btn btn-warning waves-effect waves-light">Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Product edit card end -->
+    </div>
+</div>
+{% endblock %}
+
+
+{% block anotherjs %}
+    <!-- Masking js -->
+    <script src="{% static 'assets/pages/form-masking/inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/jquery.inputmask.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/autoNumeric.js' %}"></script>
+    <script src="{% static 'assets/pages/form-masking/form-mask.js' %}?{% now "U" %}"></script>
+    <!-- Select 2 js -->
+    <script type="text/javascript" src="{% static 'bower_components/select2/js/select2.full.min.js' %}"></script>    
+
+    <script>
+
+        $(document).ready(function() {            
+
+            // Inicializando o Select2
+            $('#id_city').select2({
+                ajax: {
+                    url: '{% url "city_search" %}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1,
+                placeholder: 'Selecione a cidade',
+                allowClear: true,
+                language: {
+                    inputTooShort: function () {
+                        return 'Por favor, insira 1 ou mais caracteres';
+                    },
+                    noResults: function () {
+                        return 'Nenhum resultado encontrado';
+                    },
+                    searching: function () {
+                        return 'Procurando...';
+                    }
+                }                
+            });    
+            
+        });        
+ 
+             
+             
+      </script>      
+{% endblock anotherjs %}
+
+
+
