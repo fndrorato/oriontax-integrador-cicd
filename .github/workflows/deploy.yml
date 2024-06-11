@@ -13,14 +13,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Add GitHub to known_hosts
+      run: |
+        ssh-keyscan github.com >> ~/.ssh/known_hosts       
+
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.8.0
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: Add GitHub to known_hosts
-      run: |
-        ssh-keyscan github.com >> ~/.ssh/known_hosts        
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }} 
+        known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
 
     - name: Configure Git
       run: |
@@ -32,9 +33,7 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no root@174.138.73.68 <<EOF
         eval "$(ssh-agent -s)"  # Inicia o agente SSH
-        echo "passou pelo eval"
         ssh-add ~/.ssh/id_rsa_orion_github
-        echo "passou pelo ssh-add"
         cd /var/www/orion-ci-cd &&
         git pull origin main &&
         source venv/bin/activate &&  # Se você estiver usando um virtualenv
