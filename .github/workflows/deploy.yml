@@ -22,7 +22,7 @@ jobs:
       run: |
         git config --global user.email "fernando.rorato@gmail.com"
         git config --global user.name "Fernando Rorato"
-        git remote set-url origin https://${{ secrets.GH_TOKEN }}@github.com/fndrorato/oriontax-integrador-cicd.git  # SSH URL
+        git remote set-url origin git@github.com:fndrorato/oriontax-integrador-cicd.git  # SSH URL  # SSH URL
   
 
     - name: Deploy to DigitalOcean Droplet
