@@ -1,0 +1,29 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # ou a branch que você deseja monitorar
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy to DigitalOcean Droplet
+      run: |
+        ssh -o StrictHostKeyChecking=no root@your_server_ip '
+        cd /var/www/orion-ci-cd &&
+        git pull origin main &&
+        source venv/bin/activate &&  # Se você estiver usando um virtualenv
+        pip install -r requirements.txt &&
+        systemctl restart gunicorn  # Substitua pelo seu serviço real
+        '
