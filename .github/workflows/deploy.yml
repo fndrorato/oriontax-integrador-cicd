@@ -31,8 +31,8 @@ jobs:
         cd / &&
         ssh-keyscan github.com >> ~/.ssh/known_hosts
         echo "O diretório atual é: $(pwd)"
-        eval "$(ssh-agent -s)"  # Inicia o agente SSH
-        ssh-add ~/.ssh/id_rsa_orion_github
+        # eval "$(ssh-agent -s)"  # Inicia o agente SSH
+        # ssh-add ~/.ssh/id_rsa_orion_github
         cd /var/www/orion-ci-cd &&
         git pull origin main &&
         source venv/bin/activate &&  # Se você estiver usando um virtualenv
