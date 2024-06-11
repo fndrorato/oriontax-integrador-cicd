@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-qjlo+y5&=9g9+30s-1n^4tlcwt8jo03%qv_(@g5xobx2b!438#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['oriontax-beta.f5sys.com.br']
+ALLOWED_HOSTS = ['oriontax.f5sys.com.br']
 
 
 # Application definition
