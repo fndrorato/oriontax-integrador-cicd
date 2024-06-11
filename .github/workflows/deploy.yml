@@ -31,6 +31,8 @@ jobs:
     - name: Deploy to DigitalOcean Droplet
       run: |
         ssh -o StrictHostKeyChecking=no root@174.138.73.68 <<EOF
+        eval "$(ssh-agent -s)"  # Inicia o agente SSH
+        ssh-add -k ~/.ssh/id_rsa_orion_github
         cd /var/www/orion-ci-cd &&
         git pull origin main &&
         source venv/bin/activate &&  # Se você estiver usando um virtualenv
