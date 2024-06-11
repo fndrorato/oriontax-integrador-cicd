@@ -18,12 +18,15 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+    - name: Add GitHub to known_hosts
+      run: |
+        ssh-keyscan github.com >> ~/.ssh/known_hosts        
+
     - name: Configure Git
       run: |
         git config --global user.email "fernando.rorato@gmail.com"
         git config --global user.name "Fernando Rorato"
-        git remote set-url origin git@github.com:fndrorato/oriontax-integrador-cicd.git  # SSH URL  # SSH URL
-  
+        git remote set-url origin git@github.com:fndrorato/oriontax-integrador-cicd.git
 
     - name: Deploy to DigitalOcean Droplet
       run: |
