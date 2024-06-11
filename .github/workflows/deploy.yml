@@ -29,6 +29,7 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no root@174.138.73.68 <<EOF
         ssh-keyscan github.com >> ~/.ssh/known_hosts
+        echo "O diretório atual é: $(pwd)"
         eval "$(ssh-agent -s)"  # Inicia o agente SSH
         ssh-add ~/.ssh/id_rsa_orion_github
         cd /var/www/orion-ci-cd &&
