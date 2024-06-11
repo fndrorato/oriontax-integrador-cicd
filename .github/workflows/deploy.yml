@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main  # ou a branch que você deseja monitorar
+      - main  # branch para monitorar
 
 jobs:
   deploy:
