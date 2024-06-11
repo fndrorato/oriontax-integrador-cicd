@@ -11,11 +11,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Add GitHub to known_hosts
-      run: |
-        ssh-keyscan github.com >> ~/.ssh/known_hosts       
+      uses: actions/checkout@v3      
 
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.8.0
@@ -32,6 +28,7 @@ jobs:
     - name: Deploy to DigitalOcean Droplet
       run: |
         ssh -o StrictHostKeyChecking=no root@174.138.73.68 <<EOF
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
         eval "$(ssh-agent -s)"  # Inicia o agente SSH
         ssh-add ~/.ssh/id_rsa_orion_github
         cd /var/www/orion-ci-cd &&
