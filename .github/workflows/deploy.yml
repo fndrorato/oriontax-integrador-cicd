@@ -20,13 +20,8 @@ jobs:
     - name: Setup SSH Key
       uses: shimataro/ssh-key-action@v2
       with:
-<<<<<<< HEAD
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }} 
-        known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
-=======
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         known_hosts: 'github.com'
->>>>>>> 3678472 (Novo teste)
 
     - name: Configure Git
       run: |
