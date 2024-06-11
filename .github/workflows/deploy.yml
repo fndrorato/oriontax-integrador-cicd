@@ -33,5 +33,5 @@ jobs:
         git pull origin main &&
         source venv/bin/activate &&  # Se você estiver usando um virtualenv
         pip install -r requirements.txt &&
-        systemctl restart gunicorn  # Substitua pelo seu serviço real
+        systemctl restart gunicorn-orion_ci_cd.service  # Substitua pelo seu serviço real
         EOF
