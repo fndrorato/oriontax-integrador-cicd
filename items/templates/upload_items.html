@@ -123,7 +123,14 @@
                     contentType: false,
                     success: function(response) {
                         // Manipula a resposta de sucesso
-                        alert('Upload realizado com sucesso!');
+                        showDiv();
+                        $('#btn-send').toggleClass( "j-processing", false ).removeAttr( "disabled" );
+                        var resp = '<ul class="alert alert-success">';
+                        resp += '<li class="success">' + response.message + '</li>';
+                        resp += '<li class="success">Tempo de processamento: ' + response.elapsed_time + ' segundos</li>';
+                        resp += '<li class="success">Linhas processadas:' + response.processed_rows + '</li>';
+                        resp += '</ul>';
+                        $('.j-response').html(resp);                        
                     },
                     error: function(xhr, status, error) {
                         console.log(xhr)
@@ -135,6 +142,7 @@
                         }                        
                         
                         var errors = '<ul class="alert alert-danger">';
+                        errors += '<li class="error">Tempo de processamento: ' + xhr.responseJSON.elapsed_time + ' segundos</li>';                            
                         $.each(xhr.responseJSON.errors, function(key, value) {
                             errors += '<li class="error">' + value + '</li>';
                         });

@@ -58,7 +58,6 @@ class ItemForm(forms.ModelForm):
         # Verifica se o valor está nas opções ou é igual ao icms_aliquota
         if icms_cst == '20':
             if str(icms_aliquota_reduzida) not in choices:
-                print(choices)
                 raise ValidationError(f'O valor do ICMS Alíquota Reduzida({icms_aliquota_reduzida}) deve ser uma das opções disponíveis quando ICMS CST é 20.')
         else:
             if str(icms_aliquota_reduzida) != str(icms_aliquota):  # Converte icms_aliquota para string
@@ -67,7 +66,6 @@ class ItemForm(forms.ModelForm):
         return icms_aliquota_reduzida
 
     def clean(self):
-        print("Entrou no método clean do formulário.")  # Adicione este print 
         cleaned_data = super().clean()
         icms_aliquota_reduzida = self.data.get('icms_aliquota_reduzida')
         if icms_aliquota_reduzida:
@@ -108,7 +106,6 @@ class ItemForm(forms.ModelForm):
         if piscofins_cst and piscofins_cst.code == '01' and naturezareceita:
             self.add_error('naturezareceita', 'Natureza Receita deve estar em branco quando PIS CST é 01.')
 
-        print("Dados limpos:", cleaned_data)
         return cleaned_data
     
 class CSVUploadForm(forms.Form):

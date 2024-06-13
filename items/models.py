@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 class Item(models.Model):
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
     code = models.PositiveIntegerField()
-    barcode = models.CharField(max_length=255)
+    barcode = models.CharField(max_length=255, null=True, blank=True)
     description = models.CharField(max_length=255)
     ncm = models.CharField(max_length=8)
     cest = models.CharField(max_length=7, null=True, blank=True)
