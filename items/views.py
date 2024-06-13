@@ -472,10 +472,11 @@ class XLSXUploadViewV2(View):
             valid_cbenefs.add(None)
             
             # Carregar os dados de PisCofinsCst e NaturezaReceita em DataFrames
+            piscofins_cst_df = pd.DataFrame(list(PisCofinsCst.objects.values('code', 'pis_aliquota', 'cofins_aliquota')))
             natureza_receita_df = pd.DataFrame(list(NaturezaReceita.objects.values('code', 'id', 'piscofins_cst_id')))
 
             # Converter os DataFrames para dicionários para consulta eficiente
-            pis_cofins_cst_instances = {obj.code: obj for obj in PisCofinsCst.objects.filter(code__in=df['piscofins_cst'])}
+            pis_cofins_cst_dict = piscofins_cst_df.set_index('code').to_dict('index')
             natureza_receita_dict = natureza_receita_df.set_index(['code', 'piscofins_cst_id']).to_dict('index')
             
             # Função para buscar IDs a partir dos códigos
@@ -540,7 +541,11 @@ class XLSXUploadViewV2(View):
 
             codigos = df['codigo'].tolist()  
             # Pré-carregar os itens existentes no banco de dados
-            existing_items = {item.code: item for item in Item.objects.filter(client=client, code__in=df['codigo'])}            
+            existing_items = {item.code: item for item in Item.objects.filter(client=client, code__in=df['codigo'])}
+
+            
+            # Busque todas as instâncias de PisCofinsCst de uma vez para eficiência
+            pis_cofins_cst_instances = {obj.code: obj for obj in PisCofinsCst.objects.filter(code__in=df['piscofins_cst'])}
             
             items_to_create = []
             items_to_update = []
