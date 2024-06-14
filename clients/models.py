@@ -37,7 +37,10 @@ class Client(models.Model):
     is_active = models.BooleanField(default=True)
     day_sent = models.CharField(max_length=2, choices=DATA_SENT_CHOICES, blank=True, null=True)    
     first_load_date = models.DateField(blank=True, null=True, verbose_name="Data Primeira Carga")
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    user_created = models.ForeignKey(User, related_name='clients_created', on_delete=models.SET_NULL, null=True, blank=True)
+    user_updated = models.ForeignKey(User, related_name='clients_updated', on_delete=models.SET_NULL, null=True, blank=True)    
 
     def __str__(self):
         return self.name  
@@ -49,6 +52,11 @@ class Store(models.Model):
     city = models.ForeignKey(Cities, on_delete=models.CASCADE)
     connection_route = models.CharField(max_length=255, verbose_name="Rota da Conexão")
     is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    user_created = models.ForeignKey(User, related_name='stores_created', on_delete=models.SET_NULL, null=True, blank=True)
+    user_updated = models.ForeignKey(User, related_name='stores_updated', on_delete=models.SET_NULL, null=True, blank=True)    
+    
 
     def __str__(self):
         return self.corporate_name      

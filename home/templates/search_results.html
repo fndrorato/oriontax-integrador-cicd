@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block customcss %}
+    <!-- jqpagination css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/jqpagination/jqpagination.css' %}">
+{% endblock customcss %}
+§
+
+
+{% block title %}
+    <h4>Resultado da Pesquisa</h4>
+
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Resultado da Pesquisa</a>
+    </li>
+{% endblock breadcrumb %}
+
+
+{% block content %}
+
+    <div class="row">
+        <div class="col-sm-12">
+            <!-- Search result card start -->
+            <div class="card">
+                <div class="card-block">
+                    <div class="row">
+                        <div class="col-lg-6 offset-lg-3">
+                            <h6 class="txt-highlight text-center">Faça sua pesquisa no sistema (em clientes, lojas e itens)
+                            </h6>
+                        </div>
+                    </div>
+                    <div class="row seacrh-header">
+                        <div class="col-lg-4 offset-lg-4 offset-sm-3 col-sm-6 offset-sm-1 col-xs-12">
+                            <form method="get" action="{% url 'search' %}">
+                                <div class="input-group input-group-button input-group-primary">
+                                    <input type="text" name="q" class="form-control" placeholder="Pesquise aqui..." value={{ query }}>
+                                    <button class="btn btn-primary input-group-addon" id="basic-addon1">Pesquisar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Search result card end -->
+            <h4 class="m-b-20"><b>{{ total_results }}</b> Resultados para "{{ query }}"</h4>
+            <!-- Search result found start -->
+            <div class="row search-result">
+                {% if results %}
+                    {% for result in results %}
+                        
+                        <div class="col-lg-12 col-md-12 col-sm-12 ">
+                            <div class="card">
+                                <div class="card-block">
+                                    <h5 class="card-title">
+                                        {{ result.result_type }} 
+                                    </h5>
+                                    <p class="card-text lead">Resultado: {{ result.display_name }}</p>
+                                    <p class="card-text">{{ result.extra_info }}</p>
+                                    <p class="card-text"><small class="text-muted">Última atualização {{ result.time_since_updated }} atrás</small></p>
+                                </div>
+                            </div>
+                        </div>
+
+                    {% endfor %}
+                    <!-- Paginação -->  
+                    <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center">
+                        <ul class="pagination">
+                            {% if results.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" tabindex="-1" href="?q={{ query }}&page={{ results.previous_page_number }}">Anterior</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" tabindex="-1" href="?q={{ query }}&page=1">Anterior</a>
+                                </li>                        
+                            {% endif %}                        
+                            <li class="page-item"><a class="page-link" href="#">{{ results.number }}</a></li>
+                            {% if results.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?q={{ query }}&page={{ results.next_page_number }}">Próxima</a>
+                                </li>
+                            {% endif %}                            
+                        </ul>                        
+                    </div>                                  
+                                        
+                {% else %}
+                    <div class="col-lg-12 col-md-12 col-sm-12 ">
+                        <div class="card">
+                            <div class="card-block">
+                                <p class="card-text text-muted">Nenhum resultado encontrado.</p>
+                            </div>
+                        </div>
+                    </div>                
+                {% endif %}
+            </div>
+            <!-- Search result found end -->
+        </div>
+    </div>
+{% endblock content %}
+
+{% block anotherjs %}
+    <!-- jqpagination js -->
+    <script type="text/javascript" src="{% static 'assets/pages/jqpagination/jquery.jqpagination.js' %}"></script>
+{% endblock anotherjs %}

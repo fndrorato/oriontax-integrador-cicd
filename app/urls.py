@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from home.views import HomeView
+from home.views import HomeView, SearchResultsView
 from clients.views import CitySearchView
 
 urlpatterns = [
@@ -16,5 +16,6 @@ urlpatterns = [
     path('', include('tasks.urls')),
     path('', include('accountings.urls')),
     path('', HomeView.as_view(), name='home'),
+    path('search/', SearchResultsView.as_view(), name='search'),
     path('ajax/cities/', CitySearchView.as_view(), name='city_search'),    
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

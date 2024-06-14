@@ -1,7 +1,13 @@
+from django.urls import reverse
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView
+from datetime import datetime, timezone
+from django.utils.timesince import timesince
+from django.views.generic import TemplateView, ListView
+from django.core.paginator import Paginator  # Importando o Paginator
+from django.db.models import Q, Value, CharField, F
+from django.db.models.functions import Concat, Cast
 from clients.models import Client, Store
 from items.models import Item
 
@@ -30,3 +36,78 @@ class HomeView(TemplateView):
         context['media_items'] = total_items / clients.count()
         context['clients'] = clients_with_item_count
         return context
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class SearchResultsView(ListView):
+    model = None  # Não especificamos um modelo diretamente, pois vamos sobrescrever o método get_queryset()
+
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get('q')
+        if query:
+            # Execute a pesquisa em diferentes modelos
+            results_client = Client.objects.filter(
+                Q(accounting__name__icontains=query) | Q(name__icontains=query)
+            ).select_related('user').annotate(
+                result_type=Value('Cliente', output_field=CharField()),
+                display_name=F('name'),
+                extra_info=Concat('user__first_name', Value(' '), 'user__last_name', output_field=CharField()),
+                last_updated=F('updated_at')
+            )
+            results_store = Store.objects.filter(
+                Q(corporate_name__icontains=query) | Q(city__nome__icontains=query)
+            ).annotate(
+                result_type=Value('Loja', output_field=CharField()),
+                display_name=F('corporate_name'),
+                extra_info=Value('', output_field=CharField()),
+                last_updated=F('updated_at')
+            )
+            results_item = Item.objects.filter(
+                Q(description__icontains=query) | Q(barcode__icontains=query)
+            ).select_related('client__user').annotate(
+                result_type=Value('Produtos', output_field=CharField()),
+                display_name=Concat(Cast(F('code'), CharField()), Value(' - '), F('description'), output_field=CharField()),
+                extra_info=Concat(F('client__name'), Value(' - '), F('client__user__first_name'), Value(' '), F('client__user__last_name'), output_field=CharField()),
+                last_updated=F('updated_at')
+            )
+
+            # Combine os resultados em uma lista única
+            results = list(results_client) + list(results_store) + list(results_item)
+
+            # Calcular o total de resultados encontrados
+            total_results = len(results)
+
+            # Paginação dos resultados
+            paginator = Paginator(results, 10)  # 10 itens por página
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+
+            # Criar links para cada resultado
+            for result in page_obj:
+                if result.result_type == 'Cliente':
+                    result.url = reverse('client_update', args=[result.pk])
+                elif result.result_type == 'Loja':
+                    result.url = reverse('store_update', args=[result.pk])
+                elif result.result_type == 'Produtos':
+                    result.url = reverse('item_update', args=[result.client.pk, result.pk])
+
+                # Calcular tempo desde a última atualização
+                if result.last_updated:
+                    result.time_since_updated = self.get_time_since_updated(result.last_updated)
+
+            context = {
+                'results': page_obj,
+                'query': query,
+                'total_results': total_results,
+            }
+            return render(request, 'search_results.html', context)
+        else:
+            return render(request, 'search_results.html', {'query': query})
+
+    def get_time_since_updated(self, updated_at):
+        """
+        Retorna uma string formatada indicando quanto tempo atrás a atualização ocorreu.
+        """
+        now = datetime.now(timezone.utc)
+        delta = now - updated_at
+        return timesince(updated_at, now=now).split(", ")[0]
+        
