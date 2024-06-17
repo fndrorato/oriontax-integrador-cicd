@@ -492,7 +492,8 @@ class XLSXUploadViewV2(View):
             df['icms_aliquota'] = df['icms_aliquota'].astype(int)
             df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
             df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
-            df['naturezareceita'] = df['naturezareceita'].astype(str).replace('0', None)
+            # df['naturezareceita'] = df['naturezareceita'].astype(str).replace('0', None)
+            df['naturezareceita'] = df['naturezareceita'].fillna('').astype(str).str.zfill(3).replace(['000', 'nan'], None)
             df['protege'] = df['protege'].astype(int)
             df['cbenef'] = df['cbenef'].astype(str).replace('nan', None)
             # Truncar campos que excedem o tamanho máximo permitido
