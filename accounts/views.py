@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db import IntegrityError
 from django.views.generic import TemplateView, ListView, UpdateView
@@ -202,7 +203,7 @@ class PasswordResetView(PasswordResetView):
     template_name = 'reset_password.html'
     email_template_name = 'password_reset_email.html'
     subject_template_name = 'custom_password_reset_subject.txt'
-    success_url = '/password_reset/done/'
+    success_url = '/password_reset/done/'   
     
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'password_reset_done.html'
