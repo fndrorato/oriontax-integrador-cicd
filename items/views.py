@@ -749,9 +749,24 @@ class XLSXUploadViewV2(View):
                                 'is_active', 'is_pending_sync', 'updated_at', 'user_updated'
                             ])
 
-            except Exception as e:
-                self.logger.error(f"Erro durante o processamento do arquivo: {e}")
-                return JsonResponse({'error': f"Erro durante o processamento do arquivo: {e}"}, status=500)
+            except (pd.errors.ParserError, KeyError, TypeError, ValueError) as e:
+                self.logger.error(f"Error processing Excel file: {e}")  
+                return JsonResponse({'error': f"Erro ao processar o arquivo Excel: {e}"}, status=400)
+
+            except ObjectDoesNotExist as e:
+                self.logger.error(f"Object not found error: {e}")
+                return JsonResponse({'error': 'Erro ao encontrar objetos relacionados no banco de dados.'}, status=400)
+
+            except OperationalError as e:  # Add for database connection errors
+                self.logger.error(f"Database error: {e}")
+                return JsonResponse({'error': 'Erro no banco de dados. Tente novamente mais tarde.'}, status=500)
+
+            except Exception as e:  # Catch any unexpected exceptions
+                self.logger.critical(f"Unexpected error: {e}", exc_info=True)  # Log with traceback
+                return JsonResponse({'error': 'Erro interno no servidor.'}, status=500)
+            # except Exception as e:
+            #     self.logger.error(f"Erro durante o processamento do arquivo: {e}")
+            #     return JsonResponse({'error': f"Erro durante o processamento do arquivo: {e}"}, status=500)
 
             end_time = time.time()
             elapsed_time = round(end_time - start_time, 3)
