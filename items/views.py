@@ -344,143 +344,233 @@ class XLSXUploadView(View):
         print(f"Form inválido: {form.errors}")
         return JsonResponse({'errors': form.errors}, status=400)
 
+  
+# class XLSXUploadViewV2(View):
+#     template_name = 'upload_items.html'
 
-class XLSXUploadViewV1(View):
-    template_name = 'upload_items.html'
+#     def get(self, request, client_id):
+#         client = get_object_or_404(Client, id=client_id)
+#         form = CSVUploadForm()
+#         context = {
+#             'form': form,
+#             'client': client,
+#         }
+#         return render(request, self.template_name, context)
 
-    def get(self, request, client_id):
-        client = get_object_or_404(Client, id=client_id)
-        form = CSVUploadForm()
-        context = {
-            'form': form,
-            'client': client,
-        }
-        return render(request, self.template_name, context)
+#     logger = logging.getLogger(__name__)  # Configurar o logger
 
-    def post(self, request, client_id):
-        start_time = time.time()
-        client = get_object_or_404(Client, id=client_id)
-        form = CSVUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            xlsx_file = request.FILES['csv_file']
-            wb = load_workbook(filename=xlsx_file)
-            sheet = wb.active
+#     # @transaction.atomic  # Garante a atomicidade da transação
+#     def post(self, request, client_id):
+#         start_time = time.time()
+#         client = get_object_or_404(Client, id=client_id)
+#         form = CSVUploadForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             xlsx_file = request.FILES['csv_file']
+#             df = pd.read_excel(xlsx_file)
+            
+#             # Pré-validar códigos
+#             valid_cfops = set(Cfop.objects.values_list('cfop', flat=True))
+#             valid_icms_csts = set(IcmsCst.objects.values_list('code', flat=True))
+#             valid_icms_aliquotas = set(IcmsAliquota.objects.values_list('code', flat=True))
+#             valid_piscofins_csts = set(PisCofinsCst.objects.values_list('code', flat=True))
+#             valid_natureza_receitas = set(NaturezaReceita.objects.values_list('code', flat=True))
+#             valid_proteges = set(Protege.objects.values_list('code', flat=True))
+#             valid_cbenefs = set(CBENEF.objects.values_list('code', flat=True))
+            
+#             # Adicionar a possibilidade de ser vazio/em branco
+#             valid_natureza_receitas.add(None)
+#             valid_cbenefs.add(None)
+            
+#             # Carregar os dados de PisCofinsCst e NaturezaReceita em DataFrames
+#             piscofins_cst_df = pd.DataFrame(list(PisCofinsCst.objects.values('code', 'pis_aliquota', 'cofins_aliquota')))
+#             natureza_receita_df = pd.DataFrame(list(NaturezaReceita.objects.values('code', 'id', 'piscofins_cst_id')))
 
-            errors = []
-            items = []
+#             # Converter os DataFrames para dicionários para consulta eficiente
+#             pis_cofins_cst_dict = piscofins_cst_df.set_index('code').to_dict('index')
+#             natureza_receita_dict = natureza_receita_df.set_index(['code', 'piscofins_cst_id']).to_dict('index')
+            
+#             # Função para buscar IDs a partir dos códigos
+#             def get_natureza_receita_id(code, piscofins_cst_code):
+#                 return natureza_receita_dict.get((code, piscofins_cst_code), {}).get('id')            
 
-            user = request.user
-            current_time = timezone.now()
+#             # Convertendo os dados para strings e preenchendo zeros à esquerda quando necessário
+#             df['barcode'] = df['barcode'].fillna(0).astype(int).astype(str)
+#             df['ncm'] = df['ncm'].astype(str)
+#             df['cest'] = df['cest'].fillna(0).astype(int).astype(str)
+#             df['cfop'] = df['cfop'].astype(int)
+#             df['icms_cst'] = df['icms_cst'].astype(str)
+#             df['icms_aliquota'] = df['icms_aliquota'].astype(int)
+#             df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
+#             df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
+#             # df['naturezareceita'] = df['naturezareceita'].astype(str).replace('0', None)
+#             df['naturezareceita'] = df['naturezareceita'].fillna('').astype(str).str.zfill(3).replace(['000', 'nan'], None)
+#             df['protege'] = df['protege'].astype(int)
+#             df['cbenef'] = df['cbenef'].astype(str).replace('nan', None)
+#             # Truncar campos que excedem o tamanho máximo permitido
+#             df['description'] = df['description'].str[:255]
+#             df['cbenef'] = df['cbenef'].str[:8]
+            
 
-            # Cache de Consultas
-            cfop_cache = {str(cfop.cfop): cfop for cfop in Cfop.objects.all()}
-            icms_cst_cache = {str(cst.code): cst for cst in IcmsCst.objects.all()}
-            icms_aliquota_cache = {str(aliquota.code): aliquota for aliquota in IcmsAliquota.objects.all()}
-            piscofins_cst_cache = {str(cst.code): cst for cst in PisCofinsCst.objects.all()}
-            natureza_receita_cache = {str(nr.code): nr for nr in NaturezaReceita.objects.all()}
-            protege_cache = {str(protege.code): protege for protege in Protege.objects.all()}
-            cbenef_cache = {str(cbenef.code): cbenef for cbenef in CBENEF.objects.all()}
+#             # Lista para armazenar as linhas inválidas e seus motivos
+#             invalid_details = []
 
-            row_number = 2  # Começa com 2 para pular o cabeçalho
+#             # Função para verificar linhas inválidas
+#             def check_invalid_rows(df, column_name, valid_set):
+#                 # Filtrar as linhas inválidas da coluna especificada, considerando valores não nulos e valores nulos
+#                 invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
+                
+#                 for index, row in invalid_rows.iterrows():
+#                     error_message = f"Erro na linha[{column_name}] {index + 2}: {row[column_name]} é um valor inválido."
+#                     invalid_details.append(error_message)  # Adicionar o erro à lista                    
+#                 return invalid_rows
 
-            for row in sheet.iter_rows(min_row=2, values_only=True):  # Pulando a primeira linha (cabeçalho)
-                try:
-                    piscofins_cst_code = str(row[11])
-                    if len(piscofins_cst_code) == 1:
-                        piscofins_cst_code = f"0{piscofins_cst_code}"
+#             # Verificar cada coluna separadamente e parar se encontrar alguma linha inválida
+#             columns_to_check = [
+#                 ('cfop', valid_cfops),
+#                 ('icms_cst', valid_icms_csts),
+#                 ('icms_aliquota', valid_icms_aliquotas),
+#                 ('icms_aliquota_reduzida', valid_icms_aliquotas),
+#                 ('piscofins_cst', valid_piscofins_csts),
+#                 ('naturezareceita', valid_natureza_receitas),
+#                 ('protege', valid_proteges),
+#                 ('cbenef', valid_cbenefs)
+#             ]
 
-                    # Validar e buscar/instanciar campos relacionados
-                    cfop = cfop_cache.get(str(row[5]))
-                    if not cfop:
-                        raise ValueError(f"Código CFOP não encontrado: {row[5]}")
+#             for column_name, valid_set in columns_to_check:
+#                 invalid_rows = check_invalid_rows(df, column_name, valid_set)
+#                 if not invalid_rows.empty:
+#                     break  # Interrompe o processo ao encontrar linhas inválidas
 
-                    icms_cst = icms_cst_cache.get(str(row[6]))
-                    if not icms_cst:
-                        raise ValueError(f"Código ICMS CST não encontrado: {row[6]}")
+#             if invalid_details:
+#                 end_time = time.time()
+#                 elapsed_time = round(end_time - start_time, 3)                 
+#                 return JsonResponse({
+#                     'message': 'Linhas inválidas encontradas.',
+#                     'errors': invalid_details,
+#                     'elapsed_time': elapsed_time
+#                 }, status=400)
 
-                    icms_aliquota = icms_aliquota_cache.get(str(row[7]))
-                    if not icms_aliquota:
-                        raise ValueError(f"Código ICMS Alíquota não encontrado: {row[7]}")
+#             codigos = df['codigo'].tolist()  
+#             # Pré-carregar os itens existentes no banco de dados
+#             existing_items = {item.code: item for item in Item.objects.filter(client=client, code__in=df['codigo'])}
 
-                    icms_aliquota_reduzida = icms_aliquota_cache.get(str(row[8]))
-                    if not icms_aliquota_reduzida:
-                        raise ValueError(f"Código ICMS Alíquota Reduzida não encontrado: {row[8]}")
+            
+#             # Busque todas as instâncias de PisCofinsCst de uma vez para eficiência
+#             pis_cofins_cst_instances = {obj.code: obj for obj in PisCofinsCst.objects.filter(code__in=df['piscofins_cst'])}
+            
+#             items_to_create = []
+#             items_to_update = []
+#             user = request.user
+#             current_time = timezone.now()
+#             errors = []  # Lista para armazenar os erros
+                                     
+#             #### ORIGINAL #####  
+#             batch_size = 10000  # Define o tamanho do lote
+            
+#             with transaction.atomic():  # Transação atômica              
+#                 for index, row in df.iterrows():
+#                     try:
+#                         piscofins_cst_code = row['piscofins_cst']  # Garante que o código tenha 2 dígitos
 
-                    piscofins_cst = piscofins_cst_cache.get(piscofins_cst_code)
-                    if not piscofins_cst:
-                        raise ValueError(f"Código PIS/COFINS CST não encontrado: {piscofins_cst_code}")
+#                         # Obtenha a instância de PisCofinsCst correspondente
+#                         piscofins_cst = pis_cofins_cst_instances.get(piscofins_cst_code)
+#                         if not piscofins_cst:
+#                             raise ObjectDoesNotExist(f"PisCofinsCst com código {piscofins_cst_code} não encontrado")
 
-                    natureza_receita = natureza_receita_cache.get(str(row[14])) if row[14] else None
-                    if row[14] and not natureza_receita:
-                        raise ValueError(f"Código Natureza Receita não encontrado: {row[14]}")
+#                         pis_aliquota = piscofins_cst.pis_aliquota
+#                         cofins_aliquota = piscofins_cst.cofins_aliquota
+                        
+#                         # Buscar o id de NaturezaReceita no DataFrame carregado
+#                         natureza_receita_id = get_natureza_receita_id(row['naturezareceita'], piscofins_cst_code)
+#                         if not natureza_receita_id and row['naturezareceita'] != None:
+#                             raise ValueError(f"NaturezaReceita com código {row['naturezareceita']} e PisCofinsCst {piscofins_cst_code} não encontrado")
 
-                    protege = protege_cache.get(str(row[9])) if row[9] else None
-                    if row[9] and not protege:
-                        raise ValueError(f"Código Protege não encontrado: {row[9]}")
+#                         item_data = {
+#                             'client': client,
+#                             'code': row['codigo'],
+#                             'barcode': row['barcode'],
+#                             'description': row['description'],
+#                             'ncm': row['ncm'],
+#                             'cest': row['cest'],
+#                             'cfop_id': row['cfop'],  # Verifique se o valor de 'cfop' é um número dentro do limite de 7 caracteres
+#                             'icms_cst_id': row['icms_cst'],
+#                             'icms_aliquota_id': row['icms_aliquota'],
+#                             'icms_aliquota_reduzida': row['icms_aliquota_reduzida'],
+#                             'protege_id': row['protege'],
+#                             'cbenef_id': row['cbenef'] if row['cbenef'] in valid_cbenefs else None,  # Verifique se o valor de 'cbenef' está dentro do limite de 8 caracteres
+#                             'piscofins_cst': piscofins_cst,
+#                             'pis_aliquota': pis_aliquota,
+#                             'cofins_aliquota': cofins_aliquota,
+#                             'naturezareceita_id': natureza_receita_id,
+#                             'is_active': True,
+#                             'is_pending_sync': True,
+#                             'updated_at': current_time,
+#                             'user_updated': user,
+#                         }
 
-                    cbenef = cbenef_cache.get(str(row[10])) if row[10] else None
-                    if row[10] and not cbenef:
-                        raise ValueError(f"Código CBENEF não encontrado: {row[10]}")
+#                         # Verificar se o item existe
+#                         if row['codigo'] in existing_items:
+#                             # Atualizar item existente
+#                             item = existing_items[row['codigo']]
+#                             for key, value in item_data.items():
+#                                 setattr(item, key, value)
+#                             items_to_update.append(item)
+#                         else:
+#                             # Criar novo item
+#                             new_item = Item(**item_data)
+#                             items_to_create.append(new_item)
 
-                    item_data = {
-                        'client': client,
-                        'code': row[0],
-                        'barcode': row[1],
-                        'description': row[2],
-                        'ncm': row[3],
-                        'cest': row[4],
-                        'cfop': cfop,
-                        'icms_cst': icms_cst,
-                        'icms_aliquota': icms_aliquota,
-                        'icms_aliquota_reduzida': icms_aliquota_reduzida,
-                        'protege': protege,
-                        'cbenef': cbenef,
-                        'piscofins_cst': piscofins_cst,
-                        'pis_aliquota': piscofins_cst.pis_aliquota,
-                        'cofins_aliquota': piscofins_cst.cofins_aliquota,
-                        'naturezareceita': natureza_receita,
-                        'is_active': True,
-                        'is_pending_sync': True,
-                        'updated_at': current_time,
-                        'user_updated': user,
-                    }
+#                     except (ObjectDoesNotExist, ValidationError, TypeError, ValueError) as e:
+#                         error_message = f"Erro na linha {index + 2}: {e}"
+#                         self.logger.error(error_message)  # Log do erro para o servidor
+#                         errors.append(error_message)  # Adicionar o erro à lista
+                        
+#                 # Verificar se houve erros antes de prosseguir
+#                 if errors:
+#                     end_time = time.time()
+#                     elapsed_time = round(end_time - start_time, 3)                
+#                     return JsonResponse({
+#                         'message': 'Erros encontrados durante o processamento do arquivo.',
+#                         'errors': errors,
+#                         'elapsed_time': elapsed_time
+#                     }, status=400)
 
-                    try:
-                        item = Item.objects.get(client=client, code=row[0])
-                        for key, value in item_data.items():
-                            setattr(item, key, value)
-                        items.append(item)
-                    except Item.DoesNotExist:
-                        items.append(Item(**item_data))
+#                 # Bulk create e bulk update em lotes
+#                 for i in range(0, len(items_to_create), batch_size):
+#                     batch = items_to_create[i:i + batch_size]
+#                     Item.objects.bulk_create(batch, ignore_conflicts=True)
+#                     # connection.commit()  # Confirma a transação após cada lote
 
-                except (KeyError, ValueError) as e:
-                    errors.append(f"Erro na linha {row_number}: {str(e)}")
+#                 if items_to_update:
+#                     for i in range(0, len(items_to_update), batch_size):
+#                         batch = items_to_update[i:i + batch_size]
+#                         Item.objects.bulk_update(batch, fields=[...])
+#                         # connection.commit()  # Confirma a transação após cada lote
+                        
+#                 # Bulk create e bulk update
+#                 # Item.objects.bulk_create(items_to_create, ignore_conflicts=True)
+#                 # if items_to_update:
+#                 #     Item.objects.bulk_update(items_to_update, fields=[
+#                 #         'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
+#                 #         'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
+#                 #         'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 
+#                 #         'is_active', 'is_pending_sync', 'updated_at', 'user_updated'
+#                 #     ])
 
-                row_number += 1  # Incrementa o contador de linha
+#             end_time = time.time()
+#             elapsed_time = round(end_time - start_time, 3)
 
-            end_time = time.time()
-            elapsed_time = round(end_time - start_time, 3)
+#             return JsonResponse({
+#                 'message': 'Todos os itens foram salvos/atualizados com sucesso!',
+#                 'processed_rows': len(df),
+#                 'elapsed_time': elapsed_time
+#             })
 
-            if errors:
-                return JsonResponse({
-                    'errors': errors,
-                    'processed_rows': row_number - 2,
-                    'elapsed_time': elapsed_time
-                }, status=400)
-            else:
-                # Salvar todos os itens
-                Item.objects.bulk_create(items, ignore_conflicts=True)
-                return JsonResponse({
-                    'message': 'Todos os itens foram salvos/atualizados com sucesso!',
-                    'processed_rows': row_number - 2,
-                    'elapsed_time': elapsed_time
-                })
-
-        print(f"Form inválido: {form.errors}")
-        return JsonResponse({'errors': form.errors}, status=400)
-    
+#         print(f"Form inválido: {form.errors}")
+#         return JsonResponse({'errors': form.errors}, status=400)
 class XLSXUploadViewV2(View):
     template_name = 'upload_items.html'
+    logger = logging.getLogger(__name__)  # Configurar o logger
 
     def get(self, request, client_id):
         client = get_object_or_404(Client, id=client_id)
@@ -491,205 +581,177 @@ class XLSXUploadViewV2(View):
         }
         return render(request, self.template_name, context)
 
-    logger = logging.getLogger(__name__)  # Configurar o logger
-
-    # @transaction.atomic  # Garante a atomicidade da transação
     def post(self, request, client_id):
         start_time = time.time()
         client = get_object_or_404(Client, id=client_id)
         form = CSVUploadForm(request.POST, request.FILES)
         if form.is_valid():
             xlsx_file = request.FILES['csv_file']
-            df = pd.read_excel(xlsx_file)
+            try:
+                df = pd.read_excel(xlsx_file)
+            except Exception as e:
+                self.logger.error(f"Erro ao ler o arquivo Excel: {e}")
+                return JsonResponse({'error': f"Erro ao ler o arquivo Excel: {e}"}, status=400)
             
-            # Pré-validar códigos
-            valid_cfops = set(Cfop.objects.values_list('cfop', flat=True))
-            valid_icms_csts = set(IcmsCst.objects.values_list('code', flat=True))
-            valid_icms_aliquotas = set(IcmsAliquota.objects.values_list('code', flat=True))
-            valid_piscofins_csts = set(PisCofinsCst.objects.values_list('code', flat=True))
-            valid_natureza_receitas = set(NaturezaReceita.objects.values_list('code', flat=True))
-            valid_proteges = set(Protege.objects.values_list('code', flat=True))
-            valid_cbenefs = set(CBENEF.objects.values_list('code', flat=True))
-            
-            # Adicionar a possibilidade de ser vazio/em branco
-            valid_natureza_receitas.add(None)
-            valid_cbenefs.add(None)
-            
-            # Carregar os dados de PisCofinsCst e NaturezaReceita em DataFrames
-            piscofins_cst_df = pd.DataFrame(list(PisCofinsCst.objects.values('code', 'pis_aliquota', 'cofins_aliquota')))
-            natureza_receita_df = pd.DataFrame(list(NaturezaReceita.objects.values('code', 'id', 'piscofins_cst_id')))
-
-            # Converter os DataFrames para dicionários para consulta eficiente
-            pis_cofins_cst_dict = piscofins_cst_df.set_index('code').to_dict('index')
-            natureza_receita_dict = natureza_receita_df.set_index(['code', 'piscofins_cst_id']).to_dict('index')
-            
-            # Função para buscar IDs a partir dos códigos
-            def get_natureza_receita_id(code, piscofins_cst_code):
-                return natureza_receita_dict.get((code, piscofins_cst_code), {}).get('id')            
-
-            # Convertendo os dados para strings e preenchendo zeros à esquerda quando necessário
-            df['barcode'] = df['barcode'].fillna(0).astype(int).astype(str)
-            df['ncm'] = df['ncm'].astype(str)
-            df['cest'] = df['cest'].fillna(0).astype(int).astype(str)
-            df['cfop'] = df['cfop'].astype(int)
-            df['icms_cst'] = df['icms_cst'].astype(str)
-            df['icms_aliquota'] = df['icms_aliquota'].astype(int)
-            df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
-            df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
-            # df['naturezareceita'] = df['naturezareceita'].astype(str).replace('0', None)
-            df['naturezareceita'] = df['naturezareceita'].fillna('').astype(str).str.zfill(3).replace(['000', 'nan'], None)
-            df['protege'] = df['protege'].astype(int)
-            df['cbenef'] = df['cbenef'].astype(str).replace('nan', None)
-            # Truncar campos que excedem o tamanho máximo permitido
-            df['description'] = df['description'].str[:255]
-            df['cbenef'] = df['cbenef'].str[:8]
-            
-
-            # Lista para armazenar as linhas inválidas e seus motivos
-            invalid_details = []
-
-            # Função para verificar linhas inválidas
-            def check_invalid_rows(df, column_name, valid_set):
-                # Filtrar as linhas inválidas da coluna especificada, considerando valores não nulos e valores nulos
-                invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
+            try:
+                valid_cfops = set(Cfop.objects.values_list('cfop', flat=True))
+                valid_icms_csts = set(IcmsCst.objects.values_list('code', flat=True))
+                valid_icms_aliquotas = set(IcmsAliquota.objects.values_list('code', flat=True))
+                valid_piscofins_csts = set(PisCofinsCst.objects.values_list('code', flat=True))
+                valid_natureza_receitas = set(NaturezaReceita.objects.values_list('code', flat=True))
+                valid_proteges = set(Protege.objects.values_list('code', flat=True))
+                valid_cbenefs = set(CBENEF.objects.values_list('code', flat=True))
                 
-                for index, row in invalid_rows.iterrows():
-                    error_message = f"Erro na linha[{column_name}] {index + 2}: {row[column_name]} é um valor inválido."
-                    invalid_details.append(error_message)  # Adicionar o erro à lista                    
-                return invalid_rows
+                valid_natureza_receitas.add(None)
+                valid_cbenefs.add(None)
 
-            # Verificar cada coluna separadamente e parar se encontrar alguma linha inválida
-            columns_to_check = [
-                ('cfop', valid_cfops),
-                ('icms_cst', valid_icms_csts),
-                ('icms_aliquota', valid_icms_aliquotas),
-                ('icms_aliquota_reduzida', valid_icms_aliquotas),
-                ('piscofins_cst', valid_piscofins_csts),
-                ('naturezareceita', valid_natureza_receitas),
-                ('protege', valid_proteges),
-                ('cbenef', valid_cbenefs)
-            ]
+                piscofins_cst_df = pd.DataFrame(list(PisCofinsCst.objects.values('code', 'pis_aliquota', 'cofins_aliquota')))
+                natureza_receita_df = pd.DataFrame(list(NaturezaReceita.objects.values('code', 'id', 'piscofins_cst_id')))
+                
+                pis_cofins_cst_dict = piscofins_cst_df.set_index('code').to_dict('index')
+                natureza_receita_dict = natureza_receita_df.set_index(['code', 'piscofins_cst_id']).to_dict('index')
+                
+                def get_natureza_receita_id(code, piscofins_cst_code):
+                    return natureza_receita_dict.get((code, piscofins_cst_code), {}).get('id')            
 
-            for column_name, valid_set in columns_to_check:
-                invalid_rows = check_invalid_rows(df, column_name, valid_set)
-                if not invalid_rows.empty:
-                    break  # Interrompe o processo ao encontrar linhas inválidas
+                df['barcode'] = df['barcode'].fillna(0).astype(int).astype(str)
+                df['ncm'] = df['ncm'].astype(str)
+                df['cest'] = df['cest'].fillna(0).astype(int).astype(str)
+                df['cfop'] = df['cfop'].astype(int)
+                df['icms_cst'] = df['icms_cst'].astype(str)
+                df['icms_aliquota'] = df['icms_aliquota'].astype(int)
+                df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
+                df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
+                df['naturezareceita'] = df['naturezareceita'].fillna('').astype(str).str.zfill(3).replace(['000', 'nan'], None)
+                df['protege'] = df['protege'].astype(int)
+                df['cbenef'] = df['cbenef'].astype(str).replace('nan', None)
+                df['description'] = df['description'].str[:255]
+                df['cbenef'] = df['cbenef'].str[:8]
 
-            if invalid_details:
-                end_time = time.time()
-                elapsed_time = round(end_time - start_time, 3)                 
-                return JsonResponse({
-                    'message': 'Linhas inválidas encontradas.',
-                    'errors': invalid_details,
-                    'elapsed_time': elapsed_time
-                }, status=400)
+                invalid_details = []
+                
+                def check_invalid_rows(df, column_name, valid_set):
+                    invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
+                    for index, row in invalid_rows.iterrows():
+                        error_message = f"Erro na linha[{column_name}] {index + 2}: {row[column_name]} é um valor inválido."
+                        invalid_details.append(error_message)
+                    return invalid_rows
 
-            codigos = df['codigo'].tolist()  
-            # Pré-carregar os itens existentes no banco de dados
-            existing_items = {item.code: item for item in Item.objects.filter(client=client, code__in=df['codigo'])}
+                columns_to_check = [
+                    ('cfop', valid_cfops),
+                    ('icms_cst', valid_icms_csts),
+                    ('icms_aliquota', valid_icms_aliquotas),
+                    ('icms_aliquota_reduzida', valid_icms_aliquotas),
+                    ('piscofins_cst', valid_piscofins_csts),
+                    ('naturezareceita', valid_natureza_receitas),
+                    ('protege', valid_proteges),
+                    ('cbenef', valid_cbenefs)
+                ]
 
-            
-            # Busque todas as instâncias de PisCofinsCst de uma vez para eficiência
-            pis_cofins_cst_instances = {obj.code: obj for obj in PisCofinsCst.objects.filter(code__in=df['piscofins_cst'])}
-            
-            items_to_create = []
-            items_to_update = []
-            user = request.user
-            current_time = timezone.now()
-            errors = []  # Lista para armazenar os erros
-                                     
-            #### ORIGINAL #####  
-            batch_size = 10000  # Define o tamanho do lote
-            
-            with transaction.atomic():  # Transação atômica              
-                for index, row in df.iterrows():
-                    try:
-                        piscofins_cst_code = row['piscofins_cst']  # Garante que o código tenha 2 dígitos
+                for column_name, valid_set in columns_to_check:
+                    invalid_rows = check_invalid_rows(df, column_name, valid_set)
+                    if not invalid_rows.empty:
+                        break
 
-                        # Obtenha a instância de PisCofinsCst correspondente
-                        piscofins_cst = pis_cofins_cst_instances.get(piscofins_cst_code)
-                        if not piscofins_cst:
-                            raise ObjectDoesNotExist(f"PisCofinsCst com código {piscofins_cst_code} não encontrado")
-
-                        pis_aliquota = piscofins_cst.pis_aliquota
-                        cofins_aliquota = piscofins_cst.cofins_aliquota
-                        
-                        # Buscar o id de NaturezaReceita no DataFrame carregado
-                        natureza_receita_id = get_natureza_receita_id(row['naturezareceita'], piscofins_cst_code)
-                        if not natureza_receita_id and row['naturezareceita'] != None:
-                            raise ValueError(f"NaturezaReceita com código {row['naturezareceita']} e PisCofinsCst {piscofins_cst_code} não encontrado")
-
-                        item_data = {
-                            'client': client,
-                            'code': row['codigo'],
-                            'barcode': row['barcode'],
-                            'description': row['description'],
-                            'ncm': row['ncm'],
-                            'cest': row['cest'],
-                            'cfop_id': row['cfop'],  # Verifique se o valor de 'cfop' é um número dentro do limite de 7 caracteres
-                            'icms_cst_id': row['icms_cst'],
-                            'icms_aliquota_id': row['icms_aliquota'],
-                            'icms_aliquota_reduzida': row['icms_aliquota_reduzida'],
-                            'protege_id': row['protege'],
-                            'cbenef_id': row['cbenef'] if row['cbenef'] in valid_cbenefs else None,  # Verifique se o valor de 'cbenef' está dentro do limite de 8 caracteres
-                            'piscofins_cst': piscofins_cst,
-                            'pis_aliquota': pis_aliquota,
-                            'cofins_aliquota': cofins_aliquota,
-                            'naturezareceita_id': natureza_receita_id,
-                            'is_active': True,
-                            'is_pending_sync': True,
-                            'updated_at': current_time,
-                            'user_updated': user,
-                        }
-
-                        # Verificar se o item existe
-                        if row['codigo'] in existing_items:
-                            # Atualizar item existente
-                            item = existing_items[row['codigo']]
-                            for key, value in item_data.items():
-                                setattr(item, key, value)
-                            items_to_update.append(item)
-                        else:
-                            # Criar novo item
-                            new_item = Item(**item_data)
-                            items_to_create.append(new_item)
-
-                    except (ObjectDoesNotExist, ValidationError, TypeError, ValueError) as e:
-                        error_message = f"Erro na linha {index + 2}: {e}"
-                        self.logger.error(error_message)  # Log do erro para o servidor
-                        errors.append(error_message)  # Adicionar o erro à lista
-                        
-                # Verificar se houve erros antes de prosseguir
-                if errors:
+                if invalid_details:
                     end_time = time.time()
-                    elapsed_time = round(end_time - start_time, 3)                
+                    elapsed_time = round(end_time - start_time, 3)
                     return JsonResponse({
-                        'message': 'Erros encontrados durante o processamento do arquivo.',
-                        'errors': errors,
+                        'message': 'Linhas inválidas encontradas.',
+                        'errors': invalid_details,
                         'elapsed_time': elapsed_time
                     }, status=400)
 
-                # Bulk create e bulk update em lotes
-                for i in range(0, len(items_to_create), batch_size):
-                    batch = items_to_create[i:i + batch_size]
-                    Item.objects.bulk_create(batch, ignore_conflicts=True)
-                    # connection.commit()  # Confirma a transação após cada lote
+                codigos = df['codigo'].tolist()  
+                existing_items = {item.code: item for item in Item.objects.filter(client=client, code__in=df['codigo'])}
+                pis_cofins_cst_instances = {obj.code: obj for obj in PisCofinsCst.objects.filter(code__in=df['piscofins_cst'])}
+                
+                items_to_create = []
+                items_to_update = []
+                user = request.user
+                current_time = timezone.now()
+                errors = []
 
-                if items_to_update:
-                    for i in range(0, len(items_to_update), batch_size):
-                        batch = items_to_update[i:i + batch_size]
-                        Item.objects.bulk_update(batch, fields=[...])
-                        # connection.commit()  # Confirma a transação após cada lote
-                        
-                # Bulk create e bulk update
-                # Item.objects.bulk_create(items_to_create, ignore_conflicts=True)
-                # if items_to_update:
-                #     Item.objects.bulk_update(items_to_update, fields=[
-                #         'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
-                #         'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
-                #         'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 
-                #         'is_active', 'is_pending_sync', 'updated_at', 'user_updated'
-                #     ])
+                batch_size = 10000
+
+                with transaction.atomic():                
+                    for index, row in df.iterrows():
+                        try:
+                            piscofins_cst_code = row['piscofins_cst']
+                            piscofins_cst = pis_cofins_cst_instances.get(piscofins_cst_code)
+                            if not piscofins_cst:
+                                raise ObjectDoesNotExist(f"PisCofinsCst com código {piscofins_cst_code} não encontrado")
+
+                            pis_aliquota = piscofins_cst.pis_aliquota
+                            cofins_aliquota = piscofins_cst.cofins_aliquota
+                            
+                            natureza_receita_id = get_natureza_receita_id(row['naturezareceita'], piscofins_cst_code)
+                            if not natureza_receita_id and row['naturezareceita'] != None:
+                                raise ValueError(f"NaturezaReceita com código {row['naturezareceita']} e PisCofinsCst {piscofins_cst_code} não encontrado")
+
+                            item_data = {
+                                'client': client,
+                                'code': row['codigo'],
+                                'barcode': row['barcode'],
+                                'description': row['description'],
+                                'ncm': row['ncm'],
+                                'cest': row['cest'],
+                                'cfop_id': row['cfop'],
+                                'icms_cst_id': row['icms_cst'],
+                                'icms_aliquota_id': row['icms_aliquota'],
+                                'icms_aliquota_reduzida': row['icms_aliquota_reduzida'],
+                                'protege_id': row['protege'],
+                                'cbenef_id': row['cbenef'] if row['cbenef'] in valid_cbenefs else None,
+                                'piscofins_cst': piscofins_cst,
+                                'pis_aliquota': pis_aliquota,
+                                'cofins_aliquota': cofins_aliquota,
+                                'naturezareceita_id': natureza_receita_id,
+                                'is_active': True,
+                                'is_pending_sync': True,
+                                'updated_at': current_time,
+                                'user_updated': user,
+                            }
+
+                            if row['codigo'] in existing_items:
+                                item = existing_items[row['codigo']]
+                                for key, value in item_data.items():
+                                    setattr(item, key, value)
+                                items_to_update.append(item)
+                            else:
+                                new_item = Item(**item_data)
+                                items_to_create.append(new_item)
+
+                        except (ObjectDoesNotExist, ValidationError, TypeError, ValueError) as e:
+                            error_message = f"Erro na linha {index + 2}: {e}"
+                            self.logger.error(error_message)
+                            errors.append(error_message)
+
+                    if errors:
+                        end_time = time.time()
+                        elapsed_time = round(end_time - start_time, 3)
+                        return JsonResponse({
+                            'message': 'Erros encontrados durante o processamento do arquivo.',
+                            'errors': errors,
+                            'elapsed_time': elapsed_time
+                        }, status=400)
+
+                    for i in range(0, len(items_to_create), batch_size):
+                        batch = items_to_create[i:i + batch_size]
+                        Item.objects.bulk_create(batch, ignore_conflicts=True)
+
+                    if items_to_update:
+                        for i in range(0, len(items_to_update), batch_size):
+                            batch = items_to_update[i:i + batch_size]
+                            Item.objects.bulk_update(batch, fields=[
+                                'barcode', 'description', 'ncm', 'cest', 'cfop_id', 'icms_cst_id', 
+                                'icms_aliquota_id', 'icms_aliquota_reduzida', 'protege_id', 'cbenef_id', 
+                                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_id', 
+                                'is_active', 'is_pending_sync', 'updated_at', 'user_updated'
+                            ])
+
+            except Exception as e:
+                self.logger.error(f"Erro durante o processamento do arquivo: {e}")
+                return JsonResponse({'error': f"Erro durante o processamento do arquivo: {e}"}, status=500)
 
             end_time = time.time()
             elapsed_time = round(end_time - start_time, 3)
@@ -700,7 +762,6 @@ class XLSXUploadViewV2(View):
                 'elapsed_time': elapsed_time
             })
 
-        print(f"Form inválido: {form.errors}")
+        self.logger.error(f"Form inválido: {form.errors}")
         return JsonResponse({'errors': form.errors}, status=400)
-
    
