@@ -109,7 +109,31 @@ class ItemListView(ListView):
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
         client = get_object_or_404(Client, id=client_id)
-        return Item.objects.filter(client=client).order_by('description')
+
+        queryset = Item.objects.filter(client=client).order_by('description')
+        # Filter with ForeignKey lookups and other fields
+        filter_kwargs = {}
+        for field_name in ['code', 'barcode', 'description', 'ncm', 'cest', 'icms_aliquota_reduzida', 'pis_aliquota', 'cofins_aliquota']:
+            value = self.request.GET.get(field_name)
+            if value:
+                filter_kwargs[f"{field_name}__icontains"] = value
+
+        queryset = queryset.filter(**filter_kwargs)
+
+        # Handle ForeignKey filters separately
+        for field_name in ['cfop', 'icms_cst', 'icms_aliquota', 'protege', 'cbenef', 'piscofins_cst', 'naturezareceita']:
+            value = self.request.GET.get(field_name)
+            if value:
+                try:
+                    if field_name == 'naturezareceita':
+                        queryset = queryset.filter(**{f"{field_name}__code__icontains": value})
+                    else:
+                        queryset = queryset.filter(**{f"{field_name}_id": int(value)})
+                except ValueError:
+                    pass  # Skip filter if value is not a valid integer
+
+        return queryset
+   
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -117,6 +141,7 @@ class ItemListView(ListView):
         context['client'] = client
         context['client_name'] = client.name
         context['client_id'] = client.id
+        context['filter_params'] = self.request.GET
         # Adiciona os cálculos de paginação
         paginator = context['paginator']
         page_obj = context['page_obj']

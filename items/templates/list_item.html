@@ -118,11 +118,11 @@
                     <ul class="pagination">
                         {% if page_obj.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" tabindex="-1" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+                                <a class="page-link" tabindex="-1" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Anterior</a>
                             </li>
                         {% else %}
                             <li class="page-item disabled">
-                                <a class="page-link" tabindex="-1" href="?q={{ query }}&page=1">Anterior</a>
+                                <a class="page-link" tabindex="-1" href="?page=1&{{ request.GET.urlencode }}">Anterior</a>
                             </li>                        
                         {% endif %}  
 
@@ -139,7 +139,7 @@
                                 </li>
                             {% else %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                                    <a class="page-link" href="?page={{ page_num }}&{{ request.GET.urlencode }}">{{ page_num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}                      
@@ -147,7 +147,7 @@
 
                         {% if page_obj.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Próxima</a>
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Próxima</a>
                             </li>
                         {% endif %}                            
                     </ul> 
@@ -173,98 +173,99 @@
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Código</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_code">
+                            <input type="text" class="form-control form-control-sm" name="code" id="search_code" value="">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Cód. Barras</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_barcode">
+                            <input type="text" class="form-control form-control-sm" name="barcode" id="search_barcode">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Descrição</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_description">
+                            <input type="text" class="form-control form-control-sm" name="description" id="search_description">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">NCM</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_ncm">
+                            <input type="text" class="form-control form-control-sm" name="ncm" id="search_ncm">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">CEST</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_cest">
+                            <input type="text" class="form-control form-control-sm" name="cest" id="search_cest">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">CFOP</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_cfop">
+                            <input type="text" class="form-control form-control-sm" name="cfop" id="search_cfop">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">CST ICMS</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_cst_icms">
+                            <input type="text" class="form-control form-control-sm" name="cst_icms" id="search_cst_icms">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Alíq. ICMS</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_icms_aliquota">
+                            <input type="text" class="form-control form-control-sm" name="icms_aliquota" id="search_icms_aliquota">
                         </div>
                     </div>                    
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Alíq. ICMS Reduz</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_icms_aliquota_reduzida">
+                            <input type="text" class="form-control form-control-sm" name="icms_aliquota_reduzida" id="search_icms_aliquota_reduzida">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">CBENEF</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_cbenef">
+                            <input type="text" class="form-control form-control-sm" name="cbenef" id="search_cbenef">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Protege</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_protege">
+                            <input type="text" class="form-control form-control-sm" name="protege" id="search_protege">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">CST PIS/COFINS</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_piscofins_cst">
+                            <input type="text" class="form-control form-control-sm" name="piscofins_cst" id="search_piscofins_cst">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Alíq. PIS</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_pis_aliquota">
+                            <input type="text" class="form-control form-control-sm" name="pis_aliquota" id="search_pis_aliquota">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Alíq. COFINS</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_cofins_aliquota">
+                            <input type="text" class="form-control form-control-sm" name="cofins_aliquota" id="search_cofins_aliquota">
                         </div>
                     </div>
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">Nat. Receita</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" id="search_naturezareceita">
+                            <input type="text" class="form-control form-control-sm" name="naturezareceita" id="search_naturezareceita">
                         </div>
                     </div>                                                                                                                                                                                                                           
                 </form>
             </div>
             <div class="modal-footer p-t-5 p-b-5">
+                <a href="#" class="btn btn-secondary btn-sm" id="clearSearch">Limpar Filtros</a>
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary  btn-sm" id="applySearch">Filtrar</button>
+                <button type="submit" class="btn btn-primary  btn-sm" id="applySearch">Filtrar</button>
             </div>
         </div>
     </div>
@@ -274,13 +275,50 @@
 
 {% block anotherjs %}
 
-<!-- data-table js -->
-<script src="{% static 'bower_components/datatables.net/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'bower_components/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
-<script src="{% static 'bower_components/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
-<script src="{% static 'bower_components/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js' %}"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt_BR.json"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Pega os parâmetros da URL e preenche os campos do formulário
+        var url = new URL(window.location.href);
+        console.log(url)
+        var urlParams = new URLSearchParams(window.location.search);
+        var fields = [
+            'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'cst_icms',
+            'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege',
+            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita'
+        ];
 
+        fields.forEach(function(field) {
+            if (urlParams.has(field)) {
+                document.getElementById('search_' + field).value = urlParams.get(field);
+            }
+        });
+    });
+
+    document.getElementById('applySearch').addEventListener('click', function() {
+        var form = document.getElementById('searchForm');
+        var url = new URL(window.location.href);
+        
+        var params = new URLSearchParams(new FormData(form));
+        
+        // Adiciona os parâmetros do formulário à URL
+        for (var pair of params.entries()) {
+            url.searchParams.set(pair[0], pair[1]);
+        }
+        
+        window.location.href = url.toString();
+    });
+
+    document.getElementById('clearSearch').addEventListener('click', function() {
+        // Obtém a URL sem os parâmetros da query string
+        const baseUrl = window.location.origin + window.location.pathname;
+
+        // Redefine a URL sem os parâmetros da query string
+        window.history.replaceState(null, null, baseUrl);
+
+        // Recarrega a página sem os parâmetros da query string
+        window.location.reload();
+    });    
+</script>
 <script>
     /*
     $(document).ready(function() {
