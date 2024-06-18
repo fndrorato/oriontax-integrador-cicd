@@ -161,6 +161,23 @@ EMAIL_HOST_USER = 'contato@f5sys.com.br'
 EMAIL_HOST_PASSWORD = 'ic3h@wkk'
 DEFAULT_FROM_EMAIL = 'contato@f5sys.com.br'
 
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': '/var/www/django/error.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
 
 
