@@ -5,6 +5,7 @@ import time
 import pandas as pd
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse, FileResponse, HttpResponseNotFound, HttpResponse
 from django.utils import timezone
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -103,19 +104,37 @@ class ItemListView(ListView):
     model = Item
     template_name = 'list_item.html'
     context_object_name = 'items'
-    
+    paginate_by = 20  # Defina quantos itens você quer por página
+
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
         client = get_object_or_404(Client, id=client_id)
-        return Item.objects.filter(client=client)
+        return Item.objects.filter(client=client).order_by('description')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
         context['client'] = client
-        context['client_name'] = client.name 
-        context['client_id'] = client.id 
-        return context   
+        context['client_name'] = client.name
+        context['client_id'] = client.id
+        # Adiciona os cálculos de paginação
+        paginator = context['paginator']
+        page_obj = context['page_obj']
+        total_pages = paginator.num_pages
+        current_page = page_obj.number
+
+        if total_pages <= 10:
+            page_range = range(1, total_pages + 1)
+        else:
+            if current_page <= 4:
+                page_range = list(range(1, 6)) + ['...'] + [total_pages - 1, total_pages]
+            elif current_page > total_pages - 4:
+                page_range = [1, 2, '...'] + list(range(total_pages - 4, total_pages + 1))
+            else:
+                page_range = [1, 2, '...'] + list(range(current_page - 2, current_page + 3)) + ['...'] + [total_pages - 1, total_pages]
+
+        context['page_range'] = page_range
+        return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')    
 class ItemDetailView(DetailView):
