@@ -1,2 +1,4 @@
 adminty-dashboard-master/
 venv/
+__pycache__/
+*.pyc

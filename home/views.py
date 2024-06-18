@@ -62,7 +62,7 @@ class SearchResultsView(ListView):
                 last_updated=F('updated_at')
             )
             results_item = Item.objects.filter(
-                Q(description__icontains=query) | Q(barcode__icontains=query)
+                Q(description__icontains=query) | Q(barcode__icontains=query )
             ).select_related('client__user').annotate(
                 result_type=Value('Produtos', output_field=CharField()),
                 display_name=Concat(Cast(F('code'), CharField()), Value(' - '), F('description'), output_field=CharField()),
