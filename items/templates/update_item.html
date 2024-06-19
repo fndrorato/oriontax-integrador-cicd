@@ -2,6 +2,8 @@
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
+{% load custom_filters %}
+
 
 {% block title %}
 <h4>Atualizar Produto: {{ item.description }}</h4>
@@ -65,7 +67,7 @@
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.barcode.errors }}</span>
                                                     <div class="input-group">
-                                                        {{ form.barcode|add_class:"form-control"|attr:"placeholder:Código de Barras" }}
+                                                        {{ form.barcode|zero_to_empty|add_class:"form-control"|attr:"placeholder:Código de Barras" }}
                                                     </div>
                                                 </div>                                                
                                             </div>

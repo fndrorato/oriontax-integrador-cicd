@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}
     <h4>Produtos</h4>
@@ -87,15 +88,15 @@
                                 {% for item in items %}
                                     <tr>
                                         <td class="text-center align-middle">{{ item.code }} </td>
-                                        <td class="text-center align-middle">{{ item.barcode }}</td>
+                                        <td class="text-center align-middle">{{ item.barcode|zero_to_empty|default_if_none:'' }}</td>
                                         <td class="text-center align-middle">{{ item.description }}</td>
                                         <td class="text-center align-middle">{{ item.ncm }}</td>
-                                        <td class="text-center align-middle">{{ item.cest }}</td>
+                                        <td class="text-center align-middle">{{ item.cest|zero_to_empty|default_if_none:'' }}</td>
                                         <td class="text-center align-middle">{{ item.cfop }}</td>
                                         <td class="text-center align-middle">{{ item.icms_cst }}</td>
                                         <td class="text-center align-middle">{{ item.icms_aliquota }}</td>
                                         <td class="text-center align-middle">{{ item.icms_aliquota_reduzida }}</td>
-                                        <td class="text-center align-middle">{{ item.cbenef }}</td>
+                                        <td class="text-center align-middle">{{ item.cbenef|default_if_none:'' }}</td>
                                         <td class="text-center align-middle">{{ item.protege }}</td>
                                         <td class="text-center align-middle">{{ item.piscofins_cst.code }}</td>
                                         <td class="text-center align-middle">{{ item.pis_aliquota }}</td>

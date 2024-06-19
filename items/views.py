@@ -235,7 +235,7 @@ class ItemUpdateView(UpdateView):
         return super().form_invalid(form)     
     
     def get_success_url(self):
-        return reverse_lazy('item_update', kwargs={'pk': self.object.pk, 'client_id': self.object.client_id})          
+        return reverse_lazy('item_list', kwargs={'client_id': self.object.client_id})          
 
 class ItemDeleteView(DeleteView):
     model = Item
@@ -588,7 +588,7 @@ class XLSXUploadViewV2(View):
         if form.is_valid():
             xlsx_file = request.FILES['csv_file']
             try:
-                df = pd.read_excel(xlsx_file)
+                df = pd.read_excel(xlsx_file, dtype={'ncm': str, 'cest': str})
             except Exception as e:
                 self.logger.error(f"Erro ao ler o arquivo Excel: {e}")
                 return JsonResponse({'error': f"Erro ao ler o arquivo Excel: {e}"}, status=400)
@@ -614,9 +614,11 @@ class XLSXUploadViewV2(View):
                 def get_natureza_receita_id(code, piscofins_cst_code):
                     return natureza_receita_dict.get((code, piscofins_cst_code), {}).get('id')            
 
-                df['barcode'] = df['barcode'].fillna(0).astype(int).astype(str)
+                # df['barcode'] = df['barcode'].fillna(0).astype(int).astype(str)
+                df['barcode'] = df['barcode'].fillna('').astype(str)
                 df['ncm'] = df['ncm'].astype(str)
-                df['cest'] = df['cest'].fillna(0).astype(int).astype(str)
+                # df['cest'] = df['cest'].fillna(0).astype(int).astype(str)
+                df['cest'] = df['cest'].fillna('').astype(str)
                 df['cfop'] = df['cfop'].astype(int)
                 df['icms_cst'] = df['icms_cst'].astype(str)
                 df['icms_aliquota'] = df['icms_aliquota'].astype(int)
@@ -629,13 +631,32 @@ class XLSXUploadViewV2(View):
                 df['cbenef'] = df['cbenef'].str[:8]
 
                 invalid_details = []
-                
-                def check_invalid_rows(df, column_name, valid_set):
-                    invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
-                    for index, row in invalid_rows.iterrows():
-                        error_message = f"Erro na linha[{column_name}] {index + 2}: {row[column_name]} é um valor inválido."
-                        invalid_details.append(error_message)
+
+                def check_invalid_rows(df, column_name, valid_set=None, length=None, allow_empty=False):
+                    if length is not None:
+                        if allow_empty:
+                            invalid_rows = df[(df[column_name].apply(lambda x: len(x) != length and x != ''))]
+                        else:
+                            invalid_rows = df[df[column_name].apply(lambda x: len(x) != length)]
+                        for index, row in invalid_rows.iterrows():
+                            error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]} não tem {length} dígitos."
+                            invalid_details.append(error_message)
+                    elif valid_set is not None:
+                        invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
+                        for index, row in invalid_rows.iterrows():
+                            error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]} é um valor inválido."
+                            invalid_details.append(error_message)
+                    else:
+                        invalid_rows = pd.DataFrame()
                     return invalid_rows
+
+                
+                # def check_invalid_rows(df, column_name, valid_set):
+                #     invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
+                #     for index, row in invalid_rows.iterrows():
+                #         error_message = f"Erro na linha[{column_name}] {index + 2}: {row[column_name]} é um valor inválido."
+                #         invalid_details.append(error_message)
+                #     return invalid_rows
 
                 columns_to_check = [
                     ('cfop', valid_cfops),
@@ -645,11 +666,19 @@ class XLSXUploadViewV2(View):
                     ('piscofins_cst', valid_piscofins_csts),
                     ('naturezareceita', valid_natureza_receitas),
                     ('protege', valid_proteges),
-                    ('cbenef', valid_cbenefs)
+                    ('cbenef', valid_cbenefs),
+                    ('ncm', None, 8),
+                    ('cest', None, 7, True)  # Verificar comprimento de 7 dígitos, permitir vazio
                 ]
 
-                for column_name, valid_set in columns_to_check:
-                    invalid_rows = check_invalid_rows(df, column_name, valid_set)
+                for column_name, valid_set, *length in columns_to_check:
+                    if len(length) == 2:  # Se fornecidos length e allow_empty
+                        invalid_rows = check_invalid_rows(df, column_name, valid_set, length[0], length[1])
+                    elif length:  # Se fornecido apenas length
+                        invalid_rows = check_invalid_rows(df, column_name, valid_set, length[0])
+                    else:  # Se não fornecido length
+                        invalid_rows = check_invalid_rows(df, column_name, valid_set)
+                    
                     if not invalid_rows.empty:
                         break
 
