@@ -80,6 +80,7 @@
                             <th class="text-center" style="padding-right: 0;">Aliq.PIS</th>
                             <th class="text-center" style="padding-right: 0;">Aliq.COFINS</th>
                             <th class="text-center" style="padding-right: 0;">Nat.Receita</th>
+                            <th class="text-center" style="padding-right: 0;">Status</th>
                             <th class="text-center" style="padding-right: 0;">Ação</th>
                         </tr>
                         </thead>
@@ -102,6 +103,11 @@
                                         <td class="text-center align-middle">{{ item.pis_aliquota }}</td>
                                         <td class="text-center align-middle">{{ item.cofins_aliquota }}</td>
                                         <td class="text-center align-middle">{{ item.naturezareceita.code }}</td>
+                                        <td class="text-center align-middle" style="color: #33D176;">
+                                            
+                                                <i class="icofont icofont-ui-check"></i>
+                                            
+                                        </td>
                                         <td class="text-center align-middle">                                             
                                             <a href="{% url 'item_update' client_id=client.id pk=item.id %}" type="button" class="text-center color-black">
                                                 <i class="icofont icofont-ui-edit"></i>

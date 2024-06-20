@@ -36,7 +36,7 @@
                                     <div class="slide"></div>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" data-toggle="tab" href="#tab_integrantes" role="tab">
+                                    <a class="nav-link" data-toggle="tab" href="#tab_logs" role="tab" id="load-logs">
                                         <div class="f-20">
                                             <i class="icofont icofont-document-search"></i>
                                         </div>
@@ -220,7 +220,13 @@
                                                 </div>                                                
                                             </div>                                                                                                                                
                                         </div>                                          
-
+                                        <div class="row">
+                                            <div class="col-sm-12">
+                                                <div class="text-left p-l-15">
+                                                    Produto validado por: {{user_updated.get_full_name}} no dia {{ updated_at|date:"d/m/Y H:i" }}
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div class="row">
                                             <div class="col-sm-12">
                                                 <div class="text-center m-t-20">
@@ -233,48 +239,17 @@
                                     </form>
                                 </div>
                                 <!-- End Tab Dados Usuario -->
-                                <!-- Inicio Tab Log 
-                                <div class="tab-pane" id="tab_integrantes" role="tabpanel">
+                                <!-- Inicio Tab Log -->
+                                <div class="tab-pane" id="tab_logs" role="tabpanel">
                                     <form class="md-float-material card-block">
                                         <div class="row">
-                                            <div class="col-sm-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="icofont icofont-all-caps"></i></span>
-                                                    <input type="text" class="form-control" placeholder="Title">
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="icofont icofont-underline"></i></span>
-                                                    <input type="text" class="form-control" placeholder="Label Name">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-sm-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="icofont icofont-ui-keyboard"></i></span>
-                                                    <input type="text" class="form-control" placeholder="Keyword">
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="icofont icofont-copy-alt"></i></span>
-                                                    <input type="text" class="form-control" placeholder="Description">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-sm-12">
-                                                <div class="text-center m-t-20">
-                                                    <button type="button" class="btn btn-primary waves-effect waves-light m-r-10">Save</button>
-                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Discard</button>
-                                                </div>
-                                            </div>
+                                            <ul id="log-container" class="scroll-list cards">
+                                                <!-- Logs serão preenchidos aqui -->
+                                            </ul>                                            
                                         </div>
                                     </form>
                                 </div>
-                                 End Tab Log -->
+                                 <!-- End Tab Log -->
                             </div>
                         </div>
                     </div>
@@ -630,6 +605,45 @@
             }
             setHiddenFields();           
         }
+
+        $('#load-logs').on('click', function() {
+            var modelName = 'Item';  // Nome do modelo
+            var objectId = {{ item.id }};  // ID do objeto
+            $.ajax({
+                url: '/logs/' + modelName + '/' + objectId + '/',
+                method: 'GET',
+                success: function(response) {
+                    console.log(response)
+                    var logContainer = $('#log-container');
+                    logContainer.empty(); // Limpa o container antes de adicionar novos logs
+                    if (response.logs.length > 0) {
+                        $.each(response.logs, function(index, log) {
+                            // var changes = JSON.stringify(log.changes, null, 4);
+                            var changes = '';
+                            $.each(log.changes, function(field, values) {
+                                changes += `${field}: ${values.join(' -> ')} <strong>|</strong>`;
+                            });
+                            var logEntry = `
+                                <li class="m-b-10">
+                                    <strong>Ação:</strong> ${log.action}<br>
+                                    <strong>Usuário:</strong> ${log.actor}<br>
+                                    <strong>Data:</strong> ${log.timestamp}<br>
+                                    <strong>Dados:</strong> ${changes}
+                                </li>
+                            `;
+                            logContainer.append(logEntry);
+                        });
+                    } else {
+                        logContainer.append('<li>Log não encontrado.</li>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Um erro ocorreu quando estava tentando carregar os logs: ' + error);
+                }
+            });
+        });
+
+
     });
 
     function showLoader(){
@@ -653,7 +667,7 @@
         $('#hidden_icms_aliquota').val($('#id_icms_aliquota').val());
         $('#hidden_icms_aliquota_reduzida').val($('#id_icms_aliquota_reduzida').val());        
     }
-    
+       
  
     
         

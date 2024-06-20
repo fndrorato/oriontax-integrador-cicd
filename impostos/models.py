@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from auditlog.registry import auditlog
 
 def validate_cfop(value):
     if value < 1000 or value > 9999:
@@ -95,3 +96,14 @@ class NaturezaReceita(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['code', 'piscofins_cst'], name='unique_code_piscofins_cst')
         ]
+
+
+
+auditlog.register(Cfop)
+auditlog.register(IcmsCst)
+auditlog.register(CBENEF)
+auditlog.register(IcmsAliquota)
+auditlog.register(IcmsAliquotaReduzida)
+auditlog.register(Protege)
+auditlog.register(PisCofinsCst)
+auditlog.register(NaturezaReceita)

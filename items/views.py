@@ -2,6 +2,8 @@ import csv
 import io
 import os
 import time
+import json
+import logging
 import pandas as pd
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
@@ -28,8 +30,51 @@ from .models import Item
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
-import logging
+from auditlog.models import LogEntry
+from app.utils import get_auditlog_history
 
+
+ACTION_MAPPING = {
+    LogEntry.Action.CREATE: 'Criação',
+    LogEntry.Action.UPDATE: 'Atualização',
+    LogEntry.Action.DELETE: 'Exclusão'
+}
+
+def get_item_logs(request, model_name, object_id):
+    logs = get_auditlog_history(model_name, object_id)
+    logs_data = []
+
+    for log in logs:
+        changes = log.changes
+
+        if log.action == LogEntry.Action.CREATE:
+            # Filtro para excluir valores 'old' que são None e os campos indesejados
+            filtered_changes = {
+                k: [v for v in values if v != "None"]
+                for k, values in changes.items()
+                if k not in ['user_updated', 'user_created', 'is_pending_sync', 'id']
+            }
+
+            # Substituição do ID de naturezareceita pelo código
+            if 'naturezareceita' in filtered_changes:
+                natureza_id = filtered_changes['naturezareceita'][0]
+                try:
+                    natureza = NaturezaReceita.objects.get(id=natureza_id)
+                    filtered_changes['naturezareceita'] = [natureza.code]  # Substitui o ID pelo código
+                except NaturezaReceita.DoesNotExist:
+                    pass  # Mantém o ID se a natureza não for encontrada
+        else:
+            filtered_changes = changes
+
+        log_entry = {
+            'action': ACTION_MAPPING.get(log.action, log.get_action_display()),
+            'actor': log.actor.get_full_name() if log.actor else 'Unknown',
+            'timestamp': log.timestamp.strftime('%d/%m/%Y %H:%M'),
+            'changes': filtered_changes,
+        }
+        logs_data.append(log_entry)
+
+    return JsonResponse({'logs': logs_data})
 
 def export_items_to_excel(request, client_id):
     # Obter o cliente
@@ -201,7 +246,15 @@ class ItemCreateView(CreateView):
             for error in errors:
                 print(f"Erro no campo {field}: {error}")        
         messages.error(self.request, 'Erro ao salvar o item. Verifique os dados fornecidos.')
-        return super().form_invalid(form)         
+        return super().form_invalid(form)  
+    
+    def form_valid(self, form):
+        # Registrar o usuário que fez a atualização
+        item = form.save(commit=False)
+        item.user_created = self.request.user
+        item.user_updated = self.request.user
+        item.save()
+        return super().form_valid(form)            
 
 class ItemUpdateView(UpdateView):
     model = Item
@@ -219,6 +272,8 @@ class ItemUpdateView(UpdateView):
         context['client'] = client
         context['client_name'] = client.name 
         context['client_id'] = client.id 
+        context['user_updated'] = self.object.user_updated
+        context['updated_at'] = self.object.updated_at
         # Obtém todas as opções de icms_aliquota_reduzida
         icms_aliquota_reduzida_choices = [
             (str(ia.code), str(ia.code)) for ia in IcmsAliquotaReduzida.objects.all()
@@ -233,6 +288,13 @@ class ItemUpdateView(UpdateView):
                 print(f"Erro no campo {field}: {error}")        
         messages.error(self.request, 'Erro ao salvar o item. Verifique os dados fornecidos.')
         return super().form_invalid(form)     
+    
+    def form_valid(self, form):
+        # Registrar o usuário que fez a atualização
+        item = form.save(commit=False)
+        item.user_updated = self.request.user
+        item.save()
+        return super().form_valid(form)    
     
     def get_success_url(self):
         return reverse_lazy('item_list', kwargs={'client_id': self.object.client_id})          
@@ -588,7 +650,7 @@ class XLSXUploadViewV2(View):
         if form.is_valid():
             xlsx_file = request.FILES['csv_file']
             try:
-                df = pd.read_excel(xlsx_file, dtype={'ncm': str, 'cest': str})
+                df = pd.read_excel(xlsx_file, dtype={'ncm': str, 'cest': str, 'barcode': str, 'naturezareceita': str})
             except Exception as e:
                 self.logger.error(f"Erro ao ler o arquivo Excel: {e}")
                 return JsonResponse({'error': f"Erro ao ler o arquivo Excel: {e}"}, status=400)

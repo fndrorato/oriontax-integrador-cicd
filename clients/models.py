@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from erp.models import ERP
+from auditlog.registry import auditlog
 
 class Cities(models.Model):
     nome = models.CharField(max_length=255)
@@ -60,3 +61,6 @@ class Store(models.Model):
 
     def __str__(self):
         return self.corporate_name      
+
+auditlog.register(Client)
+auditlog.register(Store)

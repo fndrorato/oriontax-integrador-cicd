@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'items',
     'tasks',
     'accountings',
+    'auditlog',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -62,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'

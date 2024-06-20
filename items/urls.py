@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import export_items_to_excel, download_file, validate_item, ItemListView, ItemCreateView, ItemUpdateView, XLSXUploadView, XLSXUploadViewV2
+from .views import get_item_logs, export_items_to_excel, download_file, validate_item, ItemListView, ItemCreateView, ItemUpdateView, XLSXUploadView, XLSXUploadViewV2
 
 urlpatterns = [
+    path('logs/<str:model_name>/<int:object_id>/', get_item_logs, name='get_item_logs'),
     path('download/<str:filename>/', download_file, name='download_file'),
     path('clientes/items/export/<int:client_id>/', export_items_to_excel, name='export_items_to_excel'),
     path('validate-item/', validate_item, name='validate_code_item'),

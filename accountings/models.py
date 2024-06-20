@@ -1,4 +1,5 @@
 from django.db import models
+from auditlog.registry import auditlog
 from clients.models import Cities
 
 class Accounting(models.Model):
@@ -10,3 +11,5 @@ class Accounting(models.Model):
 
     def __str__(self):
         return self.name
+
+auditlog.register(Accounting)

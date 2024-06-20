@@ -1,4 +1,5 @@
 from django.db import models
+from auditlog.registry import auditlog
 
 class ERP(models.Model):
     name = models.CharField(max_length=255)
@@ -6,3 +7,5 @@ class ERP(models.Model):
 
     def __str__(self):
         return self.name
+
+auditlog.register(ERP)

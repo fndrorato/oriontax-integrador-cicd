@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from clients.models import Client, Store
 from impostos.models import Cfop, IcmsCst, CBENEF, PisCofinsCst, NaturezaReceita, Protege, IcmsAliquota, IcmsAliquotaReduzida  # Supondo que os outros modelos estejam em app2
 from django.core.exceptions import ValidationError
+from auditlog.registry import auditlog
 
 class Item(models.Model):
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
@@ -35,3 +36,7 @@ class Item(models.Model):
 
     def __str__(self):
         return self.description
+    
+auditlog.register(Item)
+
+    

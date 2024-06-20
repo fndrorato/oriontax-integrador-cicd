@@ -1,0 +1,184 @@
+ERROR 2024-06-20 09:15:57,669 log 17658 6126841856 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 35, in get_item_logs
+    logs = get_model_logs(model_name, object_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/utils.py", line 7, in get_model_logs
+    return LogEntry.objects.get_for_object_reference(model, object_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'LogEntryManager' object has no attribute 'get_for_object_reference'
+ERROR 2024-06-20 09:15:57,674 basehttp 17658 6126841856 "GET /logs/Item/363539/ HTTP/1.1" 500 69825
+ERROR 2024-06-20 09:22:20,302 log 17762 6199422976 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/apps/registry.py", line 158, in get_app_config
+    return self.app_configs[app_label]
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^
+KeyError: 'app'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 35, in get_item_logs
+    logs = get_model_logs(model_name, object_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/utils.py", line 6, in get_model_logs
+    model = apps.get_model('app', model_name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/apps/registry.py", line 208, in get_model
+    app_config = self.get_app_config(app_label)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/apps/registry.py", line 165, in get_app_config
+    raise LookupError(message)
+LookupError: No installed app with label 'app'.
+ERROR 2024-06-20 09:22:20,304 basehttp 17762 6199422976 "GET /logs/Item/363539/ HTTP/1.1" 500 82730
+ERROR 2024-06-20 09:22:42,561 log 17774 6209073152 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 35, in get_item_logs
+    logs = get_model_logs(model_name, object_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/utils.py", line 7, in get_model_logs
+    return LogEntry.objects.get_for_object_reference(model, object_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'LogEntryManager' object has no attribute 'get_for_object_reference'
+ERROR 2024-06-20 09:22:42,565 basehttp 17774 6209073152 "GET /logs/Item/363539/ HTTP/1.1" 500 69847
+ERROR 2024-06-20 10:01:19,914 log 18040 6163050496 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 47, in get_item_logs
+    if log.action == LogEntry.Action.CREATE:
+                     ^^^^^^^^
+NameError: name 'LogEntry' is not defined
+ERROR 2024-06-20 10:01:19,917 basehttp 18040 6163050496 "GET /logs/Item/363539/ HTTP/1.1" 500 69093
+ERROR 2024-06-20 10:01:57,364 log 18067 6131314688 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 48, in get_item_logs
+    changes = {k: v for k, v in changes.items() if v['old'] is not None}  # Remove old values if they are None
+                                                   ~^^^^^^^
+TypeError: list indices must be integers or slices, not str
+ERROR 2024-06-20 10:01:57,366 basehttp 18067 6131314688 "GET /logs/Item/363539/ HTTP/1.1" 500 69301
+ERROR 2024-06-20 10:04:10,068 log 18101 6167113728 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 50, in get_item_logs
+    change for change in changes if change['old'] is not None
+                                    ~~~~~~^^^^^^^
+TypeError: string indices must be integers, not 'str'
+ERROR 2024-06-20 10:04:10,069 basehttp 18101 6167113728 "GET /logs/Item/363539/ HTTP/1.1" 500 68803
+ERROR 2024-06-20 10:08:53,183 log 18195 6206140416 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 47, in get_item_logs
+    changes = json.loads(log.changes)  # Carrega a string JSON como dicionário Python
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+ERROR 2024-06-20 10:08:53,185 basehttp 18195 6206140416 "GET /logs/Item/363539/ HTTP/1.1" 500 73573
+ERROR 2024-06-20 10:09:24,649 log 18208 6198259712 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 52, in get_item_logs
+    change for change in changes if change['old'] is not None
+                                    ~~~~~~^^^^^^^
+TypeError: string indices must be integers, not 'str'
+ERROR 2024-06-20 10:09:24,650 basehttp 18208 6198259712 "GET /logs/Item/363539/ HTTP/1.1" 500 68884
+ERROR 2024-06-20 10:12:12,847 log 18243 6172160000 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 47, in get_item_logs
+    changes = json.loads(log.changes)  # Carrega a string JSON como dicionário Python
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+ERROR 2024-06-20 10:12:12,849 basehttp 18243 6172160000 "GET /logs/Item/363539/ HTTP/1.1" 500 73559
+ERROR 2024-06-20 10:17:21,638 log 18307 6136229888 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 48, in get_item_logs
+    changes = json.loads(log.changes)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+ERROR 2024-06-20 10:17:21,639 basehttp 18307 6136229888 "GET /logs/Item/363539/ HTTP/1.1" 500 73462
+ERROR 2024-06-20 10:34:22,407 log 18409 6175993856 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 73, in get_item_logs
+    new_value = values[1] if values[1] is not None else ""
+                             ~~~~~~^^^
+IndexError: list index out of range
+ERROR 2024-06-20 10:34:22,408 basehttp 18409 6175993856 "GET /logs/Item/363539/ HTTP/1.1" 500 70969
+ERROR 2024-06-20 10:41:09,918 log 18523 6164426752 Internal Server Error: /logs/Item/363539/
+Traceback (most recent call last):
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador/venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/fernandororato/Documents/F5Sys/OrionTax/integrador_CICD/items/views.py", line 74, in get_item_logs
+    new_value = values[1] if values[1] is not None else ""
+                             ~~~~~~^^^
+IndexError: list index out of range
+ERROR 2024-06-20 10:41:09,919 basehttp 18523 6164426752 "GET /logs/Item/363539/ HTTP/1.1" 500 70969

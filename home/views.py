@@ -11,6 +11,9 @@ from django.db.models.functions import Concat, Cast
 from clients.models import Client, Store
 from items.models import Item
 
+
+
+
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class HomeView(TemplateView):
     template_name = 'home.html'
@@ -33,7 +36,7 @@ class HomeView(TemplateView):
                 'store_count': store_count
             })
         context['total_stores'] = total_stores
-        context['media_items'] = total_items / clients.count()
+        context['media_items'] = round(total_items / clients.count(),1)
         context['clients'] = clients_with_item_count
         return context
 
@@ -110,4 +113,5 @@ class SearchResultsView(ListView):
         now = datetime.now(timezone.utc)
         delta = now - updated_at
         return timesince(updated_at, now=now).split(", ")[0]
+
         
