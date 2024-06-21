@@ -653,6 +653,18 @@ class XLSXUploadView(View):
 class XLSXUploadViewV2(View):
     template_name = 'upload_items.html'
     logger = logging.getLogger(__name__)  # Configurar o logger
+    
+    TYPE_PRODUCT_CHOICES = {
+        'Revenda': 'Revenda',
+        'Imobilizado': 'Imobilizado',
+        'Insumos': 'Insumos',
+    }   
+    
+    REQUIRED_COLUMNS = [
+        'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
+        'icms_aliquota', 'icms_aliquota_reduzida', 'piscofins_cst', 'naturezareceita', 
+        'protege', 'cbenef', 'tipo_produto', 'outros_detalhes'
+    ]     
 
     def get(self, request, client_id):
         client = get_object_or_404(Client, id=client_id)
@@ -670,7 +682,30 @@ class XLSXUploadViewV2(View):
         if form.is_valid():
             xlsx_file = request.FILES['csv_file']
             try:
-                df = pd.read_excel(xlsx_file, dtype={'ncm': str, 'cest': str, 'barcode': str, 'naturezareceita': str})
+                df = pd.read_excel(xlsx_file, dtype={
+                    'ncm': str, 
+                    'cest': str, 
+                    'barcode': str, 
+                    'naturezareceita': str,
+                    'tipo_produto': str,  # Adicionar tipo_produto
+                })
+
+                # Verificação das colunas obrigatórias
+                missing_columns = [col for col in self.REQUIRED_COLUMNS if col not in df.columns]
+                if missing_columns:
+                    end_time = time.time()
+                    elapsed_time = round(end_time - start_time, 3)
+                     
+                    error_message = [f"Erro: As seguintes colunas estão faltando no arquivo Excel: {', '.join(missing_columns)}"]
+                    self.logger.error(error_message)
+                    # return JsonResponse({'error': error_message}, status=400)
+                    return JsonResponse({
+                        'message': 'Colunas faltantes.',
+                        'errors': error_message,
+                        'elapsed_time': elapsed_time
+                    }, status=400)                 
+                
+                
             except Exception as e:
                 self.logger.error(f"Erro ao ler o arquivo Excel: {e}")
                 return JsonResponse({'error': f"Erro ao ler o arquivo Excel: {e}"}, status=400)
@@ -711,6 +746,24 @@ class XLSXUploadViewV2(View):
                 df['cbenef'] = df['cbenef'].astype(str).replace('nan', None)
                 df['description'] = df['description'].str[:255]
                 df['cbenef'] = df['cbenef'].str[:8]
+                
+                # Adicionando a transformação e validação de tipo_produto
+                df['tipo_produto'] = df['tipo_produto'].str.capitalize().str.strip()
+                valid_tipo_produto = set(self.TYPE_PRODUCT_CHOICES.keys())
+                invalid_tipo_produto = df[~df['tipo_produto'].isin(valid_tipo_produto)]
+
+                if not invalid_tipo_produto.empty:
+                    invalid_details = [
+                        f"Erro na linha {index + 2} [tipo_produto]: {row['tipo_produto']} é um valor inválido."
+                        for index, row in invalid_tipo_produto.iterrows()
+                    ]
+                    end_time = time.time()
+                    elapsed_time = round(end_time - start_time, 3)
+                    return JsonResponse({
+                        'message': 'Linhas inválidas encontradas.',
+                        'errors': invalid_details,
+                        'elapsed_time': elapsed_time
+                    }, status=400)                
 
                 invalid_details = []
 
@@ -731,14 +784,6 @@ class XLSXUploadViewV2(View):
                     else:
                         invalid_rows = pd.DataFrame()
                     return invalid_rows
-
-                
-                # def check_invalid_rows(df, column_name, valid_set):
-                #     invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
-                #     for index, row in invalid_rows.iterrows():
-                #         error_message = f"Erro na linha[{column_name}] {index + 2}: {row[column_name]} é um valor inválido."
-                #         invalid_details.append(error_message)
-                #     return invalid_rows
 
                 columns_to_check = [
                     ('cfop', valid_cfops),
@@ -817,6 +862,8 @@ class XLSXUploadViewV2(View):
                                 'pis_aliquota': pis_aliquota,
                                 'cofins_aliquota': cofins_aliquota,
                                 'naturezareceita_id': natureza_receita_id,
+                                'type_product': self.TYPE_PRODUCT_CHOICES[row['tipo_produto']], 
+                                'other_information': row['outros_detalhes'],
                                 'is_active': True,
                                 'is_pending_sync': True,
                                 'updated_at': current_time,
@@ -857,6 +904,7 @@ class XLSXUploadViewV2(View):
                                 'barcode', 'description', 'ncm', 'cest', 'cfop_id', 'icms_cst_id', 
                                 'icms_aliquota_id', 'icms_aliquota_reduzida', 'protege_id', 'cbenef_id', 
                                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_id', 
+                                'type_product', 'other_information',
                                 'is_active', 'is_pending_sync', 'updated_at', 'user_updated'
                             ])
 
@@ -875,9 +923,6 @@ class XLSXUploadViewV2(View):
             except Exception as e:  # Catch any unexpected exceptions
                 self.logger.critical(f"Unexpected error: {e}", exc_info=True)  # Log with traceback
                 return JsonResponse({'error': 'Erro interno no servidor.'}, status=500)
-            # except Exception as e:
-            #     self.logger.error(f"Erro durante o processamento do arquivo: {e}")
-            #     return JsonResponse({'error': f"Erro durante o processamento do arquivo: {e}"}, status=500)
 
             end_time = time.time()
             elapsed_time = round(end_time - start_time, 3)
