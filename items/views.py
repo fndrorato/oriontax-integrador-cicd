@@ -10,6 +10,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import JsonResponse, FileResponse, HttpResponseNotFound, HttpResponse
 from django.utils import timezone
+from django.conf import settings
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -17,6 +18,8 @@ from django.db import transaction, connection
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db.utils import DataError
+from django.apps import apps  # Adicione esta linha para importar o módulo apps
+from django.core.exceptions import FieldDoesNotExist
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.models import User
@@ -31,6 +34,7 @@ import openpyxl
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from auditlog.models import LogEntry
+from auditlog.registry import auditlog
 from app.utils import get_auditlog_history
 
 
@@ -43,7 +47,7 @@ ACTION_MAPPING = {
 def get_item_logs(request, model_name, object_id):
     logs = get_auditlog_history(model_name, object_id)
     logs_data = []
-
+    
     for log in logs:
         changes = log.changes
 
@@ -52,7 +56,7 @@ def get_item_logs(request, model_name, object_id):
             filtered_changes = {
                 k: [v for v in values if v != "None"]
                 for k, values in changes.items()
-                if k not in ['user_updated', 'user_created', 'is_pending_sync', 'id']
+                if k not in ['client','user_updated', 'user_created', 'is_pending_sync', 'id']
             }
 
             # Substituição do ID de naturezareceita pelo código
@@ -66,10 +70,26 @@ def get_item_logs(request, model_name, object_id):
         else:
             filtered_changes = changes
 
+        local_timestamp = timezone.localtime(log.timestamp)
+
+        # Usa changes_display_dict para obter nomes de campos amigáveis
+        # changes_display = log.changes_display_dict
+
+        # print(changes_display)
+        # print(filtered_changes)
+        # # Filtra os changes_display para corresponder aos filtered_changes
+        # mapped_changes = {}
+        # changes_display_list = list(changes_display.keys())
+        # aux = 0
+        # for k, v in filtered_changes.items():
+        #     display_name = filtered_changes.get(k, k)  # Obtém o nome amigável do campo
+        #     mapped_changes[changes_display_list[aux]] = v
+        #     aux += 1
+        
         log_entry = {
             'action': ACTION_MAPPING.get(log.action, log.get_action_display()),
             'actor': log.actor.get_full_name() if log.actor else 'Unknown',
-            'timestamp': log.timestamp.strftime('%d/%m/%Y %H:%M'),
+            'timestamp': local_timestamp.strftime('%d/%m/%Y %H:%M'),
             'changes': filtered_changes,
         }
         logs_data.append(log_entry)

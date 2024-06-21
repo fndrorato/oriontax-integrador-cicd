@@ -5,10 +5,23 @@ from impostos.models import IcmsAliquota, IcmsAliquotaReduzida, Protege, CBENEF,
 
 
 class ItemForm(forms.ModelForm):
+    TYPE_PRODUCT_CHOICES = [
+        ('', '----'),
+        ('Revenda', 'Revenda'),
+        ('Imobilizado', 'Imobilizado'),
+        ('Insumos', 'Insumos'),
+    ]
+        
     icms_aliquota_reduzida = forms.ChoiceField(
         choices=[],  # Deixe as escolhas vazias inicialmente
         widget=forms.Select,
     )
+    
+    type_product = forms.ChoiceField(
+        choices=TYPE_PRODUCT_CHOICES,
+        widget=forms.Select,
+        required=False,
+    )    
         
         
     class Meta:
@@ -16,7 +29,7 @@ class ItemForm(forms.ModelForm):
         fields = [
             'client', 'code', 'barcode', 'description', 'ncm', 'cfop', 'icms_cst', 'icms_aliquota',
             'icms_aliquota_reduzida', 'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita', 'cest'
+            'cofins_aliquota', 'naturezareceita', 'cest', 'type_product', 'other_information'
         ]
         widgets = {
             'icms_aliquota': forms.Select(),
@@ -80,13 +93,6 @@ class ItemForm(forms.ModelForm):
         icms_aliquota = self.cleaned_data.get('icms_aliquota')
         choices = [str(choice[0]) for choice in self.fields['icms_aliquota_reduzida'].choices]
 
-        # if icms_cst == '20':
-        #     if icms_aliquota_reduzida not in choices:
-        #         raise ValidationError('O valor do ICMS Alíquota Reduzida deve ser uma das opções disponíveis quando ICMS CST é 20.')
-        # else:
-        #     if icms_aliquota_reduzida != str(icms_aliquota):
-        #         raise ValidationError('ICMS Alíquota Reduzida deve ser igual a ICMS Alíquota quando ICMS CST não for 20.')
-
         cbenef = cleaned_data.get('cbenef')
         piscofins_cst = cleaned_data.get('piscofins_cst')
         naturezareceita = cleaned_data.get('naturezareceita')     
@@ -105,6 +111,12 @@ class ItemForm(forms.ModelForm):
         # Regra 6: Natureza Receita deve ser em branco se PIS CST for 01
         if piscofins_cst and piscofins_cst.code == '01' and naturezareceita:
             self.add_error('naturezareceita', 'Natureza Receita deve estar em branco quando PIS CST é 01.')
+            
+        # Validação personalizada para type_product
+        type_product = cleaned_data.get('type_product')
+        if not type_product:
+            self.add_error('type_product', 'O campo Tipo de Produto é obrigatório.')
+            
 
         return cleaned_data
     

@@ -219,7 +219,27 @@
                                                     </select>                                                    
                                                 </div>                                                
                                             </div>                                                                                                                                
-                                        </div>                                          
+                                        </div> 
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Tipo Produto</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.type_product.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.type_product|add_class:"form-control"|attr:"id:id_type_product"|attr:"required:True" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-9">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Outras Informações</label>
+                                                <div class="col-md-12">
+                                                    <span class="messages text-danger">{{ form.other_information.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.other_information|add_class:"form-control"|attr:"placeholder:Outras informações do produto" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>                                                                                                                                
+                                        </div>                                                                                   
                                         <div class="row">
                                             <div class="col-sm-12">
                                                 <div class="text-left p-l-15">
@@ -292,6 +312,8 @@
             $('#id_naturezareceita').prop('disabled', true);
             $('#id_naturezareceita').val('')
         }
+
+        runOnLoadFields()
     
 
         $('#id_cfop').change(function() {
@@ -604,6 +626,71 @@
                 }               
             }
             setHiddenFields();           
+        }
+
+        function runOnLoadFields() {
+            // desabilitar CST do ICMS de acordo com o valor inicial do CFOP
+            var selectedCfop = $("#id_cfop").val();
+            var icmsCstField = $('#id_icms_cst');
+            var selectedIcmsCst = $('#id_icms_cst').val();
+    
+            // Fetch ICMS CST options based on selected CFOP
+            if (selectedCfop == '5405') {
+                // Only allow ICMS CST 60 for CFOP 5405
+                icmsCstField.find('option').each(function() {
+                    if ($(this).val() != '60') {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+                });
+            } else {
+                // Do not allow ICMS CST 60 for other CFOPs
+                icmsCstField.find('option').each(function() {
+                    if ($(this).val() == '60') {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+                });
+            }  
+            
+            // Enable or disable ICMS Alíquota Reduzida based on selected ICMS CST
+            if (selectedIcmsCst == '20') {
+                $('#id_icms_aliquota_reduzida option.added').prop('disabled', true);
+                $('#id_icms_aliquota_reduzida').prop('disabled', false);
+            } else {
+                $('#id_icms_aliquota_reduzida').prop('disabled', true);
+            }
+
+            // If selected ICMS CST is 40 or 60
+            if (selectedIcmsCst == '40' || selectedIcmsCst == '60') {
+                $('#id_icms_aliquota').val('0').prop('disabled', true);
+                $('#id_icms_aliquota_reduzida').val('0').prop('disabled', true);                
+            } else {
+                $('#id_icms_aliquota').prop('disabled', false);
+            } 
+            
+            const cbenefSelect = document.getElementById('id_cbenef');
+            let isCbenefRequired = false;            
+        
+            $('#id_cbenef').prop('disabled', false);
+            // $('#id_cbenef').val('');
+            $('#id_cbenef option').each(function() {
+                var optionIcmsCst = $(this).data('icms-cst');
+                if (optionIcmsCst == selectedIcmsCst) {
+                    $(this).prop('disabled', false);
+                    isCbenefRequired = true;
+                } else {
+                    $(this).prop('disabled', true);
+                }
+            });
+
+            if (isCbenefRequired) {
+                cbenefSelect.setAttribute('required', 'required');
+            } else {
+                cbenefSelect.removeAttribute('required');
+            }             
         }
 
         $('#load-logs').on('click', function() {

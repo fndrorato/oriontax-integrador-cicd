@@ -6,6 +6,13 @@ from django.core.exceptions import ValidationError
 from auditlog.registry import auditlog
 
 class Item(models.Model):
+    TYPE_PRODUCT_CHOICES = [
+        ('', '----'),
+        ('Revenda', 'Revenda'),
+        ('Imobilizado', 'Imobilizado'),
+        ('Insumos', 'Insumos'),
+    ]
+        
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
     code = models.PositiveIntegerField()
     barcode = models.CharField(max_length=255, null=True, blank=True, default='')
@@ -22,12 +29,15 @@ class Item(models.Model):
     pis_aliquota = models.FloatField()
     cofins_aliquota = models.FloatField()
     naturezareceita = models.ForeignKey(NaturezaReceita, on_delete=models.SET_NULL, null=True, blank=True)
+    type_product = models.CharField(max_length=20, choices=TYPE_PRODUCT_CHOICES, default='', blank=True)
+    other_information = models.CharField(max_length=255, default='', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_pending_sync = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user_created = models.ForeignKey(User, related_name='items_created', on_delete=models.SET_NULL, null=True, blank=True)
     user_updated = models.ForeignKey(User, related_name='items_updated', on_delete=models.SET_NULL, null=True, blank=True)
+    
     
     class Meta:
         constraints = [
@@ -37,6 +47,4 @@ class Item(models.Model):
     def __str__(self):
         return self.description
     
-auditlog.register(Item)
-
-    
+auditlog.register(Item, mapping_fields={'updated_at':'Última Atualização', 'created_at':'Criado Em', 'description':'Descrição', 'barcode':'Cód. Barras',  'code':'Codigo', 'other_information':'outras informações', 'type_product':'Tipo Produto'})

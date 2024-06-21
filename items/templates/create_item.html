@@ -33,14 +33,6 @@
                                         Dados do Produto</a>
                                     <div class="slide"></div>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-toggle="tab" href="#tab_integrantes" role="tab">
-                                        <div class="f-20">
-                                            <i class="icofont icofont-document-search"></i>
-                                        </div>
-                                        Log</a>
-                                    <div class="slide"></div>
-                                </li>
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content">
@@ -215,7 +207,28 @@
                                                     </select>                                                    
                                                 </div>                                                
                                             </div>                                                                                                                                
-                                        </div>                                          
+                                        </div> 
+                                        
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="col-sm-6 col-lg-12 col-form-label">Tipo Produto</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.type_product.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.type_product|add_class:"form-control"|attr:"id:id_type_product"|attr:"required:True" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-9">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Outras Informações</label>
+                                                <div class="col-md-12">
+                                                    <span class="messages text-danger">{{ form.other_information.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.other_information|add_class:"form-control"|attr:"placeholder:Outras informações do produto" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>                                                                                                                                
+                                        </div>                                         
 
                                         <div class="row">
                                             <div class="col-sm-12">
