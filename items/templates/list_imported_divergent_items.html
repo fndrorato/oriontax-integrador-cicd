@@ -73,7 +73,7 @@
                         <div class="product-edit">
                             <ul class="nav nav-tabs nav-justified md-tabs " id="client-tabs" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active" data-toggle="tab" href="#new-items" role="tab">
+                                    <a class="nav-link " href="{% url 'imported_item_list' client_id=client_id %}" role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-exclamation-circle"></i>
                                         </div>
@@ -81,7 +81,7 @@
                                     <div class="slide"></div>
                                 </li>  
                                 <li class="nav-item">
-                                    <a class="nav-link" href={% url 'imported_divergent_item_list' client_id=client_id %} role="tab">
+                                    <a class="nav-link active" data-toggle="tab" href="#divergent-items" role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-error"></i>
                                         </div>
@@ -90,194 +90,16 @@
                                 </li>                                                                                                                          
                             </ul>
                             <!-- Tab panes -->
-                            <div class="tab-content">   
-                                <!-- Inicio Tab Novos Produtos -->
-                                <div class="tab-pane active" id="new-items" role="tabpanel">                                   
-                                    <div class="card">
-                                        <div class="card-block">                                      
-                                            <div class="dt-responsive table-responsive">
-                                                <table id="new-items-table" class="table compact table-striped table-bordered nowrap " style="font-size: x-small;padding: 0rem; ">
-                                                    <thead style="font-size: xx-small;">
-                                                    <tr>
-                                                        <th class="text-center" style="padding-right: 0;">Código</th>
-                                                        <th class="text-center" style="padding-right: 0;">Cód.Barras</th>
-                                                        <th class="text-center" style="padding-right: 0;">Descrição</th>
-                                                        <th class="text-center" style="padding-right: 0;">NCM</th>
-                                                        <th class="text-center" style="padding-right: 0;">CEST</th>
-                                                        <th class="text-center" style="padding-right: 0;">CFOP</th>
-                                                        <th class="text-center" style="padding-right: 0;">CST Icms</th>
-                                                        <th class="text-center" style="padding-right: 0;">Aliq.Icms</th>
-                                                        <th class="text-center" style="padding-right: 0;">Aliq.IcmsRed</th>
-                                                        <th class="text-center" style="padding-right: 0;">CBENEF</th>
-                                                        <th class="text-center" style="padding-right: 0;">Protege</th>
-                                                        <th class="text-center" style="padding-right: 0;">CST PIS/COFINS</th>
-                                                        <th class="text-center" style="padding-right: 0;">Aliq.PIS</th>
-                                                        <th class="text-center" style="padding-right: 0;">Aliq.COFINS</th>
-                                                        <th class="text-center" style="padding-right: 0;">Nat.Receita</th>
-                                                        <th class="text-center" style="padding-right: 0;">T.Prod.</th>
-                                                        <th class="text-center" style="padding-right: 0;">Ação</th>
-                                                    </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {% if imported_items %}
-                                                            {% for item in imported_items %}
-                                                                <tr data-id="{{ item.code }}" class="">
-                                                                    <td class="text-center align-middle p-0">{{ item.code }} </td>
-                                                                    <td class="text-center align-middle p-0 limit-field">{{ item.barcode|zero_to_empty|default_if_none:'' }}</td>
-                                                                    <td class="text-center align-middle p-0">{{ item.description }}</td>
-                                                                    <td class="text-center align-middle p-0 limit-field">{{ item.ncm }}</td>
-                                                                    <td class="text-center align-middle p-0 limit-field">{{ item.cest|zero_to_empty|default_if_none:'' }}</td>
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.cfop }}</span>
-                                                                        <select class="tabledit-input form-control input-sm" name="cfop" style="display: none;">
-                                                                            {% for code, code_label in cfop_choices %}
-                                                                            <option value="{{ code }}" {% if item.cfop|int_filter == code|int_filter %}selected{% endif %}>{{ code }}</option>
-                                                                            {% endfor %}
-                                                                        </select>
-                                                                    </td>
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.icms_cst }}</span>
-                                                                        <select class="tabledit-input form-control input-sm" name="icms_cst" style="display: none;">
-                                                                            {% for code, code_label in icms_cst_choices %}
-                                                                            <option value="{{ code }}" {% if item.icms_cst|int_filter == code|int_filter %}selected{% endif %}>{{ code }}</option>
-                                                                            {% endfor %}
-                                                                        </select>
-                                                                    </td>
-                                                                    
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.icms_aliquota }}</span>
-                                                                        <select class="tabledit-input form-control input-sm" name="icms_aliquota" id="id_icms_aliquota" style="display: none;">
-                                                                            <option value="" selected="">---------</option>
-                                                                            {% for aliq in icmsaliquota_choices %}
-                                                                            <option value="{{ aliq.code }}" {% if item.icms_aliquota|int_filter == aliq.code|int_filter %}selected{% endif %}>{{ aliq.code }}</option>
-                                                                            {% endfor %}
-                                                                        </select>                                                                        
-                                                                    </td>
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.icms_aliquota_reduzida }}</span>
-                                                                        <select class="tabledit-input form-control input-sm" name="icms_aliquota_reduzida" id="id_icms_aliquota_reduzida" style="display: none;">
-                                                                            <option value="" selected="">---------</option>
-                                                                            {% for aliq in icmsaliquota_choices %}
-                                                                                <option value="{{ aliq.code }}" 
-                                                                                data-code="{% if aliq.code in icmsaliquotareduzida_codes %}1{% else %}0{% endif %}"
-                                                                                    {% if item.icms_aliquota_reduzida|int_filter == aliq.code|int_filter %}selected{% endif %}>
-                                                                                    {{ aliq.code }}
-                                                                                </option>
-                                                                            {% endfor %}
-                                                                        </select>                                                                                                                                                
-                                                                    </td>
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.cbenef|default_if_none:'' }}</span>
-                                                                        <select id="id_cbenef" name="cbenef" class="tabledit-input form-control input-sm" style="display: none; max-width: 80px;">
-                                                                            <option value="" selected="">---------</option>
-                                                                            {% for cbenef in cbenef_choices %}
-                                                                                <option value="{{ cbenef.code }}" {% if cbenef.icms_cst %}data-cst="{{ cbenef.icms_cst.code }}"{% endif %}{% if item.cbenef == cbenef.code %} selected{% endif %}>
-                                                                                    {{ cbenef.code }} - {{ cbenef.description }}
-                                                                                </option>
-                                                                            {% endfor %}
-                                                                        </select>                                                                        
-                                                                    </td>
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.protege }}</span>
-                                                                        <select id="id_protege" name="protege" class="tabledit-input form-control input-sm" style="display: none; max-width: 80px;">
-                                                                            {% for protege in protege_choices %}
-                                                                                <option value="{{ protege.code }}" {% if item.protege == protege.code %} selected{% endif %}>
-                                                                                    {{ protege.code }}
-                                                                                </option>
-                                                                            {% endfor %}
-                                                                        </select>
-
-                                                                    </td>
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.piscofins_cst }}</span>
-                                                                        <select id="id_piscofins_cst" name="piscofins_cst" class="tabledit-input form-control input-sm" style="display: none; max-width: 80px;">
-                                                                            {% for piscofins_cst in piscofins_choices %}
-                                                                                <option value="{{ piscofins_cst.code }}" {% if item.piscofins_cst == piscofins_cst.code|int_filter %} selected{% endif %}>
-                                                                                    {{ piscofins_cst.code }} - {{ piscofins_cst.description }}
-                                                                                </option>
-                                                                            {% endfor %}
-                                                                        </select>                                                                         
-                                                                    </td>
-                                                                    <td class="text-center align-middle p-0">
-                                                                        <span class="tabledit-span" name="pis_aliquota" id="id_pis_aliquota">{{ item.pis_aliquota }}</span>
-                                                                    </td>
-                                                                    <td class="text-center align-middle p-0">
-                                                                        <span class="tabledit-span" name="cofins_aliquota" id="id_cofins_aliquota">{{ item.cofins_aliquota }}</span>
-                                                                    </td>
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.naturezareceita|default_if_none:'' }}</span>
-                                                                        <select id="id_naturezareceita" name="naturezareceita" class="tabledit-input form-control input-sm" style="display: none; max-width: 80px;">
-                                                                            <option value="" selected="">---------</option>
-                                                                            {% for naturezareceita in naturezareceita_choices %}
-                                                                                <option value="{{ naturezareceita.id }}" data-code={{ naturezareceita.code }} {% if naturezareceita.piscofins_cst %}data-cst="{{ naturezareceita.piscofins_cst.code }}"{% endif %}{% if item.naturezareceita|int_filter == naturezareceita.code|int_filter %} selected{% endif %}>
-                                                                                    {{ naturezareceita.code }} - {{ naturezareceita.description }}
-                                                                                </option>
-                                                                            {% endfor %}
-                                                                        </select>                                                                         
-                                                                    </td>
-                                                                    <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span" name="tx_type_product"></span>
-                                                                        {{ form.type_product |attr:"style:display:none;"|attr:"class:tabledit-input form-control input-sm"}}
-                                                                    </td>
-                                                                </tr>                                    
-                                                            {% endfor %}
-                                                        {% endif %}
-                                                        
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <!-- Paginação -->  
-                                            <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center">
-                                                <ul class="pagination">
-                                                    {% if page_obj.has_previous %}
-                                                        <li class="page-item">
-                                                            <a class="page-link" tabindex="-1" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Anterior</a>
-                                                        </li>
-                                                    {% else %}
-                                                        <li class="page-item disabled">
-                                                            <a class="page-link" tabindex="-1" href="?page=1&{{ request.GET.urlencode }}">Anterior</a>
-                                                        </li>                        
-                                                    {% endif %}  
-                            
-                                                    
-                                            
-                                                    {% for page_num in page_range %}
-                                                        {% if page_num == '...' %}
-                                                            <li class="page-item">
-                                                                <a class="page-link" href="#">{{ page_num }}</a>
-                                                            </li>
-                                                        {% elif items.number == page_num %}
-                                                            <li class="page-item">
-                                                                <a class="page-link" href="#">{{ page_num }}</a>
-                                                            </li>
-                                                        {% else %}
-                                                            <li class="page-item">
-                                                                <a class="page-link" href="?page={{ page_num }}&{{ request.GET.urlencode }}">{{ page_num }}</a>
-                                                            </li>
-                                                        {% endif %}
-                                                    {% endfor %}                      
-                            
-                            
-                                                    {% if page_obj.has_next %}
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Próxima</a>
-                                                        </li>
-                                                    {% endif %}                            
-                                                </ul> 
-                                                 
-                                            </div>  
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- End Tab Novos Produtos -->       
+                            <div class="tab-content">       
                                 <!-- Inicio Tab Produtos Divergentes -->
-                                <div class="tab-pane" id="divergent-items" role="tabpanel">                                   
+                                <div class="tab-pane active" id="divergent-items" role="tabpanel">                                   
                                     <div class="card">
                                         <div class="card-block">                                      
                                             <div class="dt-responsive table-responsive">
                                                 <table id="divergent-items-table" class="table compact table-striped table-bordered nowrap " style="font-size: x-small;padding: 0rem; ">
                                                     <thead style="font-size: xx-small;">
                                                     <tr>
+                                                        <th class="text-center" style="padding-right: 0;">Origem</th>
                                                         <th class="text-center" style="padding-right: 0;">Código</th>
                                                         <th class="text-center" style="padding-right: 0;">Cód.Barras</th>
                                                         <th class="text-center" style="padding-right: 0;">Descrição</th>
@@ -301,6 +123,7 @@
                                                         {% if imported_items %}
                                                             {% for item in imported_items %}
                                                                 <tr data-id="{{ item.code }}" class="">
+                                                                    <td class="text-center align-middle p-0">{{ item.origem }} </td>
                                                                     <td class="text-center align-middle p-0">{{ item.code }} </td>
                                                                     <td class="text-center align-middle p-0 limit-field">{{ item.barcode|zero_to_empty|default_if_none:'' }}</td>
                                                                     <td class="text-center align-middle p-0">{{ item.description }}</td>
@@ -326,16 +149,18 @@
                                                                     <td class="tabledit-view-mode text-center align-middle p-0">
                                                                         <span class="tabledit-span">{{ item.icms_aliquota }}</span>
                                                                         <select class="tabledit-input form-control input-sm" name="icms_aliquota" id="id_icms_aliquota" style="display: none;">
-                                                                            <option value="" selected="">---------</option>
                                                                             {% for aliq in icmsaliquota_choices %}
-                                                                            <option value="{{ aliq.code }}" {% if item.icms_aliquota|int_filter == aliq.code|int_filter %}selected{% endif %}>{{ aliq.code }}</option>
+                                                                                {% with item_icms_aliquota=item.icms_aliquota|stringformat:"s" aliq_code=aliq.code|stringformat:"s" %}
+                                                                                    <option value="{{ aliq.code }}" {% if item_icms_aliquota == aliq_code %}selected{% endif %}>
+                                                                                        {{ aliq.code }}                                                                                        
+                                                                                    </option>
+                                                                                {% endwith %}
                                                                             {% endfor %}
-                                                                        </select>                                                                        
+                                                                        </select>                                                                      
                                                                     </td>
                                                                     <td class="tabledit-view-mode text-center align-middle p-0">
                                                                         <span class="tabledit-span">{{ item.icms_aliquota_reduzida }}</span>
                                                                         <select class="tabledit-input form-control input-sm" name="icms_aliquota_reduzida" id="id_icms_aliquota_reduzida" style="display: none;">
-                                                                            <option value="" selected="">---------</option>
                                                                             {% for aliq in icmsaliquota_choices %}
                                                                                 <option value="{{ aliq.code }}" 
                                                                                 data-code="{% if aliq.code in icmsaliquotareduzida_codes %}1{% else %}0{% endif %}"
@@ -350,11 +175,14 @@
                                                                         <select id="id_cbenef" name="cbenef" class="tabledit-input form-control input-sm" style="display: none; max-width: 80px;">
                                                                             <option value="" selected="">---------</option>
                                                                             {% for cbenef in cbenef_choices %}
-                                                                                <option value="{{ cbenef.code }}" {% if cbenef.icms_cst %}data-cst="{{ cbenef.icms_cst.code }}"{% endif %}{% if item.cbenef == cbenef.code %} selected{% endif %}>
-                                                                                    {{ cbenef.code }} - {{ cbenef.description }}
-                                                                                </option>
+                                                                                {% with item_cbenef=item.cbenef|stringformat:"s" cbenef_code=cbenef.code|stringformat:"s" %}
+                                                                                    <option value="{{ cbenef.code }}" {% if cbenef.icms_cst %}data-cst="{{ cbenef.icms_cst.code }}"{% endif %}{% if item_cbenef == cbenef_code %} selected{% endif %}>
+                                                                                        {{ cbenef.code }} - {{ cbenef.description }}
+                                                                                    </option>
+                                                                                {% endwith %}
                                                                             {% endfor %}
-                                                                        </select>                                                                        
+                                                                        </select>
+                                                                                                                                               
                                                                     </td>
                                                                     <td class="tabledit-view-mode text-center align-middle p-0">
                                                                         <span class="tabledit-span">{{ item.protege }}</span>
@@ -388,11 +216,23 @@
                                                                         <select id="id_naturezareceita" name="naturezareceita" class="tabledit-input form-control input-sm" style="display: none; max-width: 80px;">
                                                                             <option value="" selected="">---------</option>
                                                                             {% for naturezareceita in naturezareceita_choices %}
-                                                                                <option value="{{ naturezareceita.id }}" data-code={{ naturezareceita.code }} {% if naturezareceita.piscofins_cst %}data-cst="{{ naturezareceita.piscofins_cst.code }}"{% endif %}{% if item.naturezareceita|int_filter == naturezareceita.code|int_filter %} selected{% endif %}>
+                                                                                <option value="{{ naturezareceita.id }}" 
+                                                                                        data-code="{{ naturezareceita.code }}" 
+                                                                                        {% if naturezareceita.piscofins_cst %}
+                                                                                            data-cst="{{ naturezareceita.piscofins_cst.code }}"
+                                                                                        {% endif %}
+                                                                                        {% if item.naturezareceita|stringformat:"s" == naturezareceita.code|stringformat:"s" and item.piscofins_cst_code|stringformat:"s" == naturezareceita.piscofins_cst.code|stringformat:"s" %} 
+                                                                                            selected
+                                                                                        {% endif %}>
                                                                                     {{ naturezareceita.code }} - {{ naturezareceita.description }}
+                                                                                                                                                                       
                                                                                 </option>
                                                                             {% endfor %}
-                                                                        </select>                                                                         
+                                                                        </select>
+                                                                        
+                                                                        
+                                                                        
+                                                                                                                                                
                                                                     </td>
                                                                     <td class="tabledit-view-mode text-center align-middle p-0">
                                                                         <span class="tabledit-span" name="tx_type_product"></span>
@@ -634,14 +474,14 @@
 {% endfor %}
 
     var urlValidateCode = '{% url "validate_code_item" %}';
-    var urlNewItem = '{% url "save_imported_item" %}';
+    var urlFixItem = '{% url "save_imported_item" %}';
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
 
    
 </script>
 
-<script type="text/javascript" src="{% static 'assets/pages/edit-table/editable-new-items.js' %}?{% now "U" %}"></script>
+<script type="text/javascript" src="{% static 'assets/pages/edit-table/editable-divergent-items.js' %}?{% now "U" %}"></script>
 
     
 

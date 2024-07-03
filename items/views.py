@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db import transaction, connection
+from django.db.models import Value, CharField
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db.utils import DataError
@@ -31,6 +32,8 @@ from impostos.models import IcmsCst, IcmsAliquota, IcmsAliquotaReduzida, Protege
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from .models import Item
+from itertools import chain
+from django.db.models import Q, F
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
@@ -334,7 +337,7 @@ class ItemDeleteView(DeleteView):
     success_url = reverse_lazy('item_list')    
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
-class ImportedItemListView(ListView):
+class ImportedItemListViewNewItem(ListView):
     model = ImportedItem
     template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
@@ -344,8 +347,7 @@ class ImportedItemListView(ListView):
         client_id = self.kwargs.get('client_id')
         client = get_object_or_404(Client, id=client_id)
 
-        queryset = ImportedItem.objects.filter(client=client, status_item=0, is_pending=True).order_by('description')
-        # Debugging: print the queryset count     
+        queryset = ImportedItem.objects.filter(client=client, status_item=0, is_pending=True).order_by('description')  
         return queryset
    
 
@@ -387,15 +389,87 @@ class ImportedItemListView(ListView):
 
         context['page_range'] = page_range
         return context
+    
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class ImportedItemListViewDivergentItem(ListView):
+    model = ImportedItem
+    template_name = 'list_imported_divergent_items.html'
+    context_object_name = 'imported_items'
+    paginate_by = 40  # Defina quantos itens você quer por página
+
+    def get_queryset(self):
+        client_id = self.kwargs.get('client_id')
+        client = get_object_or_404(Client, id=client_id)
+        
+        # Anota os querysets com a coluna 'origem'
+        imported_items_queryset = ImportedItem.objects.filter(
+            client=client, status_item=1, is_pending=True
+        ).annotate(origem=Value('Integração', output_field=CharField()))
+
+        items_queryset = Item.objects.filter(
+            client=client, code__in=imported_items_queryset.values('code')
+        ).annotate(
+            origem=Value('Base', output_field=CharField()),
+            piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
+        ).order_by('description')
+
+
+        # Combine os querysets e ordena por 'description' e 'origem'
+        combined_queryset = sorted(
+            chain(imported_items_queryset, items_queryset),
+            key=lambda item: (item.description, item.origem)
+        )
+        
+        return combined_queryset
+   
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
+        context['client'] = client
+        context['client_name'] = client.name
+        context['client_id'] = client.id
+        context['filter_params'] = self.request.GET
+        icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
+        cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
+        # Adicionando cbenef ao contexto
+        context['cbenef_choices'] = CBENEF.objects.all()         
+        context['icms_cst_choices'] = icms_cst_choices        
+        context['cfop_choices'] = cfop_choices
+        context['protege_choices'] = Protege.objects.all()
+        context['piscofins_choices'] = PisCofinsCst.objects.all()
+        context['naturezareceita_choices'] = NaturezaReceita.objects.all()
+        context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
+        icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
+        context['icmsaliquotareduzida_codes'] = set(icmsaliquotareduzida_codes)
+        context['form'] = ImportedItemForm()
+        # Adiciona os cálculos de paginação
+        paginator = context['paginator']
+        page_obj = context['page_obj']
+        total_pages = paginator.num_pages
+        current_page = page_obj.number
+
+        if total_pages <= 10:
+            page_range = range(1, total_pages + 1)
+        else:
+            if current_page <= 4:
+                page_range = list(range(1, 6)) + ['...'] + [total_pages - 1, total_pages]
+            elif current_page > total_pages - 4:
+                page_range = [1, 2, '...'] + list(range(total_pages - 4, total_pages + 1))
+            else:
+                page_range = [1, 2, '...'] + list(range(current_page - 2, current_page + 3)) + ['...'] + [total_pages - 1, total_pages]
+
+        context['page_range'] = page_range
+        return context    
 
 @csrf_exempt
 def save_imported_item(request):
     if request.method == 'POST':
         try:
             data = request.POST
-
             print(data)
             # Extract data from the request
+            tipo_produto = data.get('fix_item', '');
             code = data.get('code', '').strip()
             client_id = data.get('client', '')
             barcode = data.get('barcode', '').strip()
@@ -436,34 +510,58 @@ def save_imported_item(request):
                 
 
             with transaction.atomic():
-                # Save the data to the database
-                item = Item(
-                    code=code,
-                    client=client,
-                    barcode=barcode,
-                    description=description,
-                    ncm=ncm,
-                    cest=cest,
-                    cfop=cfop,
-                    icms_cst=icms_cst,
-                    icms_aliquota=icms_aliquota,
-                    icms_aliquota_reduzida=icms_aliquota_reduzida,
-                    cbenef=cbenef_instance,
-                    protege=protege,
-                    piscofins_cst=piscofins_cst,
-                    pis_aliquota=pis_aliquota,
-                    cofins_aliquota=cofins_aliquota,
-                    naturezareceita=naturezareceita_instance,
-                    type_product=type_product,
-                    status_item=2
-                )
-                item.save()
+                if tipo_produto == '1':
+                    # Atualiza o item existente se tipo_produto for igual a 1
+                    item = get_object_or_404(Item, code=code, client=client)
+                    item.barcode = barcode
+                    item.description = description
+                    item.ncm = ncm
+                    item.cest = cest
+                    item.cfop = cfop
+                    item.icms_cst = icms_cst
+                    item.icms_aliquota = icms_aliquota
+                    item.icms_aliquota_reduzida = icms_aliquota_reduzida
+                    item.cbenef = cbenef_instance
+                    item.protege = protege
+                    item.piscofins_cst = piscofins_cst
+                    item.pis_aliquota = pis_aliquota
+                    item.cofins_aliquota = cofins_aliquota
+                    item.naturezareceita = naturezareceita_instance
+                    item.type_product = type_product
+                    item.status_item = 2  # Verifique se precisa atualizar o status do item
+                    item.save()
 
-                # Update the ImportedItem model
-                ImportedItem.objects.filter(code=code, client=client).update(is_pending=False)
+                    # Update the ImportedItem model
+                    ImportedItem.objects.filter(code=code, client=client).update(is_pending=False)
+                else:
+                    # Cria um novo item se tipo_produto não for igual a 1
+                    item = Item(
+                        code=code,
+                        client=client,
+                        barcode=barcode,
+                        description=description,
+                        ncm=ncm,
+                        cest=cest,
+                        cfop=cfop,
+                        icms_cst=icms_cst,
+                        icms_aliquota=icms_aliquota,
+                        icms_aliquota_reduzida=icms_aliquota_reduzida,
+                        cbenef=cbenef_instance,
+                        protege=protege,
+                        piscofins_cst=piscofins_cst,
+                        pis_aliquota=pis_aliquota,
+                        cofins_aliquota=cofins_aliquota,
+                        naturezareceita=naturezareceita_instance,
+                        type_product=type_product,
+                        status_item=2  # Verifique se precisa definir o status do item
+                    )
+                    item.save()
+
+                    # Update the ImportedItem model
+                    ImportedItem.objects.filter(code=code, client=client).update(is_pending=False)
+
 
             # Return a success response
-            print('sucesso')
             return JsonResponse({'status': 'success', 'message': 'Item saved successfully'})
         
         except Exception as e:

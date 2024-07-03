@@ -29,7 +29,7 @@ class HomeView(TemplateView):
         for client in clients:
             item_count = Item.objects.filter(client=client).count()
             store_count = Store.objects.filter(client=client).count()
-            imported_itens_count = ImportedItem.objects.filter(client=client).count()
+            imported_itens_count = ImportedItem.objects.filter(client=client, is_pending=True).count()
             total_imported_itens += imported_itens_count
             total_items += item_count
             total_stores += store_count

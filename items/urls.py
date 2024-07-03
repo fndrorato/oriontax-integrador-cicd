@@ -1,5 +1,17 @@
 from django.urls import path
-from .views import get_item_logs, export_items_to_excel, download_file, validate_item, save_imported_item, ItemListView, ItemCreateView, ItemUpdateView, XLSXUploadView, ImportedItemListView
+from .views import (
+    get_item_logs,
+    export_items_to_excel,
+    download_file,
+    validate_item,
+    save_imported_item,
+    ItemListView,
+    ItemCreateView,
+    ItemUpdateView,
+    XLSXUploadView,
+    ImportedItemListViewNewItem,
+    ImportedItemListViewDivergentItem,
+)
 
 urlpatterns = [
     path('logs/<str:model_name>/<int:object_id>/', get_item_logs, name='get_item_logs'),
@@ -13,6 +25,7 @@ urlpatterns = [
     # path('clientes/store/items/<int:store_id>/<int:pk>/delete/', ItemDeleteView.as_view(), name='item_delete'),
     path('clientes/items/<int:client_id>/upload/', XLSXUploadView.as_view(), name='items_upload'),
     
-    path('clientes/items-pendentes/<int:client_id>/', ImportedItemListView.as_view(), name='imported_item_list'),    
-    path('clientes/items-pendentes/save-imported-item/', save_imported_item, name='save_new_imported_item'),
+    path('clientes/items-pendentes-novos/<int:client_id>/', ImportedItemListViewNewItem.as_view(), name='imported_item_list'),    
+    path('clientes/items-pendentes-divergentes/<int:client_id>/', ImportedItemListViewDivergentItem.as_view(), name='imported_divergent_item_list'),    
+    path('clientes/items-pendentes/save-imported-item/', save_imported_item, name='save_imported_item'),
 ]

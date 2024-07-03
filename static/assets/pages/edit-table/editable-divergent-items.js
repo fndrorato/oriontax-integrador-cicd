@@ -1,17 +1,17 @@
 'use strict';
 $(document).ready(function() {  
 
-    $('#new-items-table').Tabledit({
+    $('#divergent-items-table').Tabledit({
         groupClass: 'btn-group btn-group-mini',
         deleteButton: false,
         url: null,
         columns: {
-            identifier: [0, 'id'],
+            identifier: [1, 'id'],
             editable: [
-                [1, 'barcode'], 
-                [2, 'description'], 
-                [3, 'ncm'], 
-                [4, 'cest']
+                [2, 'barcode'], 
+                [3, 'description'], 
+                [4, 'ncm'], 
+                [5, 'cest']
             ]
         },
         buttons: {
@@ -42,19 +42,15 @@ $(document).ready(function() {
         },
         onDraw: function() {
             // Callback para quando a tabela é desenhada
-            // Add listener to edit buttons
-            $('#new-items-table').find('.tabledit-edit-button').on('click', function() {
-                // Get the current row
+            // Adicionar listener aos botões de edição
+            $('#divergent-items-table').find('.tabledit-edit-button').each(function() {
                 var $row = $(this).closest('tr');
+                var origem = $row.find('td').eq(0).text(); // Supondo que a coluna "origem" é a sexta coluna (índice 5)
                 
-                // Get the values of the fields
-                var id = $row.find('td').eq(0).text();
-                var barcode = $row.find('td').eq(1).find('.tabledit-input').val() || $row.find('td').eq(1).text();
-                var description = $row.find('td').eq(2).find('.tabledit-input').val() || $row.find('td').eq(2).text();
-                var ncm = $row.find('td').eq(3).find('.tabledit-input').val() || $row.find('td').eq(3).text();
-                var cest = $row.find('td').eq(4).find('.tabledit-input').val() || $row.find('td').eq(4).text();
-
-            });            
+                if (origem.trim() !== 'Base') {
+                    $(this).remove(); // Remove o botão de edição se a origem não for "Base"
+                }
+            });          
         },
         onSuccess: function(data, textStatus, jqXHR) {
             // Callback para quando uma ação é bem-sucedida
@@ -72,7 +68,8 @@ $(document).ready(function() {
         },
         onAjax: function(action, serialize) {
             var data = {};
-            var $row = $('#new-items-table').find('tr.custom-edit-mode');
+            var $row = $('#divergent-items-table').find('tr.custom-edit-mode');
+            console.log('ola mundo')
         
             if ($row.length > 0) {
                 $row.find('input, select').each(function() {
@@ -94,10 +91,13 @@ $(document).ready(function() {
                 });
         
                 // Chamar validateData e capturar a Promessa resultante
+                console.log('vai para o  no try')
                 try {
+                    console.log('entroru no try')
                     var resultValidate = validateData(data);
                     $row.addClass('validation-error custom-edit-mode');
                     resultValidate.then(function(isValid) {
+                        console.log('validando o isValid')
                         if (isValid) {
                             data['code'] = data['id'];
                             data['client'] = client_id;
@@ -105,14 +105,15 @@ $(document).ready(function() {
                             var aliquotas = getAliquotas(data['piscofins_cst']);
                             data['pis_aliquota'] = aliquotas.pis_aliquota;
                             data['cofins_aliquota'] = aliquotas.cofins_aliquota; 
-                            data['fix_item'] = 0;                           
+                            data['fix_item'] = 1;
             
                             serialize = '';
                             serialize += $.param(data);
+                            console.log('ira entra no ajax:', urlFixItem)
             
                             // Enviar os dados para a URL especificada via AJAX
                             $.ajax({
-                                url: urlNewItem,
+                                url: urlFixItem,
                                 type: 'POST',
                                 data: serialize,
                                 success: function(response) {
@@ -171,11 +172,11 @@ $(document).ready(function() {
     });
 
     // Adicionar e remover a classe personalizada ao iniciar e finalizar a edição
-    $('#new-items-table').on('click', '.tabledit-edit-button', function() {
+    $('#divergent-items-table').on('click', '.tabledit-edit-button', function() {
         $(this).closest('tr').addClass('custom-edit-mode');
     });
 
-    $('#new-items-table').on('click', '.tabledit-save-button, .tabledit-confirm-button', function() {
+    $('#divergent-items-table').on('click', '.tabledit-save-button, .tabledit-confirm-button', function() {
         var $row = $(this).closest('tr').removeClass('custom-edit-mode');
 
         // Ajustar o texto do span para o campo cbenef
@@ -292,45 +293,11 @@ $(document).ready(function() {
                     return resolve(false);
                 }
             }
-    
-            // Se todas as validações passarem, verificar o código
-            validateCode(codeItem, clientId).then(function(isValid) {
-                if (!isValid) {
-                    alert('Código do produto já existe para esse cliente.');
-                    return resolve(false);
-                } else {
-                    return resolve(true);
-                }
-            }).catch(function(error) {
-                alert(error); // Tratar erros de validação do código
-                return resolve(false);
 
-            });
+            return resolve(true);
+    
         });
     }
-    
-    function validateCode(code, client) {
-        return new Promise(function(resolve, reject) {
-            $.ajax({
-                url: urlValidateCode,
-                data: {
-                    'code': code,
-                    'client': client
-                },
-                dataType: 'json',
-                success: function(data) {
-                    if (data.success === false) {
-                        resolve(false);
-                    } else {
-                        resolve(true);
-                    }
-                },
-                error: function() {
-                    reject('Erro ao validar o código. Tente novamente.');
-                }
-            });
-        });
-    } 
     
     // Função para buscar as aliquotas de um dado código
     function getAliquotas(code) {
