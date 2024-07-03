@@ -32,7 +32,7 @@
         <div class="card">
             <div class="card-header">
                 <h5>Lista de Produtos: {{ client_name }} </h5>
-                
+
                 <a href="{% url 'item_create' client_id=client.id %}" type="button" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-plus-circle m-r-5"></i>
                     Adicionar Produto
@@ -56,6 +56,11 @@
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
                     <i class="icofont icofont-filter"></i>
                 </button> 
+
+                <button id="revendaButton" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                    <i class="icofont icofont-check-circled m-r-5"></i> 
+                    Somente Revenda
+                </button>                
                                                                    
                 <span>Lista dos produtos cadastrados do cliente: {{ client_name }}</span>
 
@@ -80,6 +85,7 @@
                             <th class="text-center" style="padding-right: 0;">Aliq.PIS</th>
                             <th class="text-center" style="padding-right: 0;">Aliq.COFINS</th>
                             <th class="text-center" style="padding-right: 0;">Nat.Receita</th>
+                            <th class="text-center" style="padding-right: 0;">T.Produto</th>
                             <th class="text-center" style="padding-right: 0;">Status</th>
                             <th class="text-center" style="padding-right: 0;">Ação</th>
                         </tr>
@@ -103,6 +109,7 @@
                                         <td class="text-center align-middle">{{ item.pis_aliquota }}</td>
                                         <td class="text-center align-middle">{{ item.cofins_aliquota }}</td>
                                         <td class="text-center align-middle">{{ item.naturezareceita.code }}</td>
+                                        <td class="text-center align-middle">{{ item.type_product }}</td>
                                         <td class="text-center align-middle" style="color: #33D176;">
                                             
                                                 <i class="icofont icofont-ui-check"></i>
@@ -286,12 +293,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Pega os parâmetros da URL e preenche os campos do formulário
         var url = new URL(window.location.href);
-        console.log(url)
         var urlParams = new URLSearchParams(window.location.search);
         var fields = [
             'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'cst_icms',
             'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege',
-            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita'
+            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 'tipo_produto'
         ];
 
         fields.forEach(function(field) {
@@ -299,6 +305,16 @@
                 document.getElementById('search_' + field).value = urlParams.get(field);
             }
         });
+
+        var revendaButton = document.getElementById('revendaButton');
+        // Verifica se a URL contém o parâmetro type_product=Revenda
+        if (url.searchParams.get('type_product') === 'Revenda') {
+            // Remove a classe outline se o parâmetro estiver presente
+            revendaButton.classList.remove('btn-outline-inverse');
+        } else {
+            // Adiciona a classe outline se o parâmetro não estiver presente
+            revendaButton.classList.add('btn-outline-inverse');
+        }        
     });
 
     document.getElementById('applySearch').addEventListener('click', function() {
@@ -315,6 +331,35 @@
         window.location.href = url.toString();
     });
 
+    document.getElementById('revendaButton').addEventListener('click', function() {
+        var form = document.getElementById('searchForm');
+        var url = new URL(window.location.href);
+        var params = new URLSearchParams(new FormData(form));
+        var revendaButton = document.getElementById('revendaButton');
+    
+        // Adiciona os parâmetros do formulário à URL
+        for (var pair of params.entries()) {
+            url.searchParams.set(pair[0], pair[1]);
+        }
+    
+        // Verifica se já existe o parâmetro type_product=Revenda
+        if (url.searchParams.get('type_product') === 'Revenda') {
+            // Remove o parâmetro se ele já estiver presente
+            url.searchParams.delete('type_product');
+            // Adiciona a classe outline de volta
+            revendaButton.classList.add('btn-outline-inverse');
+        } else {
+            // Adiciona o parâmetro type_product=Revenda
+            url.searchParams.set('type_product', 'Revenda');
+            // Remove a classe outline
+            revendaButton.classList.remove('btn-outline-inverse');
+        }
+    
+        // Recarrega a página com a nova URL
+        window.location.href = url.toString();
+    });
+    
+
     document.getElementById('clearSearch').addEventListener('click', function() {
         // Obtém a URL sem os parâmetros da query string
         const baseUrl = window.location.origin + window.location.pathname;
@@ -326,39 +371,7 @@
         window.location.reload();
     });    
 </script>
-<script>
-    /*
-    $(document).ready(function() {
-        var table = $('#simpletable').DataTable({
-                        select: true,
-                        language: {
-                            url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
-                        },
-                    });  
-        $('#applySearch').on('click', function() {
-            // Apply column search based on the values in the modal
-            table.column(0).search($('#search_code').val()).draw();
-            table.column(1).search($('#search_barcode').val()).draw();
-            table.column(2).search($('#search_description').val()).draw();
-            table.column(3).search($('#search_ncm').val()).draw();
-            table.column(4).search($('#search_cest').val()).draw();
-            table.column(5).search($('#search_cfop').val()).draw();
-            table.column(6).search($('#search_cst_icms').val()).draw();
-            table.column(7).search($('#search_icms_aliquota').val()).draw();
-            table.column(8).search($('#search_icms_aliquota_reduzida').val()).draw();
-            table.column(9).search($('#search_cbenef').val()).draw();
-            table.column(10).search($('#search_protege').val()).draw();
-            table.column(11).search($('#search_piscofins_cst').val()).draw();
-            table.column(12).search($('#search_pis_aliquota').val()).draw();
-            table.column(13).search($('#search_cofins_aliquota').val()).draw();
-            table.column(14).search($('#search_naturezareceita').val()).draw();
-            // Add more columns as needed
-    
-            $('#searchModal').modal('hide');
-        });        
-    });
-    */
-</script>
+
 {% endblock anotherjs %}
 
 

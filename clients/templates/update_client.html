@@ -69,7 +69,16 @@
                                         Produtos
                                     </a>
                                     <div class="slide"></div>
-                                </li>                                                              
+                                </li>   
+                                <li class="nav-item">
+                                    <a class="nav-link" data-toggle="tab" href="#integracao" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-history"></i>
+                                        </div>
+                                        Log Integração
+                                    </a>
+                                    <div class="slide"></div>
+                                </li>                                                                                            
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content">
@@ -285,7 +294,36 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- End Tab Lojas -->                                
+                                <!-- End Tab Lojas -->    
+                                <!-- Inicio Tab Log Integracao -->
+                                <div class="tab-pane" id="integracao" role="tabpanel">                                   
+                                    <div class="card">
+                                        <div class="card-block">                                         
+                                            <div class="dt-responsive table-responsive">
+                                                <table id="dt_log_integration" class="table table-striped table-bordered nowrap">
+                                                    <thead>
+                                                    <tr>
+                                                        <th class="text-center">Data/Hora</th>
+                                                        <th class="text-center">Resultado</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% if logs %}
+                                                            {% for log in logs %}
+                                                                <tr>
+                                                                    <td class="text-center align-middle">{{ log.created_at }}</td>
+                                                                    <td class="text-left align-middle">{{ log.result_integration|linebreaksbr }}</td>
+                                                                </tr>                                    
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                        
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Tab Integracao -->                                                             
                             </div>
                         </div>
                     </div>
@@ -410,7 +448,13 @@
                 language: {
                     url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
                 },
-            });             
+            });      
+            
+            table_integration = $('#dt_log_integration').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
+                },
+            });              
 
             // Inicializando o Select2
             $('#id_city').select2({

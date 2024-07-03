@@ -60,7 +60,13 @@ class Store(models.Model):
     
 
     def __str__(self):
-        return self.corporate_name      
+        return self.corporate_name   
+    
+class LogIntegration(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.RESTRICT)
+    result_integration = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
 
 auditlog.register(Client)
 auditlog.register(Store)

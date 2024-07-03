@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Item
-from impostos.models import IcmsAliquota, IcmsAliquotaReduzida, Protege, CBENEF, PisCofinsCst, NaturezaReceita, Cfop
+from .models import Item, ImportedItem
+from impostos.models import IcmsAliquota, IcmsAliquotaReduzida, Protege, CBENEF, PisCofinsCst, NaturezaReceita, Cfop, IcmsCst
 
 
 class ItemForm(forms.ModelForm):
@@ -121,5 +121,30 @@ class ItemForm(forms.ModelForm):
         return cleaned_data
     
 class CSVUploadForm(forms.Form):
-    csv_file = forms.FileField()    
+    csv_file = forms.FileField() 
+    
+class ImportedItemForm(forms.ModelForm):
+    type_product = forms.ChoiceField(
+        choices=[],  # Deixe as escolhas vazias inicialmente
+        widget=forms.Select,
+        required=False,
+    )
+        
+    class Meta:
+        model = ImportedItem
+        fields = ['barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst']       
+        
+    def __init__(self, *args, **kwargs):
+        super(ImportedItemForm, self).__init__(*args, **kwargs)
+        
+        # Busque as opções do campo `type_product` do model `Item`
+        TYPE_PRODUCT_CHOICES = [
+            ('', '----'),
+            ('Revenda', 'Revenda'),
+            ('Imobilizado', 'Imobilizado'),
+            ('Insumos', 'Insumos'),
+        ]
+        
+        # Preencha as opções do campo `type_product` no formulário
+        self.fields['type_product'].choices = TYPE_PRODUCT_CHOICES        
     

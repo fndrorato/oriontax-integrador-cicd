@@ -1,14 +1,20 @@
+import logging,time
+import pandas as pd
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.models import User, Group
 from erp.models import ERP
-from .models import Client, Store, Cities
+from .models import Client, Store, Cities, LogIntegration
 from .forms import ClientForm, StoreForm
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import ListView, CreateView, TemplateView, UpdateView, DeleteView, DetailView
+from items.models import Item
+from items.forms import CSVUploadForm
+from .utils import validateSysmo
+from django.db.models import F
 
 class CitySearchView(View):
     def get(self, request, *args, **kwargs):
@@ -70,6 +76,10 @@ class ClientUpdateView(UpdateView):
 
         # Adicione o form para adicionar uma nova store
         context['store_form'] = StoreForm() 
+        
+        # Obtendo o log das integrações para esse cliente
+        logs = LogIntegration.objects.filter(client_id=client_id)
+        context['logs'] = logs
         return context      
 
     def get_success_url(self):
@@ -146,4 +156,80 @@ class StoreDeleteView(View):
             return JsonResponse({'success': False, 'error': 'Store not found'}, status=404)
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)       
+
+class XLSXSimulateValidateItems(View):
+    template_name = 'simulate_validate_items.html'
+
+    def get(self, request):
+        clients = Client.objects.all()
+        context = {
+            'clients': clients,
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        start_time = time.time()
+        form = CSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            xlsx_file = request.FILES['csv_file']
+            client_id = request.POST.get('client') 
+            client = get_object_or_404(Client, id=client_id)
+            erp_name = client.erp.name  # Pega o nome do ERP associado ao cliente
+
+            try:
+                if erp_name != 'SYSMO':
+                    error_message = [f"Erro: Base não configurada para esse sistema do cliente escolhido."]
+                    self.logger.error(error_message)
+                    # return JsonResponse({'error': error_message}, status=400)
+                    return JsonResponse({
+                        'message': 'Base não configurada.',
+                        'errors': error_message,
+                        'elapsed_time': elapsed_time
+                    }, status=400) 
+                else:
+                    df = pd.read_excel(xlsx_file, dtype={
+                        'tx_codigobarras': str, 
+                        'tx_ncm': str, 
+                        'tx_cest': str, 
+                        'nr_naturezareceita': str,
+                        'tx_cbenef': str,  
+                    })                    
+                    
+            except Exception as e:
+                # self.logger.error(f"Erro ao ler o arquivo Excel: {e}")
+                return JsonResponse({'error': f"Erro ao ler o arquivo Excel: {e}"}, status=400)                    
                 
+            # Pega todos os itens relacionados a esse cliente
+            items_queryset = Item.objects.filter(client=client).values(
+                'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
+                'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
+                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 
+                naturezareceita_code=F('naturezareceita__code')
+            )
+            
+            # Converte o queryset em uma lista de dicionários
+            items_list = list(items_queryset.values())
+
+            # Cria um DataFrame a partir da lista de dicionários
+            items_df = pd.DataFrame(items_list)
+            
+            try:
+                # Chama a função de validação
+                validation_result = validateSysmo(client_id, items_df, df)
+                        
+            except Exception as e:  # Catch any unexpected exceptions
+                # self.logger.critical(f"Unexpected error: {e}", exc_info=True)  # Log with traceback
+                return JsonResponse({'error': 'Erro interno no servidor.'}, status=500)
+
+            end_time = time.time()
+            elapsed_time = round(end_time - start_time, 3)
+            
+            return JsonResponse({
+                'message': validation_result['message'],
+                'processed_rows': len(df),
+                'elapsed_time': elapsed_time
+            })
+
+        # self.logger.error(f"Form inválido: {form.errors}")
+        return JsonResponse({'errors': form.errors}, status=400)
+        

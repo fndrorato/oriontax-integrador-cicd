@@ -28,10 +28,11 @@ if (typeof jQuery === 'undefined') {
         var $table = this;
 
         var defaults = {
-            url: window.location.href,
-            inputClass: 'form-control input-sm',
+            // url: window.location.href,
+            url: null,
+            inputClass: 'form-control input-sm p-0',
             toolbarClass: 'btn-toolbar',
-            groupClass: 'btn-group btn-group-sm',
+            groupClass: 'btn-group btn-group-mini',
             dangerClass: 'danger',
             warningClass: 'warning',
             mutedClass: 'text-muted',
@@ -45,7 +46,7 @@ if (typeof jQuery === 'undefined') {
             restoreButton: true,
             buttons: {
                 edit: {
-                    class: 'btn btn-primary waves-effect waves-light',
+                    class: 'btn btn-primary btn-mini waves-effect waves-light',
                     html: '<span class="icofont icofont-ui-edit"></span>',
                     action: 'edit'
                 },
@@ -56,6 +57,7 @@ if (typeof jQuery === 'undefined') {
                 },
                 save: {
                     class: 'btn btn-sm btn-success',
+                    html: '<span class="icofont icofont-save"></span>',
                     html: 'Save'
                 },
                 restore: {
@@ -191,8 +193,8 @@ if (typeof jQuery === 'undefined') {
                         }
 
                         var toolbar = '<div class="tabledit-toolbar ' + settings.toolbarClass + '" style="text-align: left;">\n\
-                                           <div class="' + settings.groupClass + '" style="float: none;">' + editButton + deleteButton + '</div>\n\
-                                           ' + saveButton + '\n\
+                                           <div class="' + settings.groupClass + '" style="float: none;">' + editButton + saveButton + '</div>\n\
+                                           ' + deleteButton + '\n\
                                            ' + confirmButton + '\n\
                                            ' + restoreButton + '\n\
                                        </div></div>';
@@ -394,8 +396,10 @@ if (typeof jQuery === 'undefined') {
             if (result === false) {
                 return false;
             }
+            
 
             var jqXHR = $.post(settings.url, serialize, function(data, textStatus, jqXHR) {
+                
                 if (action === settings.buttons.edit.action) {
                     $lastEditedRow.removeClass(settings.dangerClass).addClass(settings.warningClass);
                     setTimeout(function() {

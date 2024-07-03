@@ -12,6 +12,13 @@ class Item(models.Model):
         ('Imobilizado', 'Imobilizado'),
         ('Insumos', 'Insumos'),
     ]
+    
+    STATUS_CHOICES = [
+        (0, 'Produto Novo'),
+        (1, 'Problemas Encontrados'),
+        (2, 'Aguardando Sincronização'),
+        (3, 'Validado'),
+    ]    
         
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
     code = models.PositiveIntegerField()
@@ -31,6 +38,8 @@ class Item(models.Model):
     naturezareceita = models.ForeignKey(NaturezaReceita, on_delete=models.SET_NULL, null=True, blank=True)
     type_product = models.CharField(max_length=20, choices=TYPE_PRODUCT_CHOICES, default='', blank=True)
     other_information = models.CharField(max_length=255, default='', null=True, blank=True)
+    status_item = models.IntegerField(choices=STATUS_CHOICES, default=3)
+    history = models.CharField(max_length=255, default='', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_pending_sync = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -47,4 +56,33 @@ class Item(models.Model):
     def __str__(self):
         return self.description
     
-auditlog.register(Item, mapping_fields={'updated_at':'Última Atualização', 'created_at':'Criado Em', 'description':'Descrição', 'barcode':'Cód. Barras',  'code':'Codigo', 'other_information':'outras informações', 'type_product':'Tipo Produto'})
+class ImportedItem(models.Model):  
+    STATUS_CHOICES = [
+        (0, 'Produto Novo'),
+        (1, 'Problemas Encontrados'),
+    ]       
+           
+    client = models.ForeignKey(Client, on_delete=models.RESTRICT)
+    code = models.PositiveIntegerField()
+    barcode = models.CharField(max_length=255, null=True, blank=True, default='')
+    description = models.CharField(max_length=255)
+    ncm = models.CharField(max_length=255)
+    cest = models.CharField(max_length=255, null=True, blank=True, default='')
+    cfop = models.PositiveIntegerField()
+    icms_cst = models.IntegerField()
+    icms_aliquota = models.IntegerField()
+    icms_aliquota_reduzida = models.IntegerField()
+    protege = models.IntegerField()
+    cbenef = models.CharField(max_length=255, null=True, blank=True, default='')
+    piscofins_cst = models.IntegerField()
+    pis_aliquota = models.FloatField()
+    cofins_aliquota = models.FloatField()
+    naturezareceita = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    status_item = models.IntegerField(choices=STATUS_CHOICES, default=1)
+    is_pending = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.description    
+    
+auditlog.register(Item, mapping_fields={'history':'Histórico', 'updated_at':'Última Atualização', 'created_at':'Criado Em', 'description':'Descrição', 'barcode':'Cód. Barras',  'code':'Codigo', 'other_information':'outras informações', 'type_product':'Tipo Produto'})

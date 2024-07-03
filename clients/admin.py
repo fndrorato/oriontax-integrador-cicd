@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Cities, Client, Store
+from .models import Cities, Client, Store, LogIntegration
 
 @admin.register(Cities)
 class CitiesAdmin(admin.ModelAdmin):
@@ -22,4 +22,11 @@ class ClientAdmin(admin.ModelAdmin):
         (None, {
             'fields': ('name', 'num_stores', 'date_contract', 'date_send', 'economic_benefit', 'erp', 'accounting', 'commercial_responsible', 'owner', 'email', 'contact', 'user', 'is_active', 'first_load_date', 'day_sent')
         }),
-    )    
+    )  
+    
+@admin.register(LogIntegration)
+class LogIntegrationAdmin(admin.ModelAdmin):
+    list_display = ('client', 'created_at')
+    search_fields = ('client__name',)  # Ajuste conforme necessário para os campos do seu modelo Client
+    list_filter = ('created_at',)
+    readonly_fields = ('created_at',)      
