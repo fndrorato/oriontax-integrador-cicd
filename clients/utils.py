@@ -34,11 +34,10 @@ def insert_new_items(client_id, df, status_id):
     client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
 
     # Converter as colunas para os tipos desejados
-    df['icms_aliquota'] = df['icms_aliquota'].astype(int)
-    df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
-    df['pis_aliquota'] = df['pis_aliquota'].astype(float)
-    df['cofins_aliquota'] = df['cofins_aliquota'].astype(float)
-
+    df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
+    df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
+    df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
+    df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)
 
     # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
@@ -69,7 +68,10 @@ def insert_new_items(client_id, df, status_id):
         ImportedItem.objects.bulk_create(new_items_list)
     except Exception as e:
         print(f'Erro ao inserir itens: {e}')
-        return {'message': f'Erro ao inserir itens: {e}', 'status': 'error'}    
+        return {'message': f'Erro ao inserir itens: {e}', 'status': 'error'} 
+
+    return {'message': 'Itens inseridos com sucesso', 'status': 'success'}
+  
 
 def validateSysmo(client_id, items_df, df):
     """
@@ -246,7 +248,15 @@ def validateSysmo(client_id, items_df, df):
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Gravando novos itens \n'   
     print(result_integration)          
-    insert_result = insert_new_items(client_id, new_items_df, 0)
+    try:
+        insert_result = insert_new_items(client_id, new_items_df, 0)
+    except Exception as e:
+        print(f"Erro ao inserir novos itens: {e}")
+        timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        result_integration += f'[{timestamp}] - Erro ao gravar os novos itens: {e} \n'
+        save_imported_logs(client_id, result_integration)        
+        return {'message': f"Erro ao inserir novos itens: {e}", 'status': 'error'}
+    
     # Filtrar colunas que não terminam com '_items_df'
     df_items_divergent = df_items_divergent[[col for col in df_items_divergent.columns if not col.endswith('_items_df')]]
     # Remover o sufixo '_df' das colunas restantes
@@ -255,7 +265,16 @@ def validateSysmo(client_id, items_df, df):
     # Agora df_items_divergent contém apenas as colunas desejadas  
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Gravando itens com divergência \n'            
-    insert_result = insert_new_items(client_id, df_items_divergent, 1)
+    
+    try:
+        insert_result = insert_new_items(client_id, df_items_divergent, 1)
+    except Exception as e:
+        print(f"Erro ao inserir itens divergentes: {e}")
+        timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        result_integration += f'[{timestamp}] - Erro ao gravar os itens divergentes: {e} \n'
+        save_imported_logs(client_id, result_integration)        
+        return {'message': f"Erro ao inserir itens divergentes: {e}", 'status': 'error'}    
+    
     print(result_integration) 
     
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
