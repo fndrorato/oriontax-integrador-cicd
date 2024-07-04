@@ -33,12 +33,15 @@ def delete_imported_items(client_id):
 def insert_new_items(client_id, df, status_id):
     client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
 
+    unique_values = df['protege'].unique()
+    print(unique_values)
+
     # Converter as colunas para os tipos desejados
     df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
     df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
     df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
     df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)
-    df['protege'] = pd.to_numeric(df['protege'], errors='coerce').fillna(0).astype(int)
+    df['protege'] = df['protege'].fillna(0).astype(int)
 
     # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
