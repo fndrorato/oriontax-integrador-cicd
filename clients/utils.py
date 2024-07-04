@@ -33,6 +33,13 @@ def delete_imported_items(client_id):
 def insert_new_items(client_id, df, status_id):
     client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
 
+    # Converter as colunas para os tipos desejados
+    df['icms_aliquota'] = df['icms_aliquota'].astype(int)
+    df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
+    df['pis_aliquota'] = df['pis_aliquota'].astype(float)
+    df['cofins_aliquota'] = df['cofins_aliquota'].astype(float)
+
+
     # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
         ImportedItem(
@@ -237,7 +244,8 @@ def validateSysmo(client_id, items_df, df):
     
     # Inserindo os itens novos na tabela de importacao
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    result_integration += f'[{timestamp}] - Gravando novos itens \n'            
+    result_integration += f'[{timestamp}] - Gravando novos itens \n'   
+    print(result_integration)          
     insert_result = insert_new_items(client_id, new_items_df, 0)
     # Filtrar colunas que não terminam com '_items_df'
     df_items_divergent = df_items_divergent[[col for col in df_items_divergent.columns if not col.endswith('_items_df')]]
@@ -248,6 +256,7 @@ def validateSysmo(client_id, items_df, df):
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Gravando itens com divergência \n'            
     insert_result = insert_new_items(client_id, df_items_divergent, 1)
+    print(result_integration) 
     
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - FIM \n'  
