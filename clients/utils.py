@@ -159,7 +159,7 @@ def validateSysmo(client_id, items_df, df):
      
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - executado função dos novos itens. Foram encontrados {len(new_items_df)} novos produtos \n'
-
+    print('8-executado função dos novos itens. Foram encontrados:', len(new_items_df))
     ################################
     # 2- Encontrar os itens divergentes
     # Remover os itens encontrados em new_items_df do dataframe original df
@@ -169,17 +169,19 @@ def validateSysmo(client_id, items_df, df):
     # Realizar a junção para verificar todos os itens e identificar divergências
     merged_df = df.merge(items_df, on='code', suffixes=('_df', '_items_df'))
     # Verificar se as colunas renomeadas existem após a junção (MOVIDO PARA DEPOIS DA JUNÇÃO)
+    print('9-Verificar se as colunas renomeadas existem após a junção (MOVIDO PARA DEPOIS DA JUNÇÃO)')
     missing_columns = []
     for col in expected_columns:
         if f"{col}_df" not in merged_df.columns or f"{col}_items_df" not in merged_df.columns:
             missing_columns.append(col)
-
+    print('10-verificando colunas ausentes')
     if missing_columns:
         timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         result_integration += f'[{timestamp}] - Colunas ausentes na importação do cliente: {missing_columns} \n'
         save_imported_logs(client_id, result_integration)
         raise ValueError(f"Colunas ausentes no DataFrame merged_df: {missing_columns}")
 
+    print('11-comparando as colunas- gerando _df e _items_df')
     # Comparar as colunas
     # Lidar com valores nulos e tipos de dados diferentes
     for col in expected_columns:
@@ -210,8 +212,8 @@ def validateSysmo(client_id, items_df, df):
     df_items_divergent = df_items_divergent[[first_column] + other_columns]
     
     # print(df_items_divergent.head())
-    df_items_divergent.to_excel('df_items_divergent.xlsx', index=False) 
-    
+    # df_items_divergent.to_excel('df_items_divergent.xlsx', index=False) 
+    print('12-montando o message')
     if len(new_items_df) > 0 and len(df_items_divergent) > 0:
         message = (f"Foram encontrados {len(new_items_df)} novos produtos "
                 f"e {len(df_items_divergent)} linhas com divergência no cadastro.")
@@ -223,7 +225,8 @@ def validateSysmo(client_id, items_df, df):
         message = "Nenhum novo produto ou divergência encontrada."  
         
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    result_integration += f'[{timestamp}] - {message} \n'    
+    result_integration += f'[{timestamp}] - {message} \n'   
+    print(result_integration) 
     #############################################
     ## 3 - GRAVANDO NA TABELA DE ITENS IMPORTADOS
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
