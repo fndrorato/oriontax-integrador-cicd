@@ -160,6 +160,8 @@ def validateSysmo(client_id, items_df, df):
     items_df['naturezareceita'] = items_df['naturezareceita'].fillna(0)
 
     print('6-Encontrando os novos produtos... ')
+    print(items_df.head())
+    print(df.head())
     ################################
     # 1- Encontrar os novos produtos
     # Realizar a junção para encontrar os itens presentes em df mas não em items_df
