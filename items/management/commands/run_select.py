@@ -110,10 +110,13 @@ if __name__ == "__main__":
 
             # Cria um DataFrame a partir da lista de dicionários
             items_df = pd.DataFrame(items_list)  
+            print(items_df.info())
             
             try:
                 # Chama a função de validação
+                print('Dentro do try')
                 validation_result = validateSysmo(client_id, items_df, df_client)
+                print('Saiu do validation do try')
                 print(json.dumps(validation_result, indent=4))
                         
             except Exception as e:  # Catch any unexpected exceptions
