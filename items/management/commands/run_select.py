@@ -1,7 +1,17 @@
 import os
+import sys
 import django
 import psycopg2
 from psycopg2 import sql
+
+# Get the absolute path to the directory containing this file (run_select.py)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Get the project root directory (three levels up from the current directory)
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+
+# Add the project root to the Python path
+sys.path.append(project_root)
 
 # Configurar o ambiente Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
