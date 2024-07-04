@@ -5,6 +5,7 @@ from items.models import ImportedItem
 from .models import Client, LogIntegration
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
+from decimal import Decimal
 
 def save_imported_logs(client_id, log_result):
     client_instance = Client.objects.get(id=client_id)
@@ -41,7 +42,9 @@ def insert_new_items(client_id, df, status_id):
     df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
     df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
     df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)
-    df['protege'] = df['protege'].fillna(0).astype(int)
+    # Converter a coluna 'protege' para objetos Decimal
+    df['protege'] = df['protege'].apply(lambda x: Decimal(x) if pd.notnull(x) and x != '' else Decimal('0.00'))
+
 
     # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
