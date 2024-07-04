@@ -1,23 +1,40 @@
+import os
+import django
 import psycopg2
 from psycopg2 import sql
 
-def connect_and_query():
+# Configurar o ambiente Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
+django.setup()
+
+from django.conf import settings
+from clients.models import Client  # Importe o modelo Client
+
+def get_clients():
+    return Client.objects.filter(
+        connection_route__isnull=False,
+        user_route__isnull=False,
+        password_route__isnull=False
+    ).exclude(
+        connection_route='',
+        user_route='',
+        password_route=''
+    )
+
+def connect_and_query(host, user, password, port, database):
     try:
-        # Conectar ao banco de dados
         connection = psycopg2.connect(
-            user="tributario",
-            password="tributario2023",
-            host="abccacu.ddns.net",
-            port="15432",
-            database="tributario"
+            user=user,
+            password=password,
+            host=host,
+            port=port,
+            database=database
         )
-        print("Conectado ao banco de dados PostgreSQL")
+        print(f"Conectado ao banco de dados PostgreSQL em {host}")
 
         try:
-            # Criar um cursor
             cursor = connection.cursor()
 
-            # Definir a consulta SQL
             query = sql.SQL("""
                 SELECT cd_sequencial, cd_produto, tx_codigobarras, tx_descricaoproduto, tx_ncm, tx_cest, nr_cfop, nr_cst_icms, vl_aliquota_integral_icms,
                 vl_aliquota_final_icms, vl_aliquota_fcp, tx_cbenef, nr_cst_pis, vl_aliquota_pis, nr_cst_cofins, vl_aliquota_cofins, nr_naturezareceita,
@@ -26,30 +43,32 @@ def connect_and_query():
                 ORDER BY cd_sequencial ASC
             """)
 
-            # Executar a consulta
             cursor.execute(query)
-
-            # Obter os resultados
             rows = cursor.fetchall()
-
-            # Imprimir o número de linhas retornadas
             print(f"Número de linhas retornadas: {len(rows)}")
 
         except Exception as query_error:
             print(f"Erro ao executar a consulta: {query_error}")
 
         finally:
-            # Fechar o cursor
             cursor.close()
 
     except Exception as connection_error:
         print(f"Erro ao conectar ao banco de dados: {connection_error}")
 
     finally:
-        # Fechar a conexão
         if connection:
             connection.close()
             print("Conexão com o banco de dados fechada")
 
 if __name__ == "__main__":
-    connect_and_query()
+    clients = get_clients()
+    for client in clients:
+        host = client.connection_route
+        user = client.user_route
+        password = client.password_route
+        port = client.port_route
+        database = client.database_route
+
+        print(f"Conectando para o cliente {client.name}")
+        connect_and_query(host, user, password, port, database)

@@ -42,6 +42,7 @@ class Client(models.Model):
     port_route = models.CharField(max_length=255, verbose_name="Porta", blank=True, null=True, default=None)
     user_route = models.CharField(max_length=255, verbose_name="Usuário para conectar", blank=True, null=True, default=None)
     password_route = models.CharField(max_length=255, verbose_name="Senha do usuário", blank=True, null=True, default=None)    
+    database_route = models.CharField(max_length=255, verbose_name="Senha do usuário", blank=True, null=True, default=None) 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user_created = models.ForeignKey(User, related_name='clients_created', on_delete=models.SET_NULL, null=True, blank=True)
