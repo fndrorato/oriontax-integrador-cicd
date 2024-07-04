@@ -20,6 +20,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
 django.setup()
 
 from django.conf import settings
+from django.db.models import F
 from clients.models import Client  # Importe o modelo Client
 from clients.utils import validateSysmo
 from items.models import Item
