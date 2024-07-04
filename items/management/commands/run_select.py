@@ -2,6 +2,7 @@ import os
 import sys
 import django
 import psycopg2
+import pandas as pd
 from psycopg2 import sql
 
 # Get the absolute path to the directory containing this file (run_select.py)
@@ -31,7 +32,7 @@ def get_clients():
         password_route=''
     )
 
-def connect_and_query(host, user, password, port, database):
+def connect_and_query(host, user, password, port, database, client_id, client_name):
     try:
         connection = psycopg2.connect(
             user=user,
@@ -55,7 +56,11 @@ def connect_and_query(host, user, password, port, database):
 
             cursor.execute(query)
             rows = cursor.fetchall()
-            print(f"Número de linhas retornadas: {len(rows)}")
+            
+            # Convert rows to a pandas DataFrame
+            df = pd.DataFrame(rows, columns=[desc[0] for desc in cursor.description])
+            print(f"Número de linhas retornadas: {len(df)}")
+            return df            
 
         except Exception as query_error:
             print(f"Erro ao executar a consulta: {query_error}")
@@ -64,7 +69,7 @@ def connect_and_query(host, user, password, port, database):
             cursor.close()
 
     except Exception as connection_error:
-        print(f"Erro ao conectar ao banco de dados: {connection_error}")
+        print(f"Erro ao conectar ao banco de dados do cliente {client_name}: {connection_error}")      
 
     finally:
         if connection:
@@ -79,6 +84,12 @@ if __name__ == "__main__":
         password = client.password_route
         port = client.port_route
         database = client.database_route
+        id = client.id
+        name = client.name
 
         print(f"Conectando para o cliente {client.name}")
-        connect_and_query(host, user, password, port, database)
+        connect_and_query(host, user, password, port, database, id, name)
+        df = connect_and_query(host, user, password, port, database, id, name)
+        if df is not None:
+            # Faça algo com o DataFrame, como salvar em um arquivo CSV
+            print('Agora necessário carregar os produtos da BASE OrionTax já validados ')        
