@@ -76,13 +76,14 @@ def validateSysmo(client_id, items_df, df):
     Returns:
         dict: Um dicionário com os resultados da validação.
     """
+    print('1-Entrou no validate')
     result_integration = ''
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Dados Recebidos para o Sistema Sysmo \n'
     
     # Eliminar as colunas indesejadas
     df = df.drop(columns=['cd_sequencial', 'tx_estadoorigem', 'tx_estadodestino', 'nr_cst_cofins'])
-
+    print('2-Colunas indesejadas do client DF')
     # Renomear as colunas
     df = df.rename(columns={
         'cd_produto': 'code',
@@ -101,6 +102,7 @@ def validateSysmo(client_id, items_df, df):
         'vl_aliquota_cofins': 'cofins_aliquota',
         'nr_naturezareceita': 'naturezareceita'
     }) 
+    print('3-Rename colunas')
     
     # Verificar se as colunas existem
     expected_columns = ['barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
@@ -114,13 +116,18 @@ def validateSysmo(client_id, items_df, df):
         'user_created_id', 'user_updated_id', 'natureza_id'
     ]
 
+    print('4-Quais colunas da lista estao no DataFrame Items_DF')
+
     # Verificar quais colunas da lista estão realmente presentes no DataFrame
     existing_columns_to_drop = [col for col in columns_to_drop if col in items_df.columns]
+
+    print('5-Remover colunas nao pertencentes')
 
     # Remover apenas as colunas que existem no DataFrame
     if existing_columns_to_drop:
         items_df = items_df.drop(columns=existing_columns_to_drop)
 
+    print('6-Rename colunas do ItemsDF')
     # Renomear as colunas
     items_df = items_df.rename(columns={
         'cfop_id': 'cfop',
@@ -136,7 +143,7 @@ def validateSysmo(client_id, items_df, df):
     # Preencher valores nulos na coluna 'naturezareceita' com 0
     items_df['naturezareceita'] = items_df['naturezareceita'].fillna(0)
 
-
+    print('6-Encontrando os novos produtos... ')
     ################################
     # 1- Encontrar os novos produtos
     # Realizar a junção para encontrar os itens presentes em df mas não em items_df
@@ -144,6 +151,7 @@ def validateSysmo(client_id, items_df, df):
     # Filtrar os itens que estão em df mas não em items_df
     new_items_df = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
     
+    print('7-Limpando os novos produtos ')
     ## limpando os dados
     new_items_df['barcode'] = new_items_df['barcode'].fillna('')  
     new_items_df['cest'] = new_items_df['cest'].fillna('') 
