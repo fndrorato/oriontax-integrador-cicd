@@ -5,6 +5,7 @@ import psycopg2
 import pandas as pd
 import json
 from psycopg2 import sql
+from datetime import datetime
 
 # Get the absolute path to the directory containing this file (run_select.py)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -21,8 +22,9 @@ django.setup()
 
 from django.conf import settings
 from django.db.models import F
+from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
-from clients.utils import validateSysmo
+from clients.utils import validateSysmo, save_imported_logs
 from items.models import Item
 
 
@@ -37,7 +39,7 @@ def get_clients():
         password_route=''
     )
 
-def connect_and_query(host, user, password, port, database, client_name):
+def connect_and_query(host, user, password, port, database, client_name, initial_log):
     try:
         connection = psycopg2.connect(
             user=user,
@@ -46,7 +48,8 @@ def connect_and_query(host, user, password, port, database, client_name):
             port=port,
             database=database
         )
-        print(f"Conectado ao banco de dados PostgreSQL em {host}")
+        
+        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão estabelecida com sucesso para o cliente {client_name}\n"
 
         try:
             cursor = connection.cursor()
@@ -64,26 +67,31 @@ def connect_and_query(host, user, password, port, database, client_name):
             
             # Convert rows to a pandas DataFrame
             df = pd.DataFrame(rows, columns=[desc[0] for desc in cursor.description])
-            print(df.info())
-            print(f"Número de linhas retornadas: {len(df)}")
-            return df            
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Consulta realizada com sucesso para o cliente {client_name}\n"
+            return df, initial_log    
 
         except Exception as query_error:
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao executar a consulta: {query_error}\n"
             print(f"Erro ao executar a consulta: {query_error}")
+            return None, initial_log
 
         finally:
             cursor.close()
 
     except Exception as connection_error:
-        print(f"Erro ao conectar ao banco de dados do cliente {client_name}: {connection_error}")      
+        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao banco de dados do cliente {client_name}: {connection_error}\n"
+        print(f"Erro ao conectar ao banco de dados do cliente {client_name}: {connection_error}")
+        return None, initial_log
 
     finally:
         if connection:
             connection.close()
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão com o banco de dados fechada para o cliente {client_name}\n"
             print("Conexão com o banco de dados fechada")
 
 if __name__ == "__main__":
     clients = get_clients()
+    initial_log = ''
     for client in clients:
         host = client.connection_route
         user = client.user_route
@@ -93,31 +101,39 @@ if __name__ == "__main__":
         client_id = client.id
         client_name = client.name
 
+        timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        initial_log += f'[{timestamp}] - Conectando para o cliente {client.name}... \n'        
+
         print(f"Conectando para o cliente {client.name}")
-        df_client = connect_and_query(host, user, password, port, database, client_name)
-        if df_client is not None:
-            print('Agora necessário carregar os produtos da BASE OrionTax já validados ')        
+        try:
+            df_client, initial_log = connect_and_query(host, user, password, port, database, client_name)
+        except Exception as e:  # Catch any unexpected exceptions
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client_name}: {e}\n"
+            print(f"Erro ao validar as comparações do cliente {client_name}: {e}") 
+            save_imported_logs(client_id, initial_log)            
+        
+        if df_client is None:
+            save_imported_logs(client_id, initial_log)
+        else:
             # Pega todos os itens relacionados a esse cliente
             items_queryset = Item.objects.filter(client=client).values(
                 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
                 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 
                 naturezareceita_code=F('naturezareceita__code')
-            )
-            print('Gerou o items queryset')            
+            )        
             # Converte o queryset em uma lista de dicionários
             items_list = list(items_queryset.values())
 
             # Cria um DataFrame a partir da lista de dicionários
             items_df = pd.DataFrame(items_list)  
-            print(items_df.info())
             
             try:
                 # Chama a função de validação
-                print('Dentro do try')
-                validation_result = validateSysmo(client_id, items_df, df_client)
-                print(json.dumps(validation_result, indent=4))
+                validation_result = validateSysmo(client_id, items_df, df_client, initial_log)
                         
             except Exception as e:  # Catch any unexpected exceptions
-                # self.logger.critical(f"Unexpected error: {e}", exc_info=True)  # Log with traceback
+                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client_name}: {e}\n"
+                save_imported_logs(client_id, initial_log)
                 print(f"Erro ao validar as comparações do cliente {client_name}: {e}")        
+                       

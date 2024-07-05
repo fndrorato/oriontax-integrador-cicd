@@ -41,8 +41,8 @@ def insert_new_items(client_id, df, status_id):
     # df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)
     # Converter a coluna 'protege' para objetos Decimal
     # df['protege'] = df['protege'].apply(lambda x: Decimal(x) if pd.notnull(x) and x != '' else Decimal('0.00'))
-    unique_values = df['protege'].unique()
-    print(unique_values)
+    # unique_values = df['protege'].unique()
+    # print(unique_values)
 
     # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
@@ -78,7 +78,7 @@ def insert_new_items(client_id, df, status_id):
     return {'message': 'Itens inseridos com sucesso', 'status': 'success'}
   
 
-def validateSysmo(client_id, items_df, df):
+def validateSysmo(client_id, items_df, df, initial_log=None):
     """
     Função para validar dados entre items_df e df para um cliente específico.
 
@@ -91,7 +91,11 @@ def validateSysmo(client_id, items_df, df):
         dict: Um dicionário com os resultados da validação.
     """
     print('1-Entrou no validate')
-    result_integration = ''
+    if initial_log is None:
+        result_integration = ''
+    else: 
+        result_integration = initial_log
+        
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Dados Recebidos para o Sistema Sysmo \n'
     
