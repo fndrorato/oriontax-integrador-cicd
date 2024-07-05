@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
         print(f"Conectando para o cliente {client.name}")
         try:
-            df_client, initial_log = connect_and_query(host, user, password, port, database, client_name)
+            df_client, initial_log = connect_and_query(host, user, password, port, database, client_name, initial_log)
         except Exception as e:  # Catch any unexpected exceptions
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client_name}: {e}\n"
             print(f"Erro ao validar as comparações do cliente {client_name}: {e}") 
