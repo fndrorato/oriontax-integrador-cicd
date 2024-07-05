@@ -116,8 +116,10 @@ def validateSysmo(client_id, items_df, df):
         'nr_naturezareceita': 'naturezareceita'
     }) 
     print('3-Rename colunas')
+    df['protege'] = df['protege'].apply(lambda x: int(x))
     unique_values = df['protege'].unique()
     print(unique_values)
+
     
     # Verificar se as colunas existem
     expected_columns = ['barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
@@ -159,8 +161,10 @@ def validateSysmo(client_id, items_df, df):
     items_df['naturezareceita'] = items_df['naturezareceita'].fillna(0)
 
     print('6-Encontrando os novos produtos... ')
-    print(items_df.head())
-    print(df.head())
+    # print(items_df.head())
+    # print(df.head())
+    print(df.head(2).transpose())
+    print(items_df.head(2).transpose())    
     ################################
     # 1- Encontrar os novos produtos
     # Realizar a junção para encontrar os itens presentes em df mas não em items_df
@@ -272,7 +276,8 @@ def validateSysmo(client_id, items_df, df):
 
     # Agora df_items_divergent contém apenas as colunas desejadas  
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    result_integration += f'[{timestamp}] - Gravando itens com divergência \n'            
+    result_integration += f'[{timestamp}] - Gravando itens com divergência \n' 
+    df_items_divergent['protege'] = df_items_divergent['protege'].apply(lambda x: int(x))           
     
     try:
         insert_result = insert_new_items(client_id, df_items_divergent, 1)
