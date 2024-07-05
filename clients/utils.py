@@ -35,13 +35,14 @@ def insert_new_items(client_id, df, status_id):
     client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
 
     # Converter as colunas para os tipos desejados
-    df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
-    df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
-    df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
-    df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)
+    # df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
+    # df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
+    # df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
+    # df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)
     # Converter a coluna 'protege' para objetos Decimal
     # df['protege'] = df['protege'].apply(lambda x: Decimal(x) if pd.notnull(x) and x != '' else Decimal('0.00'))
-
+    unique_values = df['protege'].unique()
+    print(unique_values)
 
     # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
@@ -159,6 +160,14 @@ def validateSysmo(client_id, items_df, df):
     ## TRATANDO OS DADOS DA BASE
     # Preencher valores nulos na coluna 'naturezareceita' com 0
     items_df['naturezareceita'] = items_df['naturezareceita'].fillna(0)
+    df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
+    df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
+    df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
+    df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)    
+    # Preenchendo com 0 a esquerda para o código do piscofins cst
+    df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
+    # Tratar valores None na coluna 'cbenef'
+    df['cbenef'] = df['cbenef'].fillna('')    
 
     print('6-Encontrando os novos produtos... ')
     # print(items_df.head())
@@ -185,8 +194,7 @@ def validateSysmo(client_id, items_df, df):
     # 2- Encontrar os itens divergentes
     # Remover os itens encontrados em new_items_df do dataframe original df
     df = df[df['code'].isin(new_items_df['code']) == False]
-    # Preenchendo com 0 a esquerda para o código do piscofins cst
-    df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
+    
     # Realizar a junção para verificar todos os itens e identificar divergências
     merged_df = df.merge(items_df, on='code', suffixes=('_df', '_items_df'))
     # Verificar se as colunas renomeadas existem após a junção (MOVIDO PARA DEPOIS DA JUNÇÃO)
@@ -277,7 +285,7 @@ def validateSysmo(client_id, items_df, df):
     # Agora df_items_divergent contém apenas as colunas desejadas  
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Gravando itens com divergência \n' 
-    df_items_divergent['protege'] = df_items_divergent['protege'].apply(lambda x: int(x))           
+    # df_items_divergent['protege'] = df_items_divergent['protege'].apply(lambda x: int(x))           
     
     try:
         insert_result = insert_new_items(client_id, df_items_divergent, 1)
