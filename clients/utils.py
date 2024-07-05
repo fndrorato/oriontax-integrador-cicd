@@ -34,16 +34,13 @@ def delete_imported_items(client_id):
 def insert_new_items(client_id, df, status_id):
     client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
 
-    unique_values = df['protege'].unique()
-    print(unique_values)
-
     # Converter as colunas para os tipos desejados
     df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
     df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
     df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
     df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)
     # Converter a coluna 'protege' para objetos Decimal
-    df['protege'] = df['protege'].apply(lambda x: Decimal(x) if pd.notnull(x) and x != '' else Decimal('0.00'))
+    # df['protege'] = df['protege'].apply(lambda x: Decimal(x) if pd.notnull(x) and x != '' else Decimal('0.00'))
 
 
     # Crie uma lista de instâncias do modelo ImportedItem
@@ -119,6 +116,8 @@ def validateSysmo(client_id, items_df, df):
         'nr_naturezareceita': 'naturezareceita'
     }) 
     print('3-Rename colunas')
+    unique_values = df['protege'].unique()
+    print(unique_values)
     
     # Verificar se as colunas existem
     expected_columns = ['barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
