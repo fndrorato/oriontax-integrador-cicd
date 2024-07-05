@@ -50,7 +50,7 @@
             <div class="card-header">
                 <h5>Lista de Produtos Novos ou com Divergências: {{ client_name }} </h5>
 
-                <a href="{% url 'items_upload' client_id=client.id %}" type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                {% comment %} <a href="{% url 'items_upload' client_id=client.id %}" type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-upload-alt m-r-5"></i> 
                     Importar Produtos
                 </a>
@@ -62,7 +62,7 @@
                 
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
                     <i class="icofont icofont-filter"></i>
-                </button> 
+                </button>  {% endcomment %}
                                                                    
                 <span>Lista dos produtos cadastrados do cliente: {{ client_name }}</span>
 
