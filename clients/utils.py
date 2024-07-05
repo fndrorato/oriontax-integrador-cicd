@@ -167,7 +167,7 @@ def validateSysmo(client_id, items_df, df):
     # Preenchendo com 0 a esquerda para o código do piscofins cst
     df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
     # Tratar valores None na coluna 'cbenef'
-    df['cbenef'] = df['cbenef'].fillna('')    
+    items_df['cbenef'] = items_df['cbenef'].fillna('')    
 
     print('6-Encontrando os novos produtos... ')
     # print(items_df.head())
@@ -255,7 +255,6 @@ def validateSysmo(client_id, items_df, df):
         
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - {message} \n'   
-    print(result_integration) 
     #############################################
     ## 3 - GRAVANDO NA TABELA DE ITENS IMPORTADOS
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
@@ -264,10 +263,10 @@ def validateSysmo(client_id, items_df, df):
     if delete_result and delete_result.get('status') == 'error':
         return delete_result
     
+    print('13-inserindo os novos itens')
     # Inserindo os itens novos na tabela de importacao
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    result_integration += f'[{timestamp}] - Gravando novos itens \n'   
-    print(result_integration)          
+    result_integration += f'[{timestamp}] - Gravando novos itens \n'            
     try:
         insert_result = insert_new_items(client_id, new_items_df, 0)
     except Exception as e:
@@ -287,6 +286,7 @@ def validateSysmo(client_id, items_df, df):
     result_integration += f'[{timestamp}] - Gravando itens com divergência \n' 
     # df_items_divergent['protege'] = df_items_divergent['protege'].apply(lambda x: int(x))           
     
+    print('14-inserindo os itens com divergencia')
     try:
         insert_result = insert_new_items(client_id, df_items_divergent, 1)
     except Exception as e:
