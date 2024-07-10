@@ -103,7 +103,11 @@
                                 {% for client_info in clients %}
                                     <tr>
                                         <th scope="row">{{ forloop.counter }}</th>
-                                        <td>{{ client_info.client.name }}</td>
+                                        <td>
+                                            <a href="{% url 'client_update' client_info.client.pk %}">
+                                                {{ client_info.client.name }}
+                                            </a>
+                                        </td>
                                         <td>{{ client_info.client.user.get_full_name }}</td>
                                         <td class="text-center">{{ client_info.store_count }}</td>
                                         <td class="text-center">{{ client_info.item_count|intcomma }}</td>
