@@ -11,5 +11,6 @@ urlpatterns = [
     path('clientes/<int:client_id>/store/detail/<int:pk>/', views.StoreDetailView.as_view(), name='store_detail'),
     path('clientes/<int:client_id>/store/delete/<int:pk>/', views.StoreDeleteView.as_view(), name='store_delete'),
     
-    path('clientes/validador-integracao/', views.XLSXSimulateValidateItems.as_view(), name='validate_simulate')
+    path('clientes/validador-integracao/', views.XLSXSimulateValidateItems.as_view(), name='validate_simulate'),
+    path('clientes/executar-sincronizacao/<int:client_id>/', views.RunSelectView.as_view(), name='run_select'),    
 ]

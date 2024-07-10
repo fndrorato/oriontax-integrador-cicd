@@ -71,6 +71,15 @@
                                     <div class="slide"></div>
                                 </li>   
                                 <li class="nav-item">
+                                    <a class="nav-link" data-toggle="tab" href="#sincronizacao" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-ui-settings"></i>
+                                        </div>
+                                        Sincronização Manual
+                                    </a>
+                                    <div class="slide"></div>
+                                </li>                                 
+                                <li class="nav-item">
                                     <a class="nav-link" data-toggle="tab" href="#integracao" role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-history"></i>
@@ -294,7 +303,74 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- End Tab Lojas -->    
+                                <!-- End Tab Lojas -->  
+                                <!-- Inicio Tab Sincronização -->
+                                <div class="tab-pane" id="sincronizacao" role="tabpanel">                                   
+                                    <div class="card">
+                                        <div class="card-block">                                         
+                                            <div class="row justify-content-center text-center p-20">                                               
+                                                <div class="col-md-4">
+                                                    <div class="sub-title m-b-0">Buscar dados no cliente:</div>
+                                                </div>
+                                                <div class="col-md-3 col-sm-6">
+                                                    <div id="loader-load-data" class="preloader3 loader-block" style="
+                                                        position: absolute;
+                                                        top: 0;
+                                                        left: 0;
+                                                        z-index: 9900;
+                                                        width: 100%;
+                                                        height: 100%;
+                                                        justify-content: center;
+                                                        background-color: rgba(255, 255, 255, 0.8);
+                                                        margin: 0 !important;
+                                                        display: none;
+                                                    ">
+                                                        <div class="circ1 loader-primary"></div>
+                                                        <div class="circ2 loader-primary"></div>
+                                                        <div class="circ3 loader-primary"></div>
+                                                        <div class="circ4 loader-primary"></div>
+                                                    </div> 
+                                                    <button class="btn btn-inverse w-100" 
+                                                        style="position: relative; z-index: 1;"
+                                                        onclick="runSelect({{ client.id }})">
+                                                            <i class="icofont icofont-exchange"></i>
+                                                            recuperar dados no cliente
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="row justify-content-center text-center align-items-center p-20 " style="background-color: rgba(0, 0, 0, .05);">
+                                                <div class="col-md-4">
+                                                    <div class="sub-title m-b-0">Sincronizar dados com o cliente:</div>
+                                                </div>
+                                                <div class="col-md-3 col-sm-6">
+                                                    <div id="loader-sent-data" class="preloader3 loader-block" style="
+                                                        position: absolute;
+                                                        top: 0;
+                                                        left: 0;
+                                                        z-index: 9900;
+                                                        width: 100%;
+                                                        height: 100%;
+                                                        justify-content: center;
+                                                        background-color: rgba(255, 255, 255, 0.8);
+                                                        margin: 0 !important;
+                                                        display: none;
+                                                    ">
+                                                        <div class="circ1 loader-primary"></div>
+                                                        <div class="circ2 loader-primary"></div>
+                                                        <div class="circ3 loader-primary"></div>
+                                                        <div class="circ4 loader-primary"></div>
+                                                    </div> 
+                                                    <button class="btn btn-inverse w-100" style="position: relative; z-index: 1;">
+                                                        <i class="icofont icofont-ui-rotation"></i>
+                                                        enviar dados para o cliente
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Tab Integracao -->                                    
                                 <!-- Inicio Tab Log Integracao -->
                                 <div class="tab-pane" id="integracao" role="tabpanel">                                   
                                     <div class="card">
@@ -742,6 +818,30 @@
 
             // Refresh the page
             location.reload();
+        }   
+        
+        function runSelect(clientId) {
+            $('#loader-load-data').show();
+            fetch(`/clientes/executar-sincronizacao/${clientId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    swal(
+                        'Sucesso!',
+                        'Importação dos dados da loja foi executado.',
+                        'success'
+                    );
+                    $('#loader-load-data').hide();
+                } else {
+                    swal(
+                        'Erro!',
+                        'Ocorreu um erro ao importar dados do cliente.',
+                        'error'
+                    );                    
+                    console.log('Error: ' + data.message);
+                    $('#loader-load-data').hide();
+                }
+            });
         }        
              
       </script>  

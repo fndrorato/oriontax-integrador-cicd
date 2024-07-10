@@ -2,6 +2,7 @@ import logging,time
 import pandas as pd
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.core.management import call_command
 from django.contrib.auth.models import User, Group
 from erp.models import ERP
 from .models import Client, Store, Cities, LogIntegration
@@ -232,4 +233,13 @@ class XLSXSimulateValidateItems(View):
 
         # self.logger.error(f"Form inválido: {form.errors}")
         return JsonResponse({'errors': form.errors}, status=400)
-        
+
+class RunSelectView(View):
+    def get(self, request, client_id):
+        client = get_object_or_404(Client, id=client_id)
+        try:
+            call_command('run_select_command', client_id=client.id)
+            return JsonResponse({'status': 'success', 'message': 'Command executed successfully'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})   
+             
