@@ -376,19 +376,22 @@
                                     <div class="card">
                                         <div class="card-block">                                         
                                             <div class="dt-responsive table-responsive">
-                                                <table id="dt_log_integration" class="table table-striped table-bordered nowrap">
+                                                <table id="dt_log_integration" class="table table-striped table-bordered nowrap" style="table-layout: fixed; width: 100%;">
                                                     <thead>
-                                                    <tr>
-                                                        <th class="text-center">Data/Hora</th>
-                                                        <th class="text-center">Resultado</th>
-                                                    </tr>
+                                                        <tr>
+                                                            <th class="text-center">#</th>
+                                                            <th class="text-center">Data/Hora</th>
+                                                            <th class="text-center" style="width: 90% !important;">Resultado</th>
+                                                        </tr>
                                                     </thead>
                                                     <tbody>
                                                         {% if logs %}
                                                             {% for log in logs %}
                                                                 <tr>
-                                                                    <td class="text-center align-middle">{{ log.created_at }}</td>
-                                                                    <td class="text-left align-middle">{{ log.result_integration|linebreaksbr }}</td>
+                                                                    
+                                                                    <td class="text-center align-middle">{{ forloop.counter }}</td>
+                                                                    <td class="text-center align-middle" >{{ log.created_at }}</td>
+                                                                    <td class="text-left align-middle" style="white-space: break-spaces;">{{ log.result_integration|linebreaksbr }}</td>
                                                                 </tr>                                    
                                                             {% endfor %}
                                                         {% endif %}
@@ -526,12 +529,19 @@
                 },
             });      
             
-            table_integration = $('#dt_log_integration').DataTable({
+            var table_integration = $('#dt_log_integration').DataTable({
                 language: {
                     url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
                 },
-                order: [[0, 'desc']]
-            });              
+                order: [[0, 'desc']],
+                columnDefs: [
+                    { targets: 0, width: '10%', type: 'num' },  // Define a largura e o tipo da primeira coluna (contador)
+                    { targets: 1, width: '15%' , orderable: false}, // Aplica a largura de 10% à segunda coluna (Data/Hora)
+                    { targets: 2, width: '73%' , orderable: false}  // Aplica a largura de 85% à terceira coluna (Resultado)
+                ]              
+            });    
+            
+            table_integration.draw();
 
             // Inicializando o Select2
             $('#id_city').select2({

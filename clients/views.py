@@ -1,8 +1,11 @@
 import logging,time
 import pandas as pd
+import subprocess  # Importar subprocess para executar o script Python
+import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.core.management import call_command
+from django.conf import settings
 from django.contrib.auth.models import User, Group
 from erp.models import ERP
 from .models import Client, Store, Cities, LogIntegration
@@ -236,10 +239,20 @@ class XLSXSimulateValidateItems(View):
 
 class RunSelectView(View):
     def get(self, request, client_id):
+        print(f"Received client_id: {client_id}")
         client = get_object_or_404(Client, id=client_id)
         try:
-            call_command('run_select_command', client_id=client.id)
-            return JsonResponse({'status': 'success', 'message': 'Command executed successfully'})
+            # Obter o caminho completo para o script run_select.py
+            script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', 'run_select.py')
+
+            # Executar o script como um subprocesso
+            result = subprocess.run(['python', script_path, '--client_id', str(client_id)])
+
+            if result.returncode == 0:  # Código de saída 0 indica sucesso
+                return JsonResponse({'status': 'success', 'message': 'Script executed successfully'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Error executing script'})
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})   
+            print(f"Error: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': str(e)})
              

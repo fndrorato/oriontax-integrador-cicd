@@ -90,7 +90,18 @@ def connect_and_query(host, user, password, port, database, client_name, initial
             print("Conexão com o banco de dados fechada")
 
 if __name__ == "__main__":
-    clients = get_clients()
+    import argparse  # Import argparse for command-line arguments
+
+    parser = argparse.ArgumentParser(description='Process data for a specific client.')
+    parser.add_argument('--client_id', type=int, help='The ID of the client to process')
+    args = parser.parse_args()
+
+    if args.client_id:
+        clients = Client.objects.filter(pk=args.client_id)  # Filter by client_id
+    else:
+        clients = get_clients()
+       
+    # clients = get_clients()
     initial_log = ''
     for client in clients:
         host = client.connection_route
@@ -108,12 +119,17 @@ if __name__ == "__main__":
         try:
             df_client, initial_log = connect_and_query(host, user, password, port, database, client_name, initial_log)
         except Exception as e:  # Catch any unexpected exceptions
-            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client_name}: {e}\n"
-            print(f"Erro ao validar as comparações do cliente {client_name}: {e}") 
-            save_imported_logs(client_id, initial_log)            
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
+            print(f"Erro ao conectar ao cliente {client_name}: {e}") 
+            save_imported_logs(client_id, initial_log) 
+            if args.client_id:
+                sys.exit(1)  # Sair com código de erro 1 
+                    
         
         if df_client is None:
             save_imported_logs(client_id, initial_log)
+            if args.client_id:
+                sys.exit(1)  # Sair com código de erro 1             
         else:
             # Pega todos os itens relacionados a esse cliente
             items_queryset = Item.objects.filter(client=client).values(
@@ -135,5 +151,7 @@ if __name__ == "__main__":
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client_name}: {e}\n"
                 save_imported_logs(client_id, initial_log)
-                print(f"Erro ao validar as comparações do cliente {client_name}: {e}")        
+                print(f"Erro ao validar as comparações do cliente {client_name}: {e}")  
+                if args.client_id:
+                    sys.exit(1)  # Sair com código de erro 1                       
                        
