@@ -246,7 +246,7 @@ class RunSelectView(View):
             script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', 'run_select.py')
 
             # Executar o script como um subprocesso
-            result = subprocess.run(['python3', script_path, '--client_id', str(client_id)])
+            result = subprocess.run(['python', script_path, '--client_id', str(client_id)])
 
             if result.returncode == 0:  # Código de saída 0 indica sucesso
                 return JsonResponse({'status': 'success', 'message': 'Script executed successfully'})
