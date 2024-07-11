@@ -60,16 +60,7 @@
                                         Lojas
                                     </a>
                                     <div class="slide"></div>
-                                </li> 
-                                <li class="nav-item">
-                                    <a href="{% url 'item_list' client_id=client.pk %}" class="nav-link">
-                                        <div class="f-20">
-                                            <i class="icofont icofont-cart-alt"></i>
-                                        </div>
-                                        Produtos
-                                    </a>
-                                    <div class="slide"></div>
-                                </li>   
+                                </li>  
                                 <li class="nav-item">
                                     <a class="nav-link" data-toggle="tab" href="#sincronizacao" role="tab">
                                         <div class="f-20">
@@ -80,14 +71,23 @@
                                     <div class="slide"></div>
                                 </li>                                 
                                 <li class="nav-item">
-                                    <a class="nav-link" data-toggle="tab" href="#integracao" role="tab">
+                                    <a class="nav-link" data-toggle="tab" href="#tab_log_integracao" role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-history"></i>
                                         </div>
                                         Log Integração
                                     </a>
                                     <div class="slide"></div>
-                                </li>                                                                                            
+                                </li>   
+                                <li class="nav-item">
+                                    <a href="{% url 'item_list' client_id=client.pk %}" class="nav-link">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-cart-alt"></i>
+                                        </div>
+                                        Produtos
+                                    </a>
+                                    <div class="slide"></div>
+                                </li>                                                                                                                           
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content">
@@ -256,7 +256,7 @@
                                         </div>
                                     </form>
                                 </div>
-                                <!-- End Tab Dados Usuario -->
+                                <!-- End Tab Dados Cliente -->
                                 <!-- Inicio Tab Lojas -->
                                 <div class="tab-pane" id="stores" role="tabpanel">                                   
                                     <div class="card">
@@ -306,8 +306,8 @@
                                 <!-- End Tab Lojas -->  
                                 <!-- Inicio Tab Sincronização -->
                                 <div class="tab-pane" id="sincronizacao" role="tabpanel">                                   
-                                    <div class="card">
-                                        <div class="card-block">                                         
+                                    <div class="card" id="content-sincronizacao">
+                                        <div class="card-block">                                                                                    
                                             <div class="row justify-content-center text-center align-items-center p-20">                                               
                                                 <div class="col-md-4">
                                                     <div class="sub-title m-b-0">Buscar dados no cliente:</div>
@@ -366,14 +366,14 @@
                                                     </button>
                                                 </div>
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
-                                <!-- End Tab Integracao -->                                    
+                                <!-- End Tab Integracao --> 
+                                                                                                   
                                 <!-- Inicio Tab Log Integracao -->
-                                <div class="tab-pane" id="integracao" role="tabpanel">                                   
-                                    <div class="card">
+                                <div class="tab-pane" id="tab_log_integracao" role="tabpanel">                                   
+                                    <div class="card" id="content-log-integracao">
                                         <div class="card-block">                                         
                                             <div class="dt-responsive table-responsive">
                                                 <table id="dt_log_integration" class="table table-striped table-bordered nowrap" style="table-layout: fixed; width: 100%;">
@@ -381,7 +381,7 @@
                                                         <tr>
                                                             <th class="text-center">#</th>
                                                             <th class="text-center">Data/Hora</th>
-                                                            <th class="text-center" style="width: 90% !important;">Resultado</th>
+                                                            <th class="text-center" style="width: 75% !important;">Resultado</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -398,9 +398,9 @@
                                                         
                                                     </tbody>
                                                 </table>
-                                            </div>
+                                            </div> 
                                         </div>
-                                    </div>
+                                    </div> 
                                 </div>
                                 <!-- End Tab Integracao -->                                                             
                             </div>
@@ -518,8 +518,27 @@
 
     <script>
         var table_stores;
+        var table_integration;
 
         $(document).ready(function() {
+            // Event listener para mudança de tab
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var targetTab = $(e.target).attr("href");
+                
+                // Limpa o conteúdo das outras tabs
+                // $('.tab-pane').not(targetTab).empty();
+
+                if (targetTab === '#sincronizacao') {
+                    $("#content-sincronizacao").show()
+                    $("#content-log-integracao").hide()
+                } else if (targetTab === '#tab_log_integracao') {
+                    // Adicionar lógica para carregar o conteúdo do Log de Integração
+                    $("#content-sincronizacao").hide()
+                    $("#content-log-integracao").show()
+                }
+                
+            });              
+
             $("#btn-up-store").hide();
             $(".cnpj").inputmask({ mask: "99.999.999/9999-99"});
 
@@ -529,7 +548,7 @@
                 },
             });      
             
-            var table_integration = $('#dt_log_integration').DataTable({
+            table_integration = $('#dt_log_integration').DataTable({
                 language: {
                     url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
                 },
@@ -539,7 +558,8 @@
                     { targets: 1, width: '15%' , orderable: false}, // Aplica a largura de 10% à segunda coluna (Data/Hora)
                     { targets: 2, width: '73%' , orderable: false}  // Aplica a largura de 85% à terceira coluna (Resultado)
                 ]              
-            });    
+            });  
+             
             
             table_integration.draw();
 
@@ -810,7 +830,7 @@
                 }
             });
         } 
-        
+/*
         document.addEventListener("DOMContentLoaded", function() {
             // Restore the active tab if it was saved in localStorage
             var activeTab = localStorage.getItem('activeTab');
@@ -829,6 +849,7 @@
             // Refresh the page
             location.reload();
         }   
+*/
         
         function runSelect(clientId) {
             $('#loader-load-data').show();
