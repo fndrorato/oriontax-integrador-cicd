@@ -381,7 +381,7 @@
                                                         <tr>
                                                             <th class="text-center">#</th>
                                                             <th class="text-center">Data/Hora</th>
-                                                            <th class="text-center" style="width: 75% !important;">Resultado</th>
+                                                            <th class="text-center" style="width: 73% !important;">Resultado</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -535,6 +535,9 @@
                     // Adicionar lógica para carregar o conteúdo do Log de Integração
                     $("#content-sincronizacao").hide()
                     $("#content-log-integracao").show()
+                } else {
+                    $("#content-sincronizacao").hide()
+                    $("#content-log-integracao").hide()
                 }
                 
             });              
@@ -830,7 +833,7 @@
                 }
             });
         } 
-/*
+
         document.addEventListener("DOMContentLoaded", function() {
             // Restore the active tab if it was saved in localStorage
             var activeTab = localStorage.getItem('activeTab');
@@ -849,7 +852,7 @@
             // Refresh the page
             location.reload();
         }   
-*/
+
         
         function runSelect(clientId) {
             $('#loader-load-data').show();
