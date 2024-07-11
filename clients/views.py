@@ -1,5 +1,6 @@
 import logging,time
 import pandas as pd
+import sys
 import subprocess  # Importar subprocess para executar o script Python
 import os
 from django.shortcuts import render, redirect, get_object_or_404
@@ -244,9 +245,13 @@ class RunSelectView(View):
         try:
             # Obter o caminho completo para o script run_select.py
             script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', 'run_select.py')
-
+            
+            # Obter o caminho do interpretador Python atual
+            python_executable = sys.executable
+            
             # Executar o script como um subprocesso
-            result = subprocess.run(['python', script_path, '--client_id', str(client_id)])
+            # result = subprocess.run(['python', script_path, '--client_id', str(client_id)])
+            result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
 
             if result.returncode == 0:  # Código de saída 0 indica sucesso
                 return JsonResponse({'status': 'success', 'message': 'Script executed successfully'})
