@@ -16,7 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db import transaction, connection
-from django.db.models import Value, CharField
+from django.db.models import Value, CharField, OuterRef,  Subquery
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db.utils import DataError
@@ -40,7 +40,6 @@ from openpyxl.utils import get_column_letter
 from auditlog.models import LogEntry
 from auditlog.registry import auditlog
 from app.utils import get_auditlog_history
-
 
 ACTION_MAPPING = {
     LogEntry.Action.CREATE: 'Criação',
@@ -127,23 +126,92 @@ def export_items_to_excel(request, client_id, table):
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
             'cofins_aliquota', 'naturezareceita'
         )
+    elif table == 'divergent':
+        # Queryset de itens importados
+        imported_items_queryset = ImportedItem.objects.filter(
+            client=client, status_item=1, is_pending=True
+        ).annotate(
+            origem=Value('Integração', output_field=CharField())
+        ).values(
+            'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
+            'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
+            'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
+            'cofins_aliquota', 'naturezareceita'
+        )
+
+        # Subquery para obter os dados da base de itens correspondentes
+        items_subquery = Item.objects.filter(
+            client=client, code=OuterRef('code')
+        ).annotate(
+            piscofins_cst_code=F('piscofins_cst__code')
+        ).values(
+            'barcode', 'description', 'ncm', 'cest', 'cfop__cfop', 'icms_cst__code',
+            'icms_aliquota__code', 'icms_aliquota_reduzida', 'protege__code',
+            'cbenef__code', 'piscofins_cst_code', 'pis_aliquota', 'cofins_aliquota',
+            'naturezareceita__code'
+        )
+
+        # Combinar os querysets usando um left outer join
+        combined_queryset = imported_items_queryset.annotate(
+            barcode_base=Subquery(items_subquery.values('barcode')[:1]),
+            description_base=Subquery(items_subquery.values('description')[:1]),
+            ncm_base=Subquery(items_subquery.values('ncm')[:1]),
+            cest_base=Subquery(items_subquery.values('cest')[:1]),
+            cfop_base=Subquery(items_subquery.values('cfop__cfop')[:1]),
+            icms_cst_base=Subquery(items_subquery.values('icms_cst__code')[:1]),
+            icms_aliquota_base=Subquery(items_subquery.values('icms_aliquota__code')[:1]),
+            icms_aliquota_reduzida_base=Subquery(items_subquery.values('icms_aliquota_reduzida')[:1]),
+            protege_base=Subquery(items_subquery.values('protege__code')[:1]),
+            cbenef_base=Subquery(items_subquery.values('cbenef__code')[:1]),
+            piscofins_cst_base=Subquery(items_subquery.values('piscofins_cst_code')[:1]),
+            pis_aliquota_base=Subquery(items_subquery.values('pis_aliquota')[:1]),
+            cofins_aliquota_base=Subquery(items_subquery.values('cofins_aliquota')[:1]),
+            naturezareceita_base=Subquery(items_subquery.values('naturezareceita__code')[:1]),        
+        ).order_by('description', 'origem')
+
+        # Converter para DataFrame (se necessário)
+        df = pd.DataFrame(list(combined_queryset))
+
+        # Ordem desejada das colunas
+        desired_order = [
+            'client__name', 'code', 'barcode_base', 'barcode', 
+            'description_base', 'description', 'ncm_base', 'ncm',
+            'cest_base', 'cest', 'cfop_base', 'cfop', 'icms_cst_base', 'icms_cst',
+            'icms_aliquota_base', 'icms_aliquota', 'icms_aliquota_reduzida_base', 'icms_aliquota_reduzida', 
+            'protege_base', 'protege', 'cbenef_base', 'cbenef', 'piscofins_cst_base', 'piscofins_cst', 
+            'pis_aliquota_base', 'pis_aliquota', 'cofins_aliquota_base', 'cofins_aliquota',
+            'naturezareceita_base', 'naturezareceita'
+        ]
+
+        # Reorganizando as colunas
+        df = df.reindex(columns=desired_order)
+        
+        # Renomear colunas adicionando sufixo _cliente, exceto para code e client__name
+        new_column_names = {col: (col + '_cliente' if '_base' not in col and col not in ['code', 'client__name'] else col) for col in df.columns}
+
+        # Renomear as colunas do DataFrame
+        df = df.rename(columns=new_column_names)        
+                     
     else:
         items = []
 
     # Converter para DataFrame
-    df = pd.DataFrame(list(items))
-
-    # Renomear colunas, se necessário
-    df.columns = [
-        'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
-        'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
-        'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita'
-    ]
+    if table != 'divergent':
+        df = pd.DataFrame(list(items))
+        # Renomear colunas, se necessário
+        df.columns = [
+            'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
+            'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
+            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita'
+        ]        
 
     # Salvar o DataFrame em um arquivo Excel
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    
     if table == 'new':
         response['Content-Disposition'] = f'attachment; filename=items_Novos_{client.name}.xlsx'
+    elif table == 'divergent':
+        response['Content-Disposition'] = f'attachment; filename=items_Divergentes_{client.name}.xlsx'
     else:
         response['Content-Disposition'] = f'attachment; filename=items_{client.name}.xlsx'
         
@@ -576,7 +644,6 @@ def save_imported_item(request):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
-
 class XLSXUploadView(View):
     template_name = 'upload_items.html'
     logger = logging.getLogger(__name__)  # Configurar o logger
@@ -863,3 +930,4 @@ class XLSXUploadView(View):
         self.logger.error(f"Form inválido: {form.errors}")
         return JsonResponse({'errors': form.errors}, status=400)
    
+

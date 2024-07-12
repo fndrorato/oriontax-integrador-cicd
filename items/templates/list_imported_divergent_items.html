@@ -50,19 +50,10 @@
             <div class="card-header">
                 <h5>Lista de Produtos Novos ou com Divergências: {{ client_name }} </h5>
 
-                {% comment %} <a href="{% url 'items_upload' client_id=client.id %}" type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
-                    <i class="icofont icofont-upload-alt m-r-5"></i> 
-                    Importar Produtos
-                </a>
-
-                <a href="{% url 'export_items_to_excel' client.id %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                <a href="{% url 'export_items_to_excel' client_id=client.id table='divergent' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
-                    Exportar Cadastros
-                </a>                 
-                
-                <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
-                    <i class="icofont icofont-filter"></i>
-                </button>  {% endcomment %}
+                    Exportar Cadastros de Itens Divergentes
+                </a>                   
                                                                    
                 <span>Lista dos produtos cadastrados do cliente: {{ client_name }}</span>
 
@@ -196,7 +187,11 @@
 
                                                                     </td>
                                                                     <td class="tabledit-view-mode text-center align-middle p-0">
-                                                                        <span class="tabledit-span">{{ item.piscofins_cst }}</span>
+                                                                        {% if item.origem == "Base" %}
+                                                                            <span class="tabledit-span">{{ item.piscofins_cst.code|slice:"1:" }}</span>
+                                                                        {% else %}
+                                                                            <span class="tabledit-span">{{ item.piscofins_cst }}</span>
+                                                                        {% endif %}
                                                                         <select id="id_piscofins_cst" name="piscofins_cst" class="tabledit-input form-control input-sm" style="display: none; max-width: 80px;">
                                                                             {% for piscofins_cst in piscofins_choices %}
                                                                                 <option value="{{ piscofins_cst.code }}" {% if item.piscofins_cst == piscofins_cst.code|int_filter %} selected{% endif %}>
@@ -462,6 +457,32 @@
         // Recarrega a página sem os parâmetros da query string
         window.location.reload();
     });    
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('tbody tr');
+
+        rows.forEach((row, index) => {
+            const firstCell = row.querySelector('td:first-child');
+            if (firstCell.textContent.trim() === 'Integração') {
+                if (index > 0) {
+                    const currentRow = row;
+                    const previousRow = rows[index - 1];
+
+                    // Comparar células da segunda coluna em diante
+                    const cells = currentRow.querySelectorAll('td:not(:first-child)');
+                    cells.forEach((cell, cellIndex) => {
+                        const currentCellValue = cell.textContent.trim();
+                        const previousCellValue = previousRow.querySelectorAll('td:not(:first-child)')[cellIndex].textContent.trim();
+
+                        // Comparar os valores e adicionar uma classe se forem diferentes
+                        if (currentCellValue !== previousCellValue) {
+                            cell.classList.add('text-danger');
+                        }
+                    });
+                }
+            }
+        });
+    });    
     
     var piscofinsData = {};
 
@@ -483,7 +504,6 @@
 
 <script type="text/javascript" src="{% static 'assets/pages/edit-table/editable-divergent-items.js' %}?{% now "U" %}"></script>
 
-    
 
     
 
