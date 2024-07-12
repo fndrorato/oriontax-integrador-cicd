@@ -416,7 +416,6 @@ class ImportedItemListViewNewItem(ListView):
         
         # Adicionar filtros baseados nos parâmetros GET
         filters = self.request.GET.dict()
-        print(filters)
         for key, value in filters.items():
             if key and value:
                 queryset = queryset.filter(Q(**{key: value}))
@@ -473,11 +472,20 @@ class ImportedItemListViewDivergentItem(ListView):
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
         client = get_object_or_404(Client, id=client_id)
+        filters = self.request.GET.dict()
         
         # Anota os querysets com a coluna 'origem'
         imported_items_queryset = ImportedItem.objects.filter(
             client=client, status_item=1, is_pending=True
         ).annotate(origem=Value('Integração', output_field=CharField()))
+        
+        # Separar filtros baseados nos parâmetros GET
+        base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
+        cliente_filters = {key[8:]: value for key, value in filters.items() if key.startswith('cliente-')}
+        
+        # Aplicar filtros ao imported_items_queryset
+        for key, value in cliente_filters.items():
+            imported_items_queryset = imported_items_queryset.filter(Q(**{key: value}))        
 
         items_queryset = Item.objects.filter(
             client=client, code__in=imported_items_queryset.values('code')
@@ -485,7 +493,10 @@ class ImportedItemListViewDivergentItem(ListView):
             origem=Value('Base', output_field=CharField()),
             piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
         ).order_by('description')
-
+        
+        # Aplicar filtros ao items_queryset
+        for key, value in base_filters.items():
+            items_queryset = items_queryset.filter(Q(**{key: value}))
 
         # Combine os querysets e ordena por 'description' e 'origem'
         combined_queryset = sorted(
