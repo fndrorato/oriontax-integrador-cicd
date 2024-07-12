@@ -16,7 +16,7 @@ from .views import (
 urlpatterns = [
     path('logs/<str:model_name>/<int:object_id>/', get_item_logs, name='get_item_logs'),
     path('download/<str:filename>/', download_file, name='download_file'),
-    path('clientes/items/export/<int:client_id>/', export_items_to_excel, name='export_items_to_excel'),
+    path('clientes/items/export/<int:client_id>/<str:table>/', export_items_to_excel, name='export_items_to_excel'),
     path('validate-item/', validate_item, name='validate_code_item'),
     path('clientes/items/<int:client_id>/', ItemListView.as_view(), name='item_list'),
     path('clientes/items/<int:client_id>/create/', ItemCreateView.as_view(), name='item_create'),

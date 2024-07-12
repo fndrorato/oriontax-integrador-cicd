@@ -1,4 +1,5 @@
 from django import template
+from app.utils import get_cleaned_query_params
 
 register = template.Library()
 
@@ -14,3 +15,7 @@ def int_filter(value):
         return int(value)
     except (ValueError, TypeError):
         return value
+
+@register.filter(name='cleaned_query_params')
+def cleaned_query_params(request, remove_param):
+    return get_cleaned_query_params(request.GET, remove_param)  

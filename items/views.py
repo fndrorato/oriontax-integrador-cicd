@@ -31,7 +31,7 @@ from .forms import ItemForm, CSVUploadForm, ImportedItemForm
 from impostos.models import IcmsCst, IcmsAliquota, IcmsAliquotaReduzida, Protege, CBENEF, PisCofinsCst, NaturezaReceita, Cfop
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
-from .models import Item
+from .models import Item, ImportedItem
 from itertools import chain
 from django.db.models import Q, F
 import openpyxl
@@ -108,49 +108,46 @@ def get_item_logs(request, model_name, object_id):
 
     return JsonResponse({'logs': logs_data})
 
-def export_items_to_excel(request, client_id):
+def export_items_to_excel(request, client_id, table):
     # Obter o cliente
-    client = Client.objects.get(id=client_id)
-    # Obter todos os itens do cliente
-    items = Item.objects.filter(client=client)
+    client = get_object_or_404(Client, id=client_id)
 
-    # Criar um Workbook e uma planilha
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = 'Items'
+    # Verificar o valor de table e obter os itens adequados
+    if table == 'all':
+        items = Item.objects.filter(client=client).values(
+            'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
+            'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
+            'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
+            'cofins_aliquota', 'naturezareceita__code'
+        )
+    elif table == 'new':
+        items = ImportedItem.objects.filter(client=client, status_item=0).values(
+            'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
+            'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
+            'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
+            'cofins_aliquota', 'naturezareceita'
+        )
+    else:
+        items = []
 
-    # Escrever os cabeçalhos
-    headers = ['Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 'icms_aliquota',
-               'icms_aliquota_reduzida', 'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota',
-               'naturezareceita']
-    for col_num, header in enumerate(headers, 1):
-        col_letter = get_column_letter(col_num)
-        ws[f'{col_letter}1'] = header
+    # Converter para DataFrame
+    df = pd.DataFrame(list(items))
 
-    # Escrever os dados dos itens
-    for row_num, item in enumerate(items, 2):
-        ws[f'A{row_num}'] = item.id
-        ws[f'A{row_num}'] = item.client.name  # Assumindo que Client tem um campo `name`
-        ws[f'B{row_num}'] = item.code
-        ws[f'C{row_num}'] = item.barcode
-        ws[f'D{row_num}'] = item.description
-        ws[f'E{row_num}'] = item.ncm
-        ws[f'F{row_num}'] = item.cest        
-        ws[f'G{row_num}'] = item.cfop.cfop  # Assumindo que CFOP tem um campo `code`
-        ws[f'H{row_num}'] = item.icms_cst.code  # Assumindo que ICMS CST tem um campo `code`
-        ws[f'I{row_num}'] = item.icms_aliquota.code  # Assumindo que ICMS Aliquota tem um campo `code`
-        ws[f'J{row_num}'] = item.icms_aliquota_reduzida
-        ws[f'K{row_num}'] = item.protege.code if item.protege else ''  # Assumindo que Protege tem um campo `code`
-        ws[f'L{row_num}'] = item.cbenef.code if item.cbenef else ''  # Assumindo que CBenef tem um campo `code`
-        ws[f'M{row_num}'] = item.piscofins_cst.code  # Assumindo que PIS Cofins CST tem um campo `code`
-        ws[f'N{row_num}'] = item.pis_aliquota
-        ws[f'O{row_num}'] = item.cofins_aliquota
-        ws[f'P{row_num}'] = item.naturezareceita.code if item.naturezareceita else ''  # Assumindo que Natureza Receita tem um campo `code`
+    # Renomear colunas, se necessário
+    df.columns = [
+        'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
+        'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
+        'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita'
+    ]
 
-    # Salvar o arquivo em uma resposta HTTP
+    # Salvar o DataFrame em um arquivo Excel
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename=items_{client.name}.xlsx'
-    wb.save(response)
+    if table == 'new':
+        response['Content-Disposition'] = f'attachment; filename=items_Novos_{client.name}.xlsx'
+    else:
+        response['Content-Disposition'] = f'attachment; filename=items_{client.name}.xlsx'
+        
+    df.to_excel(response, index=False, sheet_name='Items')
 
     return response
 
@@ -181,7 +178,7 @@ class ItemListView(ListView):
     model = Item
     template_name = 'list_item.html'
     context_object_name = 'items'
-    paginate_by = 20  # Defina quantos itens você quer por página
+    paginate_by = 50  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
@@ -341,7 +338,7 @@ class ImportedItemListViewNewItem(ListView):
     model = ImportedItem
     template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
-    paginate_by = 20  # Defina quantos itens você quer por página
+    paginate_by = 50  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
@@ -395,7 +392,7 @@ class ImportedItemListViewDivergentItem(ListView):
     model = ImportedItem
     template_name = 'list_imported_divergent_items.html'
     context_object_name = 'imported_items'
-    paginate_by = 40  # Defina quantos itens você quer por página
+    paginate_by = 50  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
