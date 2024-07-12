@@ -345,6 +345,14 @@ class ImportedItemListViewNewItem(ListView):
         client = get_object_or_404(Client, id=client_id)
 
         queryset = ImportedItem.objects.filter(client=client, status_item=0, is_pending=True).order_by('description')  
+        
+        # Adicionar filtros baseados nos parâmetros GET
+        filters = self.request.GET.dict()
+        print(filters)
+        for key, value in filters.items():
+            if key and value:
+                queryset = queryset.filter(Q(**{key: value}))
+        
         return queryset
    
 
