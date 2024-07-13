@@ -5,6 +5,7 @@ from .views import (
     download_file,
     validate_item,
     save_imported_item,
+    save_bulk_imported_item,
     ItemListView,
     ItemCreateView,
     ItemUpdateView,
@@ -27,5 +28,5 @@ urlpatterns = [
     
     path('clientes/items-pendentes-novos/<int:client_id>/', ImportedItemListViewNewItem.as_view(), name='imported_item_list'),    
     path('clientes/items-pendentes-divergentes/<int:client_id>/', ImportedItemListViewDivergentItem.as_view(), name='imported_divergent_item_list'),    
-    path('clientes/items-pendentes/save-imported-item/', save_imported_item, name='save_imported_item'),
+    path('clientes/items-pendentes/save-imported-item/', save_bulk_imported_item, name='save_imported_item'),
 ]

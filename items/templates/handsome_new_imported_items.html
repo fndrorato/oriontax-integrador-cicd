@@ -1,0 +1,893 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Produtos Novos/Divergentes</h4>
+    <span>Listagem de produtos importados com pendências</span>
+{% endblock title %}
+
+{% block customcss %}
+    <!-- Handson table css start -->
+    <link rel="stylesheet" type="text/css" href="https://docs.handsontable.com/pro/bower_components/handsontable-pro/dist/handsontable.full.min.css">
+    <!-- Notification.css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/notification/notification.css' %}">
+    <!-- Animate.css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/animate.css/css/animate.css' %}">    
+    <style>
+        .limit-field {
+            max-width: 80px !important;
+        }
+        .success-row {
+            background-color: #d9f9d9 !important;
+        }
+        .error-row {
+            background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
+        }
+        
+    </style>
+   
+{% endblock customcss %}
+
+
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'clients_list' %}">Clientes</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">Produtos com divergências</a>
+    </li>    
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Zero config.table start -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Lista de Produtos Novos ou com Divergências: {{ client_name }} </h5>
+
+                <a href="{% url 'export_items_to_excel' client_id=client.id table='new' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                    <i class="icofont icofont-save m-r-5"></i>
+                    Exportar Cadastros de Itens Novos
+                </a>       
+                
+                <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
+                    <i class="icofont icofont-filter"></i>
+                </button>    
+                
+                <button id="btn-validate" class="btn btn-primary">Editar Todos</button>                
+                                                                   
+                <span>Lista dos produtos cadastrados do cliente: {{ client_name }}</span>
+
+            </div>
+            <div class="card-block"> 
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="product-edit">
+                            <ul class="nav nav-tabs nav-justified md-tabs " id="client-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="tab" href="#new-items" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-exclamation-circle"></i>
+                                        </div>
+                                        Novos Itens</a>
+                                    <div class="slide"></div>
+                                </li>  
+                                <li class="nav-item">
+                                    <a class="nav-link" href={% url 'imported_divergent_item_list' client_id=client_id %} role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-error"></i>
+                                        </div>
+                                        Produtos Divergentes</a>
+                                    <div class="slide"></div>
+                                </li>                                                                                                                          
+                            </ul>
+                            <!-- Tab panes -->
+                            <div class="tab-content">   
+                                <!-- Inicio Tab Novos Produtos -->
+                                <div class="tab-pane active" id="new-items" role="tabpanel">                                   
+                                    <div class="card">
+                                        <div class="card-block">   
+                                            <div id="loader" class="preloader5 loader-block" style="
+                                                position: absolute;
+                                                top: 0;
+                                                left: 0;
+                                                z-index: 9900;
+                                                width: 100%;
+                                                height: 100%;
+                                                justify-content: center;
+                                                background-color: rgba(255, 255, 255, 0.8);
+                                                margin: 0 !important;
+                                                display: none;
+                                            ">
+                                                <div class="circle-5 l"></div>
+                                                <div class="circle-5 m"></div>
+                                                <div class="circle-5 r"></div>
+                                                
+                                            </div>                                                                                
+                                            <div id="new-items-table" class="handsontable"></div>
+                                            
+                                            <!-- Paginação -->  
+                                            <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center m-t-2">
+                                                <ul class="pagination">
+                                                    {% if page_obj.has_previous %}
+                                                        <li class="page-item">
+                                                            <a class="page-link" tabindex="-1" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Anterior</a>
+                                                        </li>
+                                                    {% else %}
+                                                        <li class="page-item disabled">
+                                                            <a class="page-link" tabindex="-1" href="?page=1&{{ request.GET.urlencode }}">Anterior</a>
+                                                        </li>                        
+                                                    {% endif %}  
+                            
+                                                    
+                                            
+                                                    {% for page_num in page_range %}
+                                                        {% if page_num == '...' %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="#">{{ page_num }}</a>
+                                                            </li>
+                                                        {% elif items.number == page_num %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="#">{{ page_num }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="?page={{ page_num }}&{{ request.GET.urlencode }}">{{ page_num }}</a>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% endfor %}                      
+                            
+                            
+                                                    {% if page_obj.has_next %}
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Próxima</a>
+                                                        </li>
+                                                    {% endif %}                            
+                                                </ul> 
+                                                 
+                                            </div>  
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Tab Novos Produtos -->                                                                                             
+                            </div>
+                        </div>
+                    </div>
+                </div>                                 
+              
+            </div>
+        </div>
+        <!-- Zero config.table end -->
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header p-t-5 p-b-5 color-inverse text-white">
+                <h5 class="modal-title" id="searchModalLabel">Filtrar Itens</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" class="text-white">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="form-container" class="container mt-2">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="select_filtros">Campo</label>
+                            <select class="form-control" id="select_filtros">
+                                <option value="cfop">CFOP</option>
+                                <option value="icms_cst">CST ICMS</option>
+                                <option value="icms_aliquota">Aliq ICMS</option>
+                                <option value="cbenef">CBENEF</option>
+                                <option value="piscofins_cst">CST PIS/COFINS</option>
+                                <option value="naturezareceita">Natureza Receita</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="input1">Valor</label>
+                            <input type="text" class="form-control" id="valor_filtro" placeholder="valor">
+                        </div>
+                        <div class="form-group col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary" onclick="addRow(this)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-t-5 p-b-5">
+                <a href="#" class="btn btn-secondary btn-sm" id="clearSearch">Limpar Filtros</a>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary  btn-sm" id="applySearch">Filtrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
+
+{% block anotherjs %}
+    <!-- Handson table js -->
+    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
+    <!-- notification js -->
+    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>     
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Pega os parâmetros da URL e preenche os campos do formulário
+        var url = new URL(window.location.href);
+        var urlParams = new URLSearchParams(window.location.search);
+        var fields = [
+            'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'cst_icms',
+            'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege',
+            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita'
+        ];
+
+        fields.forEach(function(field) {
+            if (urlParams.has(field)) {
+                document.getElementById('search_' + field).value = urlParams.get(field);
+            }
+        });
+    });
+
+    document.getElementById('clearSearch').addEventListener('click', function() {
+        // Obtém a URL sem os parâmetros da query string
+        const baseUrl = window.location.origin + window.location.pathname;
+
+        // Redefine a URL sem os parâmetros da query string
+        window.history.replaceState(null, null, baseUrl);
+
+        // Recarrega a página sem os parâmetros da query string
+        window.location.reload();
+    });      
+
+    function addRow(button) {
+        // Clone the form row
+        const formRow = button.parentNode.parentNode;
+        const newFormRow = formRow.cloneNode(true);
+
+        // Clear the input value in the cloned row
+        newFormRow.querySelector('input').value = '';
+
+        // Update the button to be a remove button
+        const newButton = newFormRow.querySelector('button');
+        newButton.textContent = '-';
+        newButton.classList.remove('btn-primary');
+        newButton.classList.add('btn-danger');
+        newButton.setAttribute('onclick', 'removeRow(this)');
+
+        // Append the new row to the form container
+        document.getElementById('form-container').appendChild(newFormRow);
+    }
+
+    function removeRow(button) {
+        // Remove the form row
+        const formRow = button.parentNode.parentNode;
+        formRow.parentNode.removeChild(formRow);
+    }
+
+    document.getElementById('applySearch').addEventListener('click', function() {
+        const rows = document.querySelectorAll('#form-container .form-row');
+        const params = new URLSearchParams();
+
+        rows.forEach(row => {
+            const select = row.querySelector('select').value;
+            const input = row.querySelector('input').value;
+            if (select && input) {
+                params.append(select, input);
+            }
+        });
+
+        window.location.search = params.toString();
+    });
+
+    function getQueryParams() {
+        const params = {};
+        const queryString = window.location.search.slice(1);
+        const queries = queryString.split('&');
+
+        queries.forEach(query => {
+            const [key, value] = query.split('=');
+            if (key && value) {
+                if (!params[key]) {
+                    params[key] = [];
+                }
+                params[key].push(decodeURIComponent(value));
+            }
+        });
+
+        return params;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const queryParams = getQueryParams();
+
+        Object.keys(queryParams).forEach(key => {
+            queryParams[key].forEach(value => {
+                const formRow = document.querySelector('#form-container .form-row');
+                const newFormRow = formRow.cloneNode(true);
+                newFormRow.querySelector('select').value = key;
+                newFormRow.querySelector('input').value = value;
+
+                const newButton = newFormRow.querySelector('button');
+                newButton.textContent = '-';
+                newButton.classList.remove('btn-primary');
+                newButton.classList.add('btn-danger');
+                newButton.setAttribute('onclick', 'removeRow(this)');
+
+                document.getElementById('form-container').appendChild(newFormRow);
+            });
+        });
+
+        // Remove the initial form row if queryParams are present
+        if (Object.keys(queryParams).length > 0) {
+            const initialFormRow = document.querySelector('#form-container .form-row');
+            initialFormRow.parentNode.removeChild(initialFormRow);
+        }
+    });
+    
+    var piscofinsData = {};
+    // Adicionar os dados ao objeto
+{% for piscofins in piscofins_choices %}
+    piscofinsData['{{ piscofins.code }}'] = {
+        'pis_aliquota': '{{ piscofins.pis_aliquota }}',
+        'cofins_aliquota': '{{ piscofins.cofins_aliquota }}'  
+    };
+{% endfor %}
+
+    var icmsAliquotaData = {};
+// Populate the icmsAliquotaData object
+{% for aliq in icmsaliquota_choices %}
+    icmsAliquotaData['{{ aliq.code }}'] = {
+        code: '{{ aliq.code }}',
+        dataCode: {% if aliq.code in icmsaliquotareduzida_codes %}1{% else %}0{% endif %},
+    };
+{% endfor %}
+
+    var cbenefData = {};
+// Populate the cbenefData object
+{% for cbenef in cbenef_choices %}
+    cbenefData['{{ cbenef.code }}'] = {
+        code: '{{ cbenef.code }}',
+        icmsCst: {% if cbenef.icms_cst %}'{{ cbenef.icms_cst.code }}'{% else %}null{% endif %},
+    };
+{% endfor %}
+
+    var urlValidateCode = '{% url "validate_code_item" %}';
+    var urlNewItem = '{% url "save_imported_item" %}';
+    var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
+    var client_id = {{ client_id }};
+
+    var naturezareceitaData = {};
+    // Populate the naturezareceitaData object
+{% for naturezareceita in naturezareceita_choices %}
+    naturezareceitaData['{{ naturezareceita.code }}'] = {
+        id: '{{ naturezareceita.id }}',
+        code: '{{ naturezareceita.code }}',
+        piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %},
+    };
+{% endfor %}
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        var container = document.getElementById('new-items-table');
+    
+        var data = [
+            {% for item in imported_items %}
+                [
+                    "{{ item.code }}",
+                    "{{ item.barcode|zero_to_empty|default_if_none:'' }}",
+                    "{{ item.description }}",
+                    "{{ item.ncm }}",
+                    "{{ item.cest|zero_to_empty|default_if_none:'' }}",
+                    "{{ item.cfop }}",
+                    "{{ item.icms_cst }}",
+                    "{{ item.icms_aliquota }}",
+                    "{{ item.icms_aliquota_reduzida }}",
+                    "{{ item.cbenef|default_if_none:'' }}",
+                    "{{ item.protege }}",
+                    "{{ item.piscofins_cst }}".padStart(2, '0'),
+                    "{{ item.pis_aliquota }}",
+                    "{{ item.cofins_aliquota }}",
+                    "{{ item.naturezareceita|default_if_none:'' }}",
+                    "{{ form.type_product.value|default_if_none:'' }}"
+                ],
+            {% endfor %}
+        ];
+    
+        var typeProductOptions = [
+            {% for value, label in form.type_product.field.choices %}
+                {value: '{{ value }}', label: '{{ label }}'},
+            {% endfor %}
+        ];        
+        var hot = new Handsontable(container, {
+            data: data,
+            rowHeaders: true,
+            colHeaders: [
+                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'CST Icms', 'Aliq.Icms', 'Aliq.IcmsRed', 'CBENEF', 'Protege', 'CST PIS/COFINS', 'Aliq.PIS', 'Aliq.COFINS', 'Nat.Receita', 'T.Prod.'
+            ],
+            columns: [
+                { data: 0 },
+                { data: 1 },
+                { data: 2 },
+                { data: 3 },
+                { data: 4 },
+                { 
+                    data: 5, 
+                    editor: 'select', 
+                    selectOptions: [ {% for code, code_label in cfop_choices %} '{{ code }}', {% endfor %} ] 
+                },
+                { 
+                    data: 6, 
+                    editor: 'select', 
+                    selectOptions: [ {% for code, code_label in icms_cst_choices %} '{{ code }}', {% endfor %} ] 
+                },
+                { 
+                    data: 7, 
+                    editor: 'select', 
+                    selectOptions: [ {% for aliq in icmsaliquota_choices %} '{{ aliq.code }}', {% endfor %} ] 
+                },
+                { 
+                    data: 8, 
+                    editor: 'select', 
+                    selectOptions: [ {% for aliq in icmsaliquota_choices %} '{{ aliq.code }}', {% endfor %} ] 
+                },
+                { 
+                    data: 9, 
+                    editor: 'select', 
+                    selectOptions: [ {% for cbenef in cbenef_choices %} '{{ cbenef.code }}', {% endfor %} ] 
+                },
+                { 
+                    data: 10, 
+                    editor: 'select', 
+                    selectOptions: [ {% for protege in protege_choices %} '{{ protege.code }}', {% endfor %} ] 
+                },
+                { 
+                    data: 11, 
+                    editor: 'select', 
+                    selectOptions: [ {% for piscofins_cst in piscofins_choices %} '{{ piscofins_cst.code }}', {% endfor %} ] 
+                },
+                { data: 12, readOnly: true },
+                { data: 13, readOnly: true },
+                { 
+                    data: 14, 
+                    editor: 'select', 
+                    selectOptions: [ {% for naturezareceita in naturezareceita_choices %} '{{ naturezareceita.code }}', {% endfor %} ] 
+                },
+                {
+                    data: 15,
+                    editor: 'select',
+                    selectOptions: typeProductOptions.map(option => option.value !== null ? option.value : '')
+                }
+            ],
+            stretchH: 'all',
+            autoWrapRow: true,
+            height: 500,
+            manualRowResize: false,
+            manualColumnResize: false,
+            contextMenu: [
+            'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column'
+            ],
+            filters: true,
+            dropdownMenu: true,
+            allowInsertRow: false,
+            allowRemoveRow: false,
+            allowInsertColumn: false,
+            allowRemoveColumn: false,            
+            cells: function(row, col) {
+                var cellProperties = {};
+                if (row % 2 === 0) {
+                    cellProperties.renderer = evenRowRenderer;
+                } else {
+                    cellProperties.renderer = oddRowRenderer;
+                }
+                return cellProperties;
+            },   
+            afterCreateRow: function(index, amount) {
+                // Adiciona o listener de change ao select da coluna 11 nas novas linhas criadas
+                this.addChangeEventListenerToColumnSelects(11);
+            },
+            afterCreateCol: function(index, amount) {
+                // Adiciona o listener de change ao select da coluna 11 nas novas colunas criadas
+                this.addChangeEventListenerToColumnSelects(11);
+            },           
+            afterChange: function(changes, source) {
+                console.log('Source:', source)
+                if (source === 'edit' || source === 'CopyPaste.paste') {
+                    changes.forEach(([row, prop, oldValue, newValue]) => {
+                        console.log('Change:', row, prop, oldValue, newValue);
+                        if (prop === 11) { // Verifica se a mudança ocorreu na coluna 11 (piscofins_cst)
+                            var aliquotas = getAliquotas(newValue); // Obtém as aliquotas baseado no novo valor
+                            this.setDataAtCell(row, 12, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
+                            this.setDataAtCell(row, 13, aliquotas ? aliquotas.cofins_aliquota : ''); // Define cofins_aliquota na coluna 13
+                        } 
+                    });
+                }
+            },
+                        
+        });
+
+        function evenRowRenderer(instance, td, row, col, prop, value, cellProperties) {
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            td.style.backgroundColor = '#f2f2f2'; // Cor da linha par
+        }
+    
+        function oddRowRenderer(instance, td, row, col, prop, value, cellProperties) {
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            td.style.backgroundColor = '#ffffff'; // Cor da linha ímpar
+        }           
+
+        function getAliquotas(code) {
+            if (piscofinsData.hasOwnProperty(code)) {
+                return piscofinsData[code];
+            } else {
+                return null; // ou qualquer outro valor padrão
+            }
+        }  
+
+        // Adiciona evento de clique ao botão "Validar"
+        var btnValidate = document.getElementById('btn-validate');
+        btnValidate.addEventListener('click', function() {
+            validateTable();
+        });   
+        
+        var tableContainer = document.getElementById('new-items-table'); // Obtém a referência da div da tabela
+        var errorContainer = document.createElement('div');
+        errorContainer.id = 'error-container';
+        errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
+        tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);
+    
+
+        function validateTable() {
+            $('#loader').show();
+            var data = hot.getData();
+            var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
+            var promises = [];
+        
+            data.forEach(function(rowData, rowIndex) {
+                var validationPromise = validateData({
+                    id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
+                    client_id: client_id, // Certifique-se de ter accesso ao client_id aqui
+                    ncm: rowData[3],
+                    cest: rowData[4],
+                    description: rowData[2],
+                    cfop: rowData[5],
+                    icms_cst: rowData[6],
+                    icms_aliquota: rowData[7],
+                    icms_aliquota_reduzida: rowData[8],
+                    cbenef: rowData[9],
+                    piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
+                    naturezareceita: rowData[14],
+                    type_product: rowData[15] // Ajuste conforme a estrutura real dos dados na tabela
+                }, rowIndex); // Passa o índice da linha para validar
+
+                validationPromise.then(function(result) {
+                    // Aplica ou remove o estilo de erro na linha, dependendo da validação
+                    for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
+                        if (result.isValid) {
+                            hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
+                        } else {
+                            hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
+                            // Exibe mensagem de erro usando setDataAtRowProp
+                            result.errors.forEach(function(error) {
+                                var field = error.field;
+                                var message = error.message;
+                                hot.setDataAtRowProp(rowIndex, field, message); 
+                            });                            
+                        }
+                    }
+                });
+
+                promises.push(validationPromise);
+            });      
+            
+            // Remova as células vermelhas antes de cada validação
+            hot.updateSettings({
+                cells: function(row, col) {
+                    var cellProperties = {};
+                    if (row % 2 === 0) {
+                        cellProperties.renderer = evenRowRenderer;
+                    } else {
+                        cellProperties.renderer = oddRowRenderer;
+                    }
+                    delete cellProperties.className;  // Remove className se existir
+                    return cellProperties;
+                }
+            });            
+        
+            Promise.all(promises)
+                .then(function(results) {
+                    // Limpa o container de erros antes de cada validação
+                    errorContainer.innerHTML = '';
+
+                    var allErrors = []; // Array para armazenar todos os erros
+
+                    results.forEach(function(result, index) {
+                        if (!result.isValid) {                    
+                            // Adiciona os erros da linha ao array geral
+                            allErrors.push(...result.errors.map(err => `Linha ${index + 1}: ${err.message}`));
+                        }
+                    });   
+                    
+                    // Exibe todos os erros no container
+                    if (allErrors.length > 0) {
+                        var errorList = document.createElement('ul');
+                        allErrors.forEach(function(error) {
+                            var listItem = document.createElement('li');
+                            listItem.classList.add('error'); // Adiciona a classe "error" ao item
+                            listItem.textContent = error;
+                            errorList.appendChild(listItem);
+                        });
+                        errorContainer.appendChild(errorList);
+                        errorContainer.classList.remove('alert-success'); // Remove a classe de sucesso
+                        errorContainer.classList.add('alert-danger');  
+                        $('#loader').hide();                      
+                    } else { // If all fields are valid, proceed with code validation
+                        var codes = data.map(rowData => rowData[0]);
+                        console.log(codes)
+                    
+                        Promise.all(codes.map(code => validateCodes(code, client_id)))
+                            .then(function(codeValidationResults) {
+                                // Check if any code validation failed
+                                if (codeValidationResults.some(isValid => !isValid)) {
+                                    // Handle code validation errors (e.g., display in errorContainer)
+                                    errorContainer.innerHTML = '';
+                                    var errorList = document.createElement('ul');
+                                    codeValidationResults.forEach((isValid, index) => {
+                                        if (!isValid) {
+                                            var listItem = document.createElement('li');
+                                            listItem.classList.add('error'); 
+                                            listItem.textContent = `Linha ${index + 1}: Código inválido`;
+                                            errorList.appendChild(listItem);
+                    
+                                            // Apply error styling to invalid code row
+                                            for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
+                                                hot.getCellMeta(index, colIndex).className = 'error-row';
+                                            }
+                                        }
+                                    });
+                                    errorContainer.appendChild(errorList);
+                                    errorContainer.classList.remove('alert-success');
+                                    errorContainer.classList.add('alert-danger');
+                                    $('#loader').hide();
+                                } else {
+                                    // If all codes are valid, display success message
+                                    var dataToSend = hot.getData();
+
+                                    // Find the ID for each row based on piscofinsCst and code
+                                    dataToSend = dataToSend.map(row => {
+                                        var piscofinsCst = row[11];
+                                        var code = row[14];
+
+                                        // Find the ID from naturezareceitaData
+                                        var matchingId = null;
+                                        for (var id in naturezareceitaData) {
+                                            if (naturezareceitaData[id].piscofinsCst === piscofinsCst && naturezareceitaData[id].code === code) {
+                                                matchingId = id;
+                                                break; // Stop searching once found
+                                            }
+                                        }
+
+                                        row.push('0'); // Add 'fix_item'
+                                        row.push(matchingId || ''); // Add the found ID (or empty string if not found)
+                                        row.push(client_id)
+                                        return row;
+                                    });                                     
+
+                                    $.ajax({
+                                        url: urlNewItem,
+                                        type: 'POST',
+                                        data: {
+                                            items: JSON.stringify(dataToSend), // Send entire table data as JSON
+                                            csrfmiddlewaretoken: '{{ csrf_token }}' // Include CSRF token
+                                        },
+                                        success: function(response) {
+                                            if (response.status === 'success') {
+                                                errorContainer.textContent = response.message;
+                                                errorContainer.classList.add('alert-success');
+                                                errorContainer.classList.remove('alert-danger');
+                                                $('#loader').hide();
+                                                // Apply success class to all rows
+                                                for (var i = 0; i < hot.countRows(); i++) {
+                                                    for (var j = 0; j < hot.countCols(); j++) {
+                                                        hot.getCellMeta(i, j).className = 'success-row';
+                                                    }
+                                                }
+
+                                                // Disable editing in the table
+                                                hot.updateSettings({
+                                                    readOnly: true
+                                                });                                                
+                                            } else {
+                                                // Handle errors from the Django view
+                                                errorContainer.textContent = response.message;
+                                                errorContainer.classList.remove('alert-success');
+                                                errorContainer.classList.add('alert-danger');
+                                                $('#loader').hide();
+                                            }
+                                        },
+                                        error: function(jqXHR, textStatus, errorThrown) {
+                                            // Handle AJAX errors (display message to the user)
+                                            errorContainer.textContent = 'Erro ao salvar os itens. Tente novamente.';
+                                            errorContainer.classList.remove('alert-success');
+                                            errorContainer.classList.add('alert-danger');
+                                            $('#loader').hide();
+                                        }
+                                    });                                    
+                                }
+                            })
+                            .catch(function(error) {
+                                console.error('Erro ao validar códigos:', error);
+                                $('#loader').hide();
+                            });
+                    }                 
+                    
+                })
+                .catch(function(error) {
+                    console.error('Erro ao validar tabela:', error);
+                    $('#loader').hide();
+                });
+        }        
+        
+        
+
+        function getColumnIndexByFieldName(field) {
+            var headers = hot.getColHeader();
+            for (var i = 0; i < headers.length; i++) {
+                if (headers[i] === field) {
+                    return i;
+                }
+            }
+            return -1; // Retorna -1 se o campo não for encontrado
+        }        
+                
+        function validateData(data, rowIndex) {
+            return new Promise(function(resolve, reject) {
+                // Validações de cada campo
+                var errors = [];
+        
+                var codeItem = data['id'];
+                var clientId = client_id;
+                var ncm = data['ncm'];
+                var cest = data['cest'];
+                var description = data['description'];
+                var selectedCfop = data['cfop'];
+                var selectedIcmsCst = data['icms_cst'];
+                var selectedIcmsAliquota = data['icms_aliquota'];
+                var selectedIcmsAliquotaReduzida = data['icms_aliquota_reduzida'];
+                var selectedCbenef = data['cbenef']
+                var selectedPisCofinsCst = data['piscofins_cst'];
+                var selectedNaturezareceita = data['naturezareceita'];
+                var tipoProduto = data['type_product'];
+        
+                // Trim description and check if it's empty after trimming
+                description = description.trim();
+                if (description === '') {
+                    errors.push({ field: 'description', message: "A descrição é obrigatória." });
+                }
+        
+                // Check if tipoProduto is selected
+                if (tipoProduto === '' || tipoProduto === null || tipoProduto === undefined) {
+                    errors.push({ field: 'type_product', message: "O tipo de produto é obrigatório." });
+                }
+        
+                // Validação do NCM
+                if (!/^\d{8}$/.test(ncm)) {
+                    errors.push({ field: 'ncm', message: 'NCM deve ter 8 dígitos.' });
+                }
+        
+                // Validação do CEST
+                if (cest && !/^\d{7}$/.test(cest)) {
+                    errors.push({ field: 'cest', message: 'CEST deve ter 7 dígitos.' });
+                }
+        
+                // Validação de CFOP e ICMS CST
+                if (selectedCfop == '5405' && selectedIcmsCst != '60') {
+                    errors.push({ field: 'icms_cst', message: 'Quando o CFOP é 5405, o ICMS CST deve ser 60.' });
+                }
+        
+                // Revalidar condições
+                if (selectedIcmsCst != '20' && selectedIcmsAliquota != selectedIcmsAliquotaReduzida) {
+                    errors.push({ field: 'icms_aliquota_reduzida', message: 'ICMS Alíquota Reduzida deve ser igual a ICMS Alíquota quando ICMS CST não for 20.' });
+                }
+        
+                if (selectedIcmsCst == '40' || selectedIcmsCst == '60') {
+                    if (selectedIcmsAliquota != '0' || selectedIcmsAliquotaReduzida != '0') {
+                        errors.push({ field: 'icms_aliquota', message: 'Para ICMS ' + selectedIcmsCst + ', as alíquotas de ICMS precisam ser 0.' });
+                    }
+                }
+        
+                if (selectedIcmsCst == '20') {
+                    if (icmsAliquotaData.hasOwnProperty(selectedIcmsAliquotaReduzida) && icmsAliquotaData[selectedIcmsAliquotaReduzida].dataCode != 1) {
+                        errors.push({ field: 'icms_aliquota_reduzida_code', message: 'O valor do ICMS alíquota reduzida não é válido.' });
+                    }
+                }
+        
+                if (selectedCbenef) {
+                    if (cbenefData.hasOwnProperty(selectedCbenef) && cbenefData[selectedCbenef].icmsCst != selectedIcmsCst) {
+                        errors.push({ field: 'cbenef_cst', message: 'Esta não é uma combinação válida do CBENEF com o ICMS/CST selecionado.' });
+                    }                    
+                }
+                
+                if (selectedNaturezareceita) {
+                    console.log('selectedNaturezareceita:', selectedNaturezareceita)
+                    if (naturezareceitaData.hasOwnProperty(selectedNaturezareceita)) {
+                        console.log('selectedNaturezareceita 2 :', selectedNaturezareceita)
+                        if (naturezareceitaData[selectedNaturezareceita].piscofinsCst != selectedPisCofinsCst) {
+                            errors.push({ field: 'naturezareceita_cst', message: 'A combinação Natureza Receita: ' + selectedNaturezareceita + ' com o PIS/COFINS ' + selectedPisCofinsCst + ' não é uma combinação válida!' });
+                        }
+                    }
+                }
+        
+                // Se houver erros, rejeita a promessa com as mensagens de erro
+                if (errors.length > 0) {
+                    resolve({ isValid: false, errors: errors });
+                } else {
+                    resolve({ isValid: true });
+                }
+            });
+        }
+
+        function validateCode(code, client) {
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: urlValidateCode,
+                    data: {
+                        'code': code,
+                        'client': client
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success === false) {
+                            resolve(false);
+                        } else {
+                            resolve(true);
+                        }
+                    },
+                    error: function() {
+                        reject('Erro ao validar o código. Tente novamente.');
+                    }
+                });
+            });
+        }   
+        
+        function validateCodes(codes, client) {
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: urlValidateCode, // Your server-side validation endpoint
+                    data: {
+                        'codes': JSON.stringify(codes), // Send codes as a JSON string
+                        'client': client
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success === false) {
+                            // Handle error response from server (e.g., some codes invalid)
+                            resolve(data.invalidCodes || []); // Resolve with an array of invalid codes
+                        } else {
+                            resolve([]); // All codes are valid
+                        }
+                    },
+                    error: function() {
+                        reject('Erro ao validar os códigos. Tente novamente.');
+                    }
+                });
+            });
+        }        
+
+    });
+    
+    
+
+</script>
+
+    <!-- Custom js -->
+    <script type="text/javascript" src="{% static 'assets/pages/handson-table/new-items.js' %}"></script>
+    
+
+    
+
+{% endblock anotherjs %}
+
+
+

@@ -168,8 +168,8 @@ $(document).ready(function() {
 
             return true;
         }
-    });
-
+    });  
+    
     // Adicionar e remover a classe personalizada ao iniciar e finalizar a edição
     $('#new-items-table').on('click', '.tabledit-edit-button', function() {
         $(this).closest('tr').addClass('custom-edit-mode');
@@ -340,8 +340,7 @@ $(document).ready(function() {
             return null; // ou qualquer outro valor padrão
         }
     }  
-
-   
+     
 });
 
 function notify(from, align, icon, type, animIn, animOut, title, message){

@@ -229,17 +229,47 @@ def download_file(request, filename):
         return HttpResponseNotFound('Arquivo não encontrado')
 
 def validate_item(request):
-    code = request.GET.get('code')
+    codes_param = request.GET.get('codes[]')  # Check for multiple codes first
     client = request.GET.get('client')
 
-    if not code or not client:
-        return JsonResponse({'success': False, 'message': 'Code and client are required.'})
+    if codes_param:
+        codes = codes_param.split(',')  # Split comma-separated string if multiple codes
+    else:
+        code = request.GET.get('code')  # Check for a single code
+        codes = [code] if code else []  # Create a list even if it's a single code
 
-    exists = Item.objects.filter(code=code, client=client).exists()
-    if exists:
-        return JsonResponse({'success': False, 'message': 'This code for this client already exists.'})
+    if not codes or not client:
+        return JsonResponse({'success': False, 'message': 'Code(s) and client are required.'})
+
+    # Convert codes to integers for efficient database query
+    try:
+        codes = [int(code) for code in codes]
+    except ValueError:
+        return JsonResponse({'success': False, 'message': 'Invalid code format.'})
+
+    # Check for existing codes in the database (bulk query)
+    existing_codes = Item.objects.filter(code__in=codes, client=client).values_list('code', flat=True)
+
+    # Determine invalid codes
+    invalid_codes = [code for code in codes if code in existing_codes]
+
+    if invalid_codes:
+        return JsonResponse({'success': False, 'invalidCodes': invalid_codes})
+    else:
+        return JsonResponse({'success': True})
+
+# def validate_item(request):
+#     code = request.GET.get('code')
+#     client = request.GET.get('client')
+
+#     if not code or not client:
+#         return JsonResponse({'success': False, 'message': 'Code and client are required.'})
+
+#     exists = Item.objects.filter(code=code, client=client).exists()
+#     if exists:
+#         return JsonResponse({'success': False, 'message': 'This code for this client already exists.'})
     
-    return JsonResponse({'success': True, 'message': 'This code for this client is available.'})
+#     return JsonResponse({'success': True, 'message': 'This code for this client is available.'})
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class ItemListView(ListView):
@@ -404,9 +434,10 @@ class ItemDeleteView(DeleteView):
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class ImportedItemListViewNewItem(ListView):
     model = ImportedItem
-    template_name = 'list_imported_items.html'
+    template_name = 'handsome_new_imported_items.html'
+    # template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
-    paginate_by = 50  # Defina quantos itens você quer por página
+    paginate_by = 10  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
@@ -414,14 +445,14 @@ class ImportedItemListViewNewItem(ListView):
 
         queryset = ImportedItem.objects.filter(client=client, status_item=0, is_pending=True).order_by('description')  
         
-        # Adicionar filtros baseados nos parâmetros GET
+        # Adicionar filtros baseados nos parâmetros GET, exceto 'page'
         filters = self.request.GET.dict()
+        filters.pop('page', None)  # Remover o parâmetro 'page' dos filtros
         for key, value in filters.items():
             if key and value:
                 queryset = queryset.filter(Q(**{key: value}))
         
         return queryset
-   
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -506,7 +537,6 @@ class ImportedItemListViewDivergentItem(ListView):
         
         return combined_queryset
    
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
@@ -652,6 +682,144 @@ def save_imported_item(request):
             # Handle exceptions
             print(str(e))
             return JsonResponse({'status': 'error', 'message': str(e)})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def save_bulk_imported_item(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.POST.get('items', '[]'))
+            
+            print(data)
+
+            # Validate each item and collect errors if any
+            all_errors = []
+            for i, row in enumerate(data):
+                item_data = {
+                    'code': row[0],
+                    'barcode': row[1],
+                    'description': row[2],
+                    'ncm': row[3],
+                    'cest': row[4],
+                    'cfop': row[5],
+                    'icms_cst': row[6],
+                    'icms_aliquota': row[7],
+                    'icms_aliquota_reduzida': row[8],
+                    'cbenef': row[9],
+                    'protege': row[10],
+                    'piscofins_cst': row[11],
+                    'pis_aliquota': row[12],
+                    'cofins_aliquota': row[13],
+                    'naturezareceita': row[17],
+                    'type_product': row[15],
+                    'fix_item': row[16]  # Get fix_item from the last column
+                }
+                errors = validate_item_data(item_data)
+                if errors:
+                    all_errors.extend([f"Linha {i + 1}: {err}" for err in errors])
+
+            if all_errors:
+                return JsonResponse({'status': 'error', 'message': '\n'.join(all_errors)})
+
+            
+            # If all items are valid, process them
+            with transaction.atomic():
+                for row in data:
+                    tipo_produto = row[16]
+                    code = row[0]
+                    client_id = row[18]
+                    barcode = row[1]
+                    description = row[2]
+                    ncm = row[3]
+                    cest = row[4]
+                    cfop_code = row[5]
+                    icms_cst_code = row[6]
+                    icms_aliquota_code = row[7]
+                    icms_aliquota_reduzida = row[8]
+                    cbenef_code = row[9]
+                    cbenef_instance = None
+                    protege = row[10]
+                    piscofins_cst = row[11]
+                    pis_aliquota_str = row[12]
+                    cofins_aliquota_str = row[13]
+                    naturezareceita_id = row[17]
+                    naturezareceita_instance = None
+                    type_product = row[15]
+                    
+                    pis_aliquota = convert_to_decimal(pis_aliquota_str)
+                    cofins_aliquota = convert_to_decimal(cofins_aliquota_str)
+                                        
+                    # Verificar se o client_id é válido
+                    client = get_object_or_404(Client, id=client_id)  
+                    cfop = get_object_or_404(Cfop, cfop=cfop_code)          
+                    icms_cst = get_object_or_404(IcmsCst, code=icms_cst_code)
+                    icms_aliquota = get_object_or_404(IcmsAliquota, code=icms_aliquota_code)
+                    protege = get_object_or_404(Protege, code=protege)
+                    piscofins_cst = get_object_or_404(PisCofinsCst, code=piscofins_cst)
+                    
+                    if cbenef_code:
+                        cbenef_instance = get_object_or_404(CBENEF, code=cbenef_code)
+                        
+                    if naturezareceita_id:
+                        naturezareceita_instance = get_object_or_404(NaturezaReceita, id=naturezareceita_id)                    
+                    
+                    if tipo_produto == '1':
+                        # Atualiza o item existente se tipo_produto for igual a 1
+                        item = get_object_or_404(Item, code=code, client=client)
+                        item.barcode = barcode
+                        item.description = description
+                        item.ncm = ncm
+                        item.cest = cest
+                        item.cfop = cfop
+                        item.icms_cst = icms_cst
+                        item.icms_aliquota = icms_aliquota
+                        item.icms_aliquota_reduzida = icms_aliquota_reduzida
+                        item.cbenef = cbenef_instance
+                        item.protege = protege
+                        item.piscofins_cst = piscofins_cst
+                        item.pis_aliquota = pis_aliquota
+                        item.cofins_aliquota = cofins_aliquota
+                        item.naturezareceita = naturezareceita_instance
+                        item.type_product = type_product
+                        item.status_item = 2  # Verifique se precisa atualizar o status do item
+                        item.save()
+
+                        # Update the ImportedItem model
+                        ImportedItem.objects.filter(code=code, client=client).update(is_pending=False)
+                    else:
+                        
+                        # Cria um novo item se tipo_produto não for igual a 1
+                        item = Item(
+                            code=code,
+                            client=client,
+                            barcode=barcode,
+                            description=description,
+                            ncm=ncm,
+                            cest=cest,
+                            cfop=cfop,
+                            icms_cst=icms_cst,
+                            icms_aliquota=icms_aliquota,
+                            icms_aliquota_reduzida=icms_aliquota_reduzida,
+                            cbenef=cbenef_instance,
+                            protege=protege,
+                            piscofins_cst=piscofins_cst,
+                            pis_aliquota=pis_aliquota,
+                            cofins_aliquota=cofins_aliquota,
+                            naturezareceita=naturezareceita_instance,
+                            type_product=type_product,
+                            status_item=2  # Verifique se precisa definir o status do item
+                        )
+                        item.save()
+
+                        # Update the ImportedItem model
+                        ImportedItem.objects.filter(code=code, client=client).update(is_pending=False)
+
+            # Return a success response
+            return JsonResponse({'status': 'success', 'message': 'Itens salvos com sucesso'})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data format'})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
@@ -941,4 +1109,13 @@ class XLSXUploadView(View):
         self.logger.error(f"Form inválido: {form.errors}")
         return JsonResponse({'errors': form.errors}, status=400)
    
+def validate_item_data(item_data):
+    errors = []
+
+    # Add validation rules for each field (similar to your individual item validation)
+    if not item_data.get('description'):
+        errors.append("A descrição é obrigatória.")
+    # ... other validation rules ...
+
+    return errors
 
