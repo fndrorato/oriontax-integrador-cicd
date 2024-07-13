@@ -437,7 +437,7 @@ class ImportedItemListViewNewItem(ListView):
     template_name = 'handsome_new_imported_items.html'
     # template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
-    paginate_by = 10  # Defina quantos itens você quer por página
+    paginate_by = 50  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
