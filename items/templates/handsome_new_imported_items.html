@@ -56,7 +56,10 @@
                     <i class="icofont icofont-filter"></i>
                 </button>    
                 
-                <button id="btn-validate" class="btn btn-primary">Editar Todos</button>                
+                <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
+                    <i class="icofont icofont-save"></i>
+                    Salvar Dados
+                </button>                
                                                                    
                 <span>Lista dos produtos cadastrados do cliente: {{ client_name }}</span>
 
@@ -113,11 +116,11 @@
                                                 <ul class="pagination">
                                                     {% if page_obj.has_previous %}
                                                         <li class="page-item">
-                                                            <a class="page-link" tabindex="-1" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Anterior</a>
+                                                            <a class="page-link" tabindex="-1" href="?page={{ page_obj.previous_page_number }}&{{ request|cleaned_query_params:'page' }}">Anterior</a>
                                                         </li>
                                                     {% else %}
                                                         <li class="page-item disabled">
-                                                            <a class="page-link" tabindex="-1" href="?page=1&{{ request.GET.urlencode }}">Anterior</a>
+                                                            <a class="page-link" tabindex="-1" href="?page=1&{{ request|cleaned_query_params:'page' }}">Anterior</a>
                                                         </li>                        
                                                     {% endif %}  
                             
@@ -134,7 +137,7 @@
                                                             </li>
                                                         {% else %}
                                                             <li class="page-item">
-                                                                <a class="page-link" href="?page={{ page_num }}&{{ request.GET.urlencode }}">{{ page_num }}</a>
+                                                                <a class="page-link" href="?page={{ page_num }}&{{ request|cleaned_query_params:'page' }}">{{ page_num }}</a>
                                                             </li>
                                                         {% endif %}
                                                     {% endfor %}                      
@@ -142,7 +145,7 @@
                             
                                                     {% if page_obj.has_next %}
                                                         <li class="page-item">
-                                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Próxima</a>
+                                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request|cleaned_query_params:'page' }}">Próxima</a>
                                                         </li>
                                                     {% endif %}                            
                                                 </ul> 
@@ -407,7 +410,7 @@
                 'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'CST Icms', 'Aliq.Icms', 'Aliq.IcmsRed', 'CBENEF', 'Protege', 'CST PIS/COFINS', 'Aliq.PIS', 'Aliq.COFINS', 'Nat.Receita', 'T.Prod.'
             ],
             columns: [
-                { data: 0 },
+                { data: 0, readOnly: true },
                 { data: 1 },
                 { data: 2 },
                 { data: 3 },
