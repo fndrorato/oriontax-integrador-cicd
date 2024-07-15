@@ -422,7 +422,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                     "{{ item.cofins_aliquota_base }}",
                     "{{ item.cofins_aliquota_cliente }}",
                     "{{ item.naturezareceita_base|default_if_none:'' }}",
-                    "{{ item.naturezareceita_cliente|default_if_none:'' }}",
+                    "{{ item.naturezareceita_cliente|default_if_none_or_zero:'' }}",
                     "{{ form.type_product.value|default_if_none:'' }}",
                     false // valor inicial do checkbox
                 ],
