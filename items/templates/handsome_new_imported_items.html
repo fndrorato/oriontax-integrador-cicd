@@ -54,14 +54,19 @@
                 
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
                     <i class="icofont icofont-filter"></i>
-                </button>    
+                </button>  
+                
+                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" id="checkAllRevenda"> 
+                    <i class="icofont icofont-verification-check"></i>
+                    Marcar todos como Revenda
+                </button>                
                 
                 <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
                     <i class="icofont icofont-save"></i>
                     Salvar Dados
                 </button>                
                                                                    
-                <span>Lista dos produtos cadastrados do cliente: {{ client_name }}</span>
+                <span class="text-danger">Total de produtos novos: {{ total_items }}</span>
 
             </div>
             <div class="card-block"> 
@@ -538,7 +543,14 @@
             } else {
                 return null; // ou qualquer outro valor padrão
             }
-        }  
+        } 
+        
+        $('#checkAllRevenda').click(function() {
+            const rowCount = hot.countRows();
+            for (let row = 0; row < rowCount; row++) {
+                hot.setDataAtCell(row, 15, 'Revenda');
+            }
+        });        
 
         // Adiciona evento de clique ao botão "Validar"
         var btnValidate = document.getElementById('btn-validate');
