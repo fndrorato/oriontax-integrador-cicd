@@ -32,9 +32,73 @@ def delete_imported_items(client_id):
     except Client.DoesNotExist:
         return {'message': f'Erro ao deletar itens: {e}', 'status': 'error'}
     
-def insert_new_items(client_id, df, status_id):
-    client_instance = Client.objects.get(id=client_id)
+# def insert_new_items(client_id, df, status_id):
+#     client_instance = Client.objects.get(id=client_id)
 
+#     new_items_list = [
+#         ImportedItem(
+#             client=client_instance,
+#             code=row['code'],
+#             barcode=row['barcode'],
+#             description=row['description'],
+#             ncm=row['ncm'],
+#             cest=row['cest'],
+#             cfop=row['cfop'],
+#             icms_cst=row['icms_cst'],
+#             icms_aliquota=row['icms_aliquota'],
+#             icms_aliquota_reduzida=row['icms_aliquota_reduzida'],
+#             protege=row['protege'],
+#             cbenef=row['cbenef'],
+#             piscofins_cst=row['piscofins_cst'],
+#             pis_aliquota=row['pis_aliquota'],
+#             cofins_aliquota=row['cofins_aliquota'],
+#             naturezareceita=row['naturezareceita'],
+#             sequencial=row['sequencial'],
+#             estado_origem=row['estado_origem'],
+#             estado_destino=row['estado_destino'],
+#             status_item=status_id
+#         )
+#         for index, row in df.iterrows()
+#     ]
+
+#     try:
+#         with transaction.atomic():
+#             ImportedItem.objects.bulk_create(new_items_list)
+
+#             if status_id == 1:
+#                 # Atualize os itens no modelo Item
+#                 imported_items_dict = { (item.code, item.client_id): item for item in new_items_list }
+#                 items_to_update = Item.objects.filter(
+#                     client_id=client_id,
+#                     code__in=[item.code for item in new_items_list]
+#                 )
+
+#                 for item in items_to_update:
+#                     imported_item = imported_items_dict.get((item.code, item.client_id))
+#                     item.sequencial = imported_item.sequencial
+#                     item.estado_origem = imported_item.estado_origem
+#                     item.estado_destino = imported_item.estado_destino
+#                     # if imported_item:
+#                     #     if not item.sequencial:
+#                     #         item.sequencial = imported_item.sequencial
+#                     #     if not item.estado_origem:
+#                     #         item.estado_origem = imported_item.estado_origem
+#                     #     if not item.estado_destino:
+#                     #         item.estado_destino = imported_item.estado_destino
+
+#                 Item.objects.bulk_update(items_to_update, ['sequencial', 'estado_origem', 'estado_destino'])
+
+#     except Exception as e:
+#         print(f'Erro ao inserir ou atualizar itens: {e}')
+#         return {'message': f'Erro ao inserir ou atualizar itens: {e}', 'status': 'error'}
+
+#     return {'message': 'Itens inseridos e atualizados com sucesso', 'status': 'success'}
+ 
+ 
+def insert_new_items(client_id, df, status_id):
+    client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
+
+    # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
         ImportedItem(
             client=client_instance,
@@ -56,44 +120,19 @@ def insert_new_items(client_id, df, status_id):
             sequencial=row['sequencial'],
             estado_origem=row['estado_origem'],
             estado_destino=row['estado_destino'],
-            status_item=status_id
+            status_item=status_id  # Supondo que todos os novos itens sejam "Produto Novo"
         )
         for index, row in df.iterrows()
     ]
 
+    # Inserir todos os itens de uma vez usando bulk_create
     try:
-        with transaction.atomic():
-            ImportedItem.objects.bulk_create(new_items_list)
-
-            if status_id == 1:
-                # Atualize os itens no modelo Item
-                imported_items_dict = { (item.code, item.client_id): item for item in new_items_list }
-                items_to_update = Item.objects.filter(
-                    client_id=client_id,
-                    code__in=[item.code for item in new_items_list]
-                )
-
-                for item in items_to_update:
-                    imported_item = imported_items_dict.get((item.code, item.client_id))
-                    item.sequencial = imported_item.sequencial
-                    item.estado_origem = imported_item.estado_origem
-                    item.estado_destino = imported_item.estado_destino
-                    # if imported_item:
-                    #     if not item.sequencial:
-                    #         item.sequencial = imported_item.sequencial
-                    #     if not item.estado_origem:
-                    #         item.estado_origem = imported_item.estado_origem
-                    #     if not item.estado_destino:
-                    #         item.estado_destino = imported_item.estado_destino
-
-                Item.objects.bulk_update(items_to_update, ['sequencial', 'estado_origem', 'estado_destino'])
-
+        ImportedItem.objects.bulk_create(new_items_list)
     except Exception as e:
-        print(f'Erro ao inserir ou atualizar itens: {e}')
-        return {'message': f'Erro ao inserir ou atualizar itens: {e}', 'status': 'error'}
+        print(f'Erro ao inserir itens: {e}')
+        return {'message': f'Erro ao inserir itens: {e}', 'status': 'error'} 
 
-    return {'message': 'Itens inseridos e atualizados com sucesso', 'status': 'success'}
-  
+    return {'message': 'Itens inseridos com sucesso', 'status': 'success'}  
 
 def validateSysmo(client_id, items_df, df, initial_log=None):
     """
