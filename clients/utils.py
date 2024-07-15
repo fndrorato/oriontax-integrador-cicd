@@ -97,12 +97,13 @@ def delete_imported_items(client_id):
  
 def insert_new_items(client_id, df, status_id):
     client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
-
+    print('Insert New Items - Received')
     # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
         ImportedItem(
             client=client_instance,
             code=row['code'],
+            sequencial=row['sequencial'],
             barcode=row['barcode'],
             description=row['description'],
             ncm=row['ncm'],
@@ -117,14 +118,13 @@ def insert_new_items(client_id, df, status_id):
             pis_aliquota=row['pis_aliquota'],
             cofins_aliquota=row['cofins_aliquota'],
             naturezareceita=row['naturezareceita'],
-            sequencial=row['sequencial'],
             estado_origem=row['estado_origem'],
             estado_destino=row['estado_destino'],
             status_item=status_id  # Supondo que todos os novos itens sejam "Produto Novo"
         )
         for index, row in df.iterrows()
     ]
-
+    print('Insert New Items - After Loop')
     # Inserir todos os itens de uma vez usando bulk_create
     try:
         ImportedItem.objects.bulk_create(new_items_list)
@@ -233,7 +233,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Tratar valores None na coluna 'cbenef'
     items_df['cbenef'] = items_df['cbenef'].fillna('')    
 
-    print('6-Encontrando os novos produtos... ')
+    print('7-Encontrando os novos produtos... ')
     # print(items_df.head())
     # print(df.head())
     print(df.head(2).transpose())
@@ -245,7 +245,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Filtrar os itens que estão em df mas não em items_df
     new_items_df = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
     
-    print('7-Limpando os novos produtos ')
+    print('8-Limpando os novos produtos ')
     ## limpando os dados
     new_items_df['barcode'] = new_items_df['barcode'].fillna('')  
     new_items_df['cest'] = new_items_df['cest'].fillna('') 
@@ -253,7 +253,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
      
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - executado função dos novos itens. Foram encontrados {len(new_items_df)} novos produtos \n'
-    print('8-executado função dos novos itens. Foram encontrados:', len(new_items_df))
+    print('9-executado função dos novos itens. Foram encontrados:', len(new_items_df))
     ################################
     # 2- Encontrar os itens divergentes
     # Remover os itens encontrados em new_items_df do dataframe original df
@@ -262,7 +262,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Realizar a junção para verificar todos os itens e identificar divergências
     merged_df = df.merge(items_df, on='code', suffixes=('_df', '_items_df'))
     # Verificar se as colunas renomeadas existem após a junção (MOVIDO PARA DEPOIS DA JUNÇÃO)
-    print('9-Verificar se as colunas renomeadas existem após a junção (MOVIDO PARA DEPOIS DA JUNÇÃO)')
+    print('10-Verificar se as colunas renomeadas existem após a junção (MOVIDO PARA DEPOIS DA JUNÇÃO)')
     missing_columns = []
     for col in expected_columns:
         if f"{col}_df" not in merged_df.columns or f"{col}_items_df" not in merged_df.columns:
