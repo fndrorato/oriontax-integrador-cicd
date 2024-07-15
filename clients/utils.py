@@ -97,7 +97,7 @@ def delete_imported_items(client_id):
  
 def insert_new_items(client_id, df, status_id):
     client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
-    print('Insert New Items - Received')
+    print('Insert New Items - Received ')
     # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
         ImportedItem(
