@@ -75,13 +75,16 @@ def insert_new_items(client_id, df, status_id):
 
                 for item in items_to_update:
                     imported_item = imported_items_dict.get((item.code, item.client_id))
-                    if imported_item:
-                        if not item.sequencial:
-                            item.sequencial = imported_item.sequencial
-                        if not item.estado_origem:
-                            item.estado_origem = imported_item.estado_origem
-                        if not item.estado_destino:
-                            item.estado_destino = imported_item.estado_destino
+                    item.sequencial = imported_item.sequencial
+                    item.estado_origem = imported_item.estado_origem
+                    item.estado_destino = imported_item.estado_destino
+                    # if imported_item:
+                    #     if not item.sequencial:
+                    #         item.sequencial = imported_item.sequencial
+                    #     if not item.estado_origem:
+                    #         item.estado_origem = imported_item.estado_origem
+                    #     if not item.estado_destino:
+                    #         item.estado_destino = imported_item.estado_destino
 
                 Item.objects.bulk_update(items_to_update, ['sequencial', 'estado_origem', 'estado_destino'])
 
