@@ -1,5 +1,6 @@
 import pandas as pd
 import openpyxl
+import logging
 from datetime import datetime
 from django.db import transaction
 from items.models import ImportedItem, Item
@@ -95,41 +96,46 @@ def delete_imported_items(client_id):
 #     return {'message': 'Itens inseridos e atualizados com sucesso', 'status': 'success'}
  
  
-def insert_new_items(client_id, df, status_id):
-    client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
-    print('Insert New Items - Received ')
-    # Crie uma lista de instâncias do modelo ImportedItem
-    new_items_list = [
-        ImportedItem(
-            client=client_instance,
-            code=row['code'],
-            barcode=row['barcode'],
-            description=row['description'],
-            ncm=row['ncm'],
-            cest=row['cest'],
-            cfop=row['cfop'],
-            icms_cst=row['icms_cst'],
-            icms_aliquota=row['icms_aliquota'],
-            icms_aliquota_reduzida=row['icms_aliquota_reduzida'],
-            protege=row['protege'],
-            cbenef=row['cbenef'],
-            piscofins_cst=row['piscofins_cst'],
-            pis_aliquota=row['pis_aliquota'],
-            cofins_aliquota=row['cofins_aliquota'],
-            naturezareceita=row['naturezareceita'],
-            status_item=status_id  # Supondo que todos os novos itens sejam "Produto Novo"
-        )
-        for index, row in df.iterrows()
-    ]
-    print('Insert New Items - After Loop')
-    # Inserir todos os itens de uma vez usando bulk_create
-    try:
-        ImportedItem.objects.bulk_create(new_items_list)
-    except Exception as e:
-        print(f'Erro ao inserir itens: {e}')
-        return {'message': f'Erro ao inserir itens: {e}', 'status': 'error'} 
+logger = logging.getLogger(__name__)  # Obtenha um logger
 
-    return {'message': 'Itens inseridos com sucesso', 'status': 'success'}  
+def insert_new_items(client_id, df, status_id, batch_size=1000):
+    client_instance = Client.objects.get(id=client_id)
+    print('Insert New Items - Received')
+
+    for i in range(0, len(df), batch_size):
+        try:
+            batch = df.iloc[i: i + batch_size]
+            new_items_list = [
+                ImportedItem(
+                    client=client_instance,
+                    code=row['code'],
+                    barcode=row['barcode'],
+                    description=row['description'],
+                    ncm=row['ncm'],
+                    cest=row['cest'],
+                    cfop=row['cfop'],
+                    icms_cst=row['icms_cst'],
+                    icms_aliquota=row['icms_aliquota'],
+                    icms_aliquota_reduzida=row['icms_aliquota_reduzida'],
+                    protege=row['protege'],
+                    cbenef=row['cbenef'],
+                    piscofins_cst=row['piscofins_cst'],
+                    pis_aliquota=row['pis_aliquota'],
+                    cofins_aliquota=row['cofins_aliquota'],
+                    naturezareceita=row['naturezareceita'],
+                    status_item=status_id
+                )
+                for _, row in batch.iterrows()
+            ]
+
+            ImportedItem.objects.bulk_create(new_items_list)
+            print(f'Lote {i // batch_size + 1} de {len(df) // batch_size + 1} inserido com sucesso')
+
+        except Exception as e:
+            logger.error(f"Erro ao inserir lote de itens (iniciando em índice {i}): {e}")
+            return {'message': f"Erro ao inserir lote de itens. Verifique os logs para mais detalhes.", 'status': 'error'}
+
+    return {'message': 'Todos os itens foram inseridos com sucesso', 'status': 'success'}
 
 def validateSysmo(client_id, items_df, df, initial_log=None):
     """
