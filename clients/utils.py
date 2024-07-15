@@ -149,7 +149,8 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Verificar se as colunas existem
     expected_columns = ['barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
                         'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
-                        'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita']
+                        'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 
+                        'sequencial', 'estado_origem', 'estado_destino']
 
     # Lista de colunas que queremos remover
     columns_to_drop = [
@@ -246,7 +247,10 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     problematic_columns = []
     divergence_counts = {col: 0 for col in expected_columns}
 
-    for col in expected_columns:
+    columns_not_compare = ['sequencial', 'estado_origem', 'estado_destino']
+    # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
+    filtered_columns = [col for col in expected_columns if col not in columns_not_compare]    
+    for col in filtered_columns:
         try:
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
             divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
