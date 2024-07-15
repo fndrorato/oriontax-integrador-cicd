@@ -125,7 +125,6 @@ if __name__ == "__main__":
             if args.client_id:
                 sys.exit(1)  # Sair com código de erro 1 
                     
-        
         if df_client is None:
             save_imported_logs(client_id, initial_log)
             if args.client_id:

@@ -1,7 +1,8 @@
 import pandas as pd
 import openpyxl
 from datetime import datetime
-from items.models import ImportedItem
+from django.db import transaction
+from items.models import ImportedItem, Item
 from .models import Client, LogIntegration
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
@@ -32,19 +33,8 @@ def delete_imported_items(client_id):
         return {'message': f'Erro ao deletar itens: {e}', 'status': 'error'}
     
 def insert_new_items(client_id, df, status_id):
-    client_instance = Client.objects.get(id=client_id)  # Obtenha a instância do cliente correta
+    client_instance = Client.objects.get(id=client_id)
 
-    # Converter as colunas para os tipos desejados
-    # df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
-    # df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
-    # df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
-    # df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)
-    # Converter a coluna 'protege' para objetos Decimal
-    # df['protege'] = df['protege'].apply(lambda x: Decimal(x) if pd.notnull(x) and x != '' else Decimal('0.00'))
-    # unique_values = df['protege'].unique()
-    # print(unique_values)
-
-    # Crie uma lista de instâncias do modelo ImportedItem
     new_items_list = [
         ImportedItem(
             client=client_instance,
@@ -63,19 +53,43 @@ def insert_new_items(client_id, df, status_id):
             pis_aliquota=row['pis_aliquota'],
             cofins_aliquota=row['cofins_aliquota'],
             naturezareceita=row['naturezareceita'],
-            status_item=status_id  # Supondo que todos os novos itens sejam "Produto Novo"
+            sequencial=row['sequencial'],
+            estado_origem=row['estado_origem'],
+            estado_destino=row['estado_destino'],
+            status_item=status_id
         )
         for index, row in df.iterrows()
     ]
 
-    # Inserir todos os itens de uma vez usando bulk_create
     try:
-        ImportedItem.objects.bulk_create(new_items_list)
-    except Exception as e:
-        print(f'Erro ao inserir itens: {e}')
-        return {'message': f'Erro ao inserir itens: {e}', 'status': 'error'} 
+        with transaction.atomic():
+            ImportedItem.objects.bulk_create(new_items_list)
 
-    return {'message': 'Itens inseridos com sucesso', 'status': 'success'}
+            if status_id == 1:
+                # Atualize os itens no modelo Item
+                imported_items_dict = { (item.code, item.client_id): item for item in new_items_list }
+                items_to_update = Item.objects.filter(
+                    client_id=client_id,
+                    code__in=[item.code for item in new_items_list]
+                )
+
+                for item in items_to_update:
+                    imported_item = imported_items_dict.get((item.code, item.client_id))
+                    if imported_item:
+                        if not item.sequencial:
+                            item.sequencial = imported_item.sequencial
+                        if not item.estado_origem:
+                            item.estado_origem = imported_item.estado_origem
+                        if not item.estado_destino:
+                            item.estado_destino = imported_item.estado_destino
+
+                Item.objects.bulk_update(items_to_update, ['sequencial', 'estado_origem', 'estado_destino'])
+
+    except Exception as e:
+        print(f'Erro ao inserir ou atualizar itens: {e}')
+        return {'message': f'Erro ao inserir ou atualizar itens: {e}', 'status': 'error'}
+
+    return {'message': 'Itens inseridos e atualizados com sucesso', 'status': 'success'}
   
 
 def validateSysmo(client_id, items_df, df, initial_log=None):
@@ -100,7 +114,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     result_integration += f'[{timestamp}] - Dados Recebidos para o Sistema Sysmo \n'
     
     # Eliminar as colunas indesejadas
-    df = df.drop(columns=['cd_sequencial', 'tx_estadoorigem', 'tx_estadodestino', 'nr_cst_cofins'])
+    df = df.drop(columns=['nr_cst_cofins'])
     print('2-Colunas indesejadas do client DF')
     # Renomear as colunas
     df = df.rename(columns={
@@ -118,7 +132,10 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
         'nr_cst_pis': 'piscofins_cst',
         'vl_aliquota_pis': 'pis_aliquota',
         'vl_aliquota_cofins': 'cofins_aliquota',
-        'nr_naturezareceita': 'naturezareceita'
+        'nr_naturezareceita': 'naturezareceita',
+        'cd_sequencial': 'sequencial',
+        'tx_estadoorigem': 'estado_origem',
+        'tx_estadodestino': 'estado_destino',
     }) 
     print('3-Rename colunas')
     df['protege'] = df['protege'].apply(lambda x: int(x))

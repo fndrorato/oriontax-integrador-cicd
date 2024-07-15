@@ -22,6 +22,7 @@ class Item(models.Model):
         
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
     code = models.PositiveIntegerField()
+    sequencial = models.PositiveIntegerField(null=True, blank=True, default=0)
     barcode = models.CharField(max_length=255, null=True, blank=True, default='')
     description = models.CharField(max_length=255)
     ncm = models.CharField(max_length=8)
@@ -40,6 +41,8 @@ class Item(models.Model):
     other_information = models.CharField(max_length=255, default='', null=True, blank=True)
     status_item = models.IntegerField(choices=STATUS_CHOICES, default=3)
     history = models.CharField(max_length=255, default='', null=True, blank=True)
+    estado_origem = models.CharField(max_length=3, default='', null=True, blank=True)
+    estado_destino = models.CharField(max_length=3, default='', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_pending_sync = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -64,6 +67,7 @@ class ImportedItem(models.Model):
            
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
     code = models.PositiveIntegerField()
+    sequencial = models.PositiveIntegerField(null=True, blank=True, default=0)    
     barcode = models.CharField(max_length=255, null=True, blank=True, default='')
     description = models.CharField(max_length=255)
     ncm = models.CharField(max_length=255)
@@ -78,6 +82,8 @@ class ImportedItem(models.Model):
     pis_aliquota = models.FloatField()
     cofins_aliquota = models.FloatField()
     naturezareceita = models.IntegerField()
+    estado_origem = models.CharField(max_length=3, default='', null=True, blank=True)
+    estado_destino = models.CharField(max_length=3, default='', null=True, blank=True)    
     created_at = models.DateTimeField(auto_now_add=True)
     status_item = models.IntegerField(choices=STATUS_CHOICES, default=1)
     is_pending = models.BooleanField(default=True)
