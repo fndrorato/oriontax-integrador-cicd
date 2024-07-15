@@ -691,8 +691,9 @@ def save_bulk_imported_item(request):
         try:
             data = json.loads(request.POST.get('items', '[]'))
             
-            print(data)
-
+            # print(data)
+            # return JsonResponse({'status': 'error', 'message': 'rrro'})
+            
             # Validate each item and collect errors if any
             all_errors = []
             for i, row in enumerate(data):
@@ -761,10 +762,9 @@ def save_bulk_imported_item(request):
                     if cbenef_code:
                         cbenef_instance = get_object_or_404(CBENEF, code=cbenef_code)
                     
-                    print('Chegou aqui')
                     if naturezareceita_id:
                         naturezareceita_instance = get_object_or_404(NaturezaReceita, id=naturezareceita_id)                    
-                    print('Chegou aqui 2')                    
+                                         
                     if tipo_produto == '1':
                         # Atualiza o item existente se tipo_produto for igual a 1
                         item = get_object_or_404(Item, code=code, client=client)
@@ -789,6 +789,9 @@ def save_bulk_imported_item(request):
                         # Update the ImportedItem model
                         ImportedItem.objects.filter(code=code, client=client).update(is_pending=False)
                     else:
+                        sequencial = row[19]
+                        estado_origem = row[20]
+                        estado_destino = row[21]
                         
                         # Cria um novo item se tipo_produto não for igual a 1
                         item = Item(
@@ -809,6 +812,9 @@ def save_bulk_imported_item(request):
                             cofins_aliquota=cofins_aliquota,
                             naturezareceita=naturezareceita_instance,
                             type_product=type_product,
+                            sequencial=sequencial,
+                            estado_origem=estado_origem,
+                            estado_destino=estado_destino,
                             status_item=2  # Verifique se precisa definir o status do item
                         )
                         item.save()

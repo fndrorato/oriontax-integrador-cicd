@@ -375,7 +375,7 @@
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('new-items-table');
     
-        var data = [
+        var dataOrigin = [
             {% for item in imported_items %}
                 [
                     "{{ item.code }}",
@@ -393,7 +393,10 @@
                     "{{ item.pis_aliquota }}",
                     "{{ item.cofins_aliquota }}",
                     "{{ item.naturezareceita|default_if_none:'' }}",
-                    "{{ form.type_product.value|default_if_none:'' }}"
+                    "{{ form.type_product.value|default_if_none:'' }}",
+                    "{{ item.sequencial }}",
+                    "{{ item.estado_origem }}",
+                    "{{ item.estado_destino }}"
                 ],
             {% endfor %}
         ];
@@ -404,7 +407,7 @@
             {% endfor %}
         ];        
         var hot = new Handsontable(container, {
-            data: data,
+            data: dataOrigin,
             rowHeaders: true,
             colHeaders: [
                 'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'CST Icms', 'Aliq.Icms', 'Aliq.IcmsRed', 'CBENEF', 'Protege', 'CST PIS/COFINS', 'Aliq.PIS', 'Aliq.COFINS', 'Nat.Receita', 'T.Prod.'
@@ -461,8 +464,8 @@
                     data: 15,
                     editor: 'select',
                     selectOptions: typeProductOptions.map(option => option.value !== null ? option.value : '')
-                }
-            ],
+                }              
+            ],     
             stretchH: 'all',
             autoWrapRow: true,
             height: 500,
@@ -472,6 +475,7 @@
             'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column'
             ],
             filters: true,
+            hiddenColumns: true,
             dropdownMenu: true,
             allowInsertRow: false,
             allowRemoveRow: false,
@@ -506,7 +510,7 @@
                         } 
                     });
                 }
-            },
+            }   
                         
         });
 
@@ -661,6 +665,7 @@
                                     dataToSend = dataToSend.map(row => {
                                         var piscofinsCst = row[11];
                                         var code = row[14];
+                                        var codeItem = row[0];
 
                                         // Find the ID from naturezareceitaData
                                         var matchingId = null;
@@ -671,9 +676,16 @@
                                             }
                                         }
 
+                                        // Find matching row in 'data' based on code
+                                        var matchingRow = dataOrigin.find(dataRow => dataRow[0] === codeItem);                                        
+
                                         row.push('0'); // Add 'fix_item'
                                         row.push(matchingId || ''); // Add the found ID (or empty string if not found)
                                         row.push(client_id)
+                                        row.push(matchingRow[16]); // Push column 16 from 'data' (index adjusted)
+                                        row.push(matchingRow[17]); // Push column 17 from 'data' (index adjusted)
+                                        row.push(matchingRow[18]);                                        
+
                                         return row;
                                     });                                     
 
