@@ -267,14 +267,14 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     for col in expected_columns:
         if f"{col}_df" not in merged_df.columns or f"{col}_items_df" not in merged_df.columns:
             missing_columns.append(col)
-    print('10-verificando colunas ausentes')
+    print('11-verificando colunas ausentes')
     if missing_columns:
         timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         result_integration += f'[{timestamp}] - Colunas ausentes na importação do cliente: {missing_columns} \n'
         save_imported_logs(client_id, result_integration)
         raise ValueError(f"Colunas ausentes no DataFrame merged_df: {missing_columns}")
 
-    print('11-comparando as colunas- gerando _df e _items_df')
+    print('12-comparando as colunas- gerando _df e _items_df')
     # Comparar as colunas
     # Lidar com valores nulos e tipos de dados diferentes
     for col in expected_columns:
@@ -309,7 +309,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     
     # print(df_items_divergent.head())
     # df_items_divergent.to_excel('df_items_divergent.xlsx', index=False) 
-    print('12-montando o message')
+    print('13-montando o message')
     if len(new_items_df) > 0 and len(df_items_divergent) > 0:
         message = (f"Foram encontrados {len(new_items_df)} novos produtos "
                 f"e {len(df_items_divergent)} linhas com divergência no cadastro.")
@@ -330,7 +330,8 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     if delete_result and delete_result.get('status') == 'error':
         return delete_result
     
-    print('13-inserindo os novos itens')
+    print('14-inserindo os novos itens')
+    print(message)
     # Inserindo os itens novos na tabela de importacao
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Gravando novos itens \n'            
@@ -353,7 +354,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     result_integration += f'[{timestamp}] - Gravando itens com divergência \n' 
     # df_items_divergent['protege'] = df_items_divergent['protege'].apply(lambda x: int(x))           
     
-    print('14-inserindo os itens com divergencia')
+    print('15-inserindo os itens com divergencia')
     try:
         insert_result = insert_new_items(client_id, df_items_divergent, 1)
     except Exception as e:
