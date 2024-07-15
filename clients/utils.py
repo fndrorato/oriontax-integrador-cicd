@@ -103,7 +103,6 @@ def insert_new_items(client_id, df, status_id):
         ImportedItem(
             client=client_instance,
             code=row['code'],
-            sequencial=row['sequencial'],
             barcode=row['barcode'],
             description=row['description'],
             ncm=row['ncm'],
@@ -118,8 +117,6 @@ def insert_new_items(client_id, df, status_id):
             pis_aliquota=row['pis_aliquota'],
             cofins_aliquota=row['cofins_aliquota'],
             naturezareceita=row['naturezareceita'],
-            estado_origem=row['estado_origem'],
-            estado_destino=row['estado_destino'],
             status_item=status_id  # Supondo que todos os novos itens sejam "Produto Novo"
         )
         for index, row in df.iterrows()
