@@ -29,19 +29,6 @@
         .error-row {
             background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
         }
-
-        .handsontable .htCore td { /* Targets all cells in the Handsontable */
-            font-size: 10px; /* Or your desired smaller font size */
-        }
-        /* Target all column headers */
-        .handsontable .ht_master th {
-            font-size: 12px; /* Adjust the size as needed */
-        }
-        
-        /* Target row headers */
-        .handsontable .ht_clone_left .htCore th {
-            font-size: 12px; /* Adjust the size as needed */
-        }        
     </style>
 {% endblock customcss %}
 
@@ -93,21 +80,21 @@
                                     <div class="slide"></div>
                                 </li>  
                                 <li class="nav-item">
-                                    <a class="nav-link" href={% url 'imported_descricao_item_list' client_id=client_id %} role="tab">
+                                    <a class="nav-link active" data-toggle="tab" href="#divergent-items" role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-error"></i>
                                         </div>
                                         Descrição Divergente</a>
                                     <div class="slide"></div>
-                                </li>                                  
+                                </li> 
                                 <li class="nav-item">
-                                    <a class="nav-link active" data-toggle="tab" href="#divergent-items" role="tab">
+                                    <a class="nav-link" href={% url 'imported_divergent_item_list' client_id=client_id %} role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-error"></i>
                                         </div>
                                         Produtos Divergentes</a>
                                     <div class="slide"></div>
-                                </li>                                                                                                                          
+                                </li>                                                                                                                                                          
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content">       
@@ -242,7 +229,7 @@
 
 {% block anotherjs %}
     <!-- Handson table js -->
-    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>  
+    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
     <!-- notification js -->
     <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>    
 <script>
@@ -398,7 +385,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                     "{{ item.barcode_base|zero_to_empty|default_if_none:'' }}",
                     "{{ item.barcode_cliente|zero_to_empty|default_if_none:'' }}",
                     "{{ item.description_base }}",
-                    "{{ item.description_cliente }}", // 4
+                    "{{ item.description_cliente }}",
                     "{{ item.ncm_base }}",
                     "{{ item.ncm_cliente }}",
                     "{{ item.cest_base|zero_to_empty|default_if_none:'' }}",
@@ -438,16 +425,17 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             data: data,
             rowHeaders: true,
             colHeaders: [
-                'Código', 'Cód.Barras.OTX', 'Cód.Barras', 'Descrição.OT', 'NCM.OT', 'NCM', 'CEST.OT', 'CEST', 
-                'CF.OT', 'CFOP', 'Icms.OT', 'Icms', 'Al.Icms.OT', 'Al.Icms', 'Aliq.IcmsRed.OT', 'Aliq.IcmsRed', 
-                'CBENEF.OT', 'CBENEF', 'Prot.OT', 'Prot', 'PIS/COFINS.OT', 'PIS/COFINS', 'Al.PIS.OT', 'Aliq.PIS', 
-                'Al.COFINS.OT', 'Al.COFINS', 'Nat.Rec.OT', 'Nat.Rec', 'T.Prod.', 'Validado'
+                'Código', 'Cód.Barras.OTX', 'Cód.Barras', 'Descrição.OTX', 'Descrição', 'NCM.OTX', 'NCM', 'CEST.OTX', 'CEST', 
+                'CFOP.OTX', 'CFOP', 'CST Icms.OTX', 'CST Icms', 'Aliq.Icms.OTX', 'Aliq.Icms', 'Aliq.IcmsRed.OTX', 'Aliq.IcmsRed', 
+                'CBENEF.OTX', 'CBENEF', 'Protege.OTX', 'Protege', 'CST PIS/COFINS.OTX', 'CST PIS/COFINS', 'Aliq.PIS.OTX', 'Aliq.PIS', 
+                'Aliq.COFINS.OTX', 'Aliq.COFINS', 'Nat.Receita.OTX', 'Nat.Receita', 'T.Prod.', 'Validado'
             ],
             columns: [
                 { data: 0, readOnly: true },
                 { data: 1 },
                 { data: 2 , readOnly: true},
                 { data: 3 },
+                { data: 4 , readOnly: true},
                 { data: 5 },
                 { data: 6 , readOnly: true},
                 { data: 7 }, //CEST
@@ -512,25 +500,19 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                 { data: 30, type: 'checkbox' }
             ],
             stretchH: 'all',
-            hiddenColumns: {
-                columns: [3, 5, 9],
-                // show UI indicators to mark hidden columns
-                indicators: true,
-            },            
-            autoWrapRow: false,
+            autoWrapRow: true,
             height: 500,
             manualRowResize: false,
             manualColumnResize: false,
             contextMenu: [
-                'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column', 'hide_column'
+            'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column'
             ],
             filters: true,
             dropdownMenu: true,
             allowInsertRow: false,
             allowRemoveRow: false,
             allowInsertColumn: false,
-            allowRemoveColumn: false,    
-            autoWrapCol: true,                    
+            allowRemoveColumn: false,            
             cells: function(row, col) {
                 var cellProperties = {};
                 cellProperties.renderer = compareColumnsRenderer;
@@ -540,14 +522,15 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             afterChange: function(changes, source) {
                 if (source === 'edit' || source === 'CopyPaste.paste') {
                     changes.forEach(([row, prop, oldValue, newValue]) => {
-                        if (prop === 2) { // Verifica se a mudança ocorreu na coluna 11 (piscofins_cst)
+                        if (prop === 21) { // Verifica se a mudança ocorreu na coluna 11 (piscofins_cst)
                             var aliquotas = getAliquotas(newValue); // Obtém as aliquotas baseado no novo valor
-                            this.setDataAtCell(row, 22, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
-                            this.setDataAtCell(row, 24, aliquotas ? aliquotas.cofins_aliquota : ''); // Define cofins_aliquota na coluna 13
+                            this.setDataAtCell(row, 23, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
+                            this.setDataAtCell(row, 25, aliquotas ? aliquotas.cofins_aliquota : ''); // Define cofins_aliquota na coluna 13
                         } 
                     });
                 }
-            },       
+            },
+                        
         });
 
         function evenRowRenderer(instance, td, row, col, prop, value, cellProperties) {
@@ -561,16 +544,16 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
         }   
 
         function compareColumnsRenderer(instance, td, row, col, prop, value, cellProperties) {
-            if (col === 29) { 
+            if (col === 30) { 
                 Handsontable.renderers.CheckboxRenderer.apply(this, arguments);
                 return;
             }            
             Handsontable.renderers.TextRenderer.apply(this, arguments);
         
             const comparisonPairs = [
-                [1, 2], [4, 5], [6, 7], [8, 9],
-                [10, 11], [12, 13], [14, 15], [16, 17], [18, 19],
-                [20, 21], [22, 23], [24, 25], [26, 27]
+                [1, 2], [3, 4], [5, 6], [7, 8], [9, 10],
+                [11, 12], [13, 14], [15, 16], [17, 18], [19, 20],
+                [21, 22], [23, 24], [25, 26], [27, 28]
             ];
         
             comparisonPairs.forEach(([col1, col2]) => {
@@ -620,17 +603,17 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                 var validationPromise = validateData({
                     id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
                     client_id: client_id, // Certifique-se de ter accesso ao client_id aqui
-                    description: rowData[3],
-                    ncm: rowData[4],
-                    cest: rowData[6],
-                    cfop: rowData[8],
-                    icms_cst: rowData[10],
-                    icms_aliquota: rowData[12],
-                    icms_aliquota_reduzida: rowData[14],
-                    cbenef: rowData[16],
-                    piscofins_cst: rowData[20], // Ajuste conforme a estrutura real dos dados na tabela
-                    naturezareceita: rowData[26],
-                    type_product: rowData[28] // Ajuste conforme a estrutura real dos dados na tabela
+                    description: rowData[23],
+                    ncm: rowData[5],
+                    cest: rowData[7],
+                    cfop: rowData[9],
+                    icms_cst: rowData[11],
+                    icms_aliquota: rowData[13],
+                    icms_aliquota_reduzida: rowData[15],
+                    cbenef: rowData[17],
+                    piscofins_cst: rowData[21], // Ajuste conforme a estrutura real dos dados na tabela
+                    naturezareceita: rowData[27],
+                    type_product: rowData[29] // Ajuste conforme a estrutura real dos dados na tabela
                 }, rowIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
@@ -697,9 +680,9 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                     } else { // If all fields are valid, proceed with code validation
                         var dataToSend = hot.getData();
                         // Filter rows where checkbox is checked
-                        var filteredDataToSend = dataToSend.filter(row => row[29] === true || row[29] === 1); // Filter based on boolean or 1
+                        var filteredDataToSend = dataToSend.filter(row => row[30] === true || row[30] === 1); // Filter based on boolean or 1
                         // Remove specific columns from each row
-                        const columnsToRemove = [2, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29];
+                        const columnsToRemove = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
                         filteredDataToSend = filteredDataToSend.map(row => {
                             return row.filter((_, index) => !columnsToRemove.includes(index));
                         });                        
@@ -707,8 +690,8 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
 
                         // Find the ID for each row based on piscofinsCst and code
                         filteredDataToSend = filteredDataToSend.map(row => {
-                            var piscofinsCst = row[10];
-                            var code = row[13];
+                            var piscofinsCst = row[11];
+                            var code = row[14];
 
                             var matchingId = findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst);
 
@@ -734,7 +717,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                                     $('#loader').hide();
                                     // Apply success class to all rows
                                     for (var i = 0; i < hot.countRows(); i++) {
-                                        if (dataToSend[i][29]) { // Check if the checkbox value is true
+                                        if (dataToSend[i][30]) { // Check if the checkbox value is true
                                             for (var j = 0; j < hot.countCols(); j++) {
                                                 hot.getCellMeta(i, j).className = 'success-row'; 
                                                 hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell

@@ -78,13 +78,21 @@
                                     <div class="slide"></div>
                                 </li>  
                                 <li class="nav-item">
+                                    <a class="nav-link" href={% url 'imported_descricao_item_list' client_id=client_id %} role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-error"></i>
+                                        </div>
+                                        Descrição Divergente</a>
+                                    <div class="slide"></div>
+                                </li>                                  
+                                <li class="nav-item">
                                     <a class="nav-link" href={% url 'imported_divergent_item_list' client_id=client_id %} role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-error"></i>
                                         </div>
                                         Produtos Divergentes</a>
                                     <div class="slide"></div>
-                                </li>                                                                                                                          
+                                </li>                                                                                                                                                          
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content">   

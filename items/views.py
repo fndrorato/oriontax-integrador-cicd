@@ -1132,7 +1132,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
     model = ImportedItem
     template_name = 'handsome_divergent_imported_items.html'
     context_object_name = 'imported_items'
-    paginate_by = 20  # Defina quantos itens você quer por página
+    paginate_by = 100  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
@@ -1198,7 +1198,171 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             cofins_aliquota_base=Subquery(items_subquery.values('cofins_aliquota')[:1]),
             naturezareceita_base=Subquery(items_subquery.values('naturezareceita__code')[:1]), 
             type_product=Subquery(items_subquery.values('type_product')[:1]),       
-        ).order_by('description', 'origem')        
+        ).annotate(
+            description_cliente=F('description')
+        ).filter(
+            Q(description_base=F('description_cliente'))
+        ).order_by('description', 'origem')  
+        
+        # Reorganizar e renomear colunas adicionando sufixo _cliente, exceto para 'code' e 'client__name'
+        combined_queryset = combined_queryset.values(
+            'client__name',
+            'code',
+            'barcode_base',
+            'barcode',
+            'description_base',
+            'description',
+            'ncm_base',
+            'ncm',
+            'cest_base',
+            'cest',
+            'cfop_base',
+            'cfop',
+            'icms_cst_base',
+            'icms_cst',
+            'icms_aliquota_base',
+            'icms_aliquota',
+            'icms_aliquota_reduzida_base',
+            'icms_aliquota_reduzida',
+            'protege_base',
+            'protege',
+            'cbenef_base',
+            'cbenef',
+            'piscofins_cst_base',
+            'piscofins_cst',
+            'pis_aliquota_base',
+            'pis_aliquota',
+            'cofins_aliquota_base',
+            'cofins_aliquota',
+            'naturezareceita_base',
+            'naturezareceita',
+            'type_product'
+        )
+
+        return [
+            {
+                **{key + '_cliente' if '_base' not in key and key not in ['code', 'client__name'] else key: value 
+                for key, value in item.items()}
+            }
+            for item in combined_queryset
+        ]  
+    
+   
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
+        context['client'] = client
+        context['client_name'] = client.name
+        context['client_id'] = client.id
+        context['filter_params'] = self.request.GET
+        icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
+        cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
+        # Adicionando cbenef ao contexto
+        context['cbenef_choices'] = CBENEF.objects.all()         
+        context['icms_cst_choices'] = icms_cst_choices        
+        context['cfop_choices'] = cfop_choices
+        context['protege_choices'] = Protege.objects.all()
+        context['piscofins_choices'] = PisCofinsCst.objects.all()
+        context['naturezareceita_choices'] = NaturezaReceita.objects.all()
+        context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
+        icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
+        context['icmsaliquotareduzida_codes'] = set(icmsaliquotareduzida_codes)
+        context['form'] = ImportedItemForm()
+        # Adiciona os cálculos de paginação
+        paginator = context['paginator']
+        page_obj = context['page_obj']
+        total_pages = paginator.num_pages
+        current_page = page_obj.number
+
+        if total_pages <= 10:
+            page_range = range(1, total_pages + 1)
+        else:
+            if current_page <= 4:
+                page_range = list(range(1, 6)) + ['...'] + [total_pages - 1, total_pages]
+            elif current_page > total_pages - 4:
+                page_range = [1, 2, '...'] + list(range(total_pages - 4, total_pages + 1))
+            else:
+                page_range = [1, 2, '...'] + list(range(current_page - 2, current_page + 3)) + ['...'] + [total_pages - 1, total_pages]
+
+        context['page_range'] = page_range
+        return context    
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
+    model = ImportedItem
+    template_name = 'handsome_description_imported_items.html'
+    context_object_name = 'imported_items'
+    paginate_by = 100  # Defina quantos itens você quer por página
+
+    def get_queryset(self):
+        client_id = self.kwargs.get('client_id')
+        client = get_object_or_404(Client, id=client_id)
+        filters = self.request.GET.dict()
+        
+        # Anota os querysets com a coluna 'origem'
+        imported_items_queryset = ImportedItem.objects.filter(
+            client=client, status_item=1, is_pending=True
+        ).annotate(
+            origem=Value('Integração', output_field=CharField())
+        ).values(
+            'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
+            'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
+            'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
+            'cofins_aliquota', 'naturezareceita'
+        )
+        
+        # Separar filtros baseados nos parâmetros GET
+        base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
+        cliente_filters = {key[8:]: value for key, value in filters.items() if key.startswith('cliente-')}
+        
+        # Aplicar filtros ao imported_items_queryset
+        for key, value in cliente_filters.items():
+            imported_items_queryset = imported_items_queryset.filter(Q(**{key: value}))        
+
+        items_queryset = Item.objects.filter(
+            client=client, code__in=imported_items_queryset.values('code')
+        ).annotate(
+            origem=Value('Base', output_field=CharField()),
+            piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
+        ).order_by('description')
+        # Subquery para obter os dados da base de itens correspondentes
+        items_subquery = Item.objects.filter(
+            client=client, code=OuterRef('code')
+        ).annotate(
+            piscofins_cst_code=F('piscofins_cst__code')
+        ).values(
+            'barcode', 'description', 'ncm', 'cest', 'cfop__cfop', 'icms_cst__code',
+            'icms_aliquota__code', 'icms_aliquota_reduzida', 'protege__code',
+            'cbenef__code', 'piscofins_cst_code', 'pis_aliquota', 'cofins_aliquota',
+            'naturezareceita__code', 'type_product'
+        )        
+        
+        # Aplicar filtros ao items_queryset
+        for key, value in base_filters.items():
+            items_queryset = items_queryset.filter(Q(**{key: value}))
+
+        # Combinar os querysets usando um left outer join
+        combined_queryset = imported_items_queryset.annotate(
+            barcode_base=Subquery(items_subquery.values('barcode')[:1]),
+            description_base=Subquery(items_subquery.values('description')[:1]),
+            ncm_base=Subquery(items_subquery.values('ncm')[:1]),
+            cest_base=Subquery(items_subquery.values('cest')[:1]),
+            cfop_base=Subquery(items_subquery.values('cfop__cfop')[:1]),
+            icms_cst_base=Subquery(items_subquery.values('icms_cst__code')[:1]),
+            icms_aliquota_base=Subquery(items_subquery.values('icms_aliquota__code')[:1]),
+            icms_aliquota_reduzida_base=Subquery(items_subquery.values('icms_aliquota_reduzida')[:1]),
+            protege_base=Subquery(items_subquery.values('protege__code')[:1]),
+            cbenef_base=Subquery(items_subquery.values('cbenef__code')[:1]),
+            piscofins_cst_base=Subquery(items_subquery.values('piscofins_cst_code')[:1]),
+            pis_aliquota_base=Subquery(items_subquery.values('pis_aliquota')[:1]),
+            cofins_aliquota_base=Subquery(items_subquery.values('cofins_aliquota')[:1]),
+            naturezareceita_base=Subquery(items_subquery.values('naturezareceita__code')[:1]), 
+            type_product=Subquery(items_subquery.values('type_product')[:1]),       
+        ).annotate(
+            description_cliente=F('description')
+        ).filter(
+            ~Q(description_base=F('description_cliente'))
+        ).order_by('description', 'origem')       
         
         # Reorganizar e renomear colunas adicionando sufixo _cliente, exceto para 'code' e 'client__name'
         combined_queryset = combined_queryset.values(
