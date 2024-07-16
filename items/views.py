@@ -173,6 +173,7 @@ def export_items_to_excel(request, client_id, table):
 
         # Converter para DataFrame (se necessário)
         df = pd.DataFrame(list(combined_queryset))
+        
 
         # Ordem desejada das colunas
         desired_order = [
@@ -182,11 +183,12 @@ def export_items_to_excel(request, client_id, table):
             'icms_aliquota_base', 'icms_aliquota', 'icms_aliquota_reduzida_base', 'icms_aliquota_reduzida', 
             'protege_base', 'protege', 'cbenef_base', 'cbenef', 'piscofins_cst_base', 'piscofins_cst', 
             'pis_aliquota_base', 'pis_aliquota', 'cofins_aliquota_base', 'cofins_aliquota',
-            'naturezareceita_base', 'naturezareceita'
+            'naturezareceita_base', 'naturezareceita', 'type_product', 'other_information'
         ]
 
         # Reorganizando as colunas
         df = df.reindex(columns=desired_order)
+        
         
         # Renomear colunas adicionando sufixo _cliente, exceto para code e client__name
         new_column_names = {col: (col + '_cliente' if '_base' not in col and col not in ['code', 'client__name'] else col) for col in df.columns}
@@ -196,7 +198,8 @@ def export_items_to_excel(request, client_id, table):
         new_column_names['other_information'] = 'outros_detalhes'
 
         # Renomear as colunas do DataFrame
-        df = df.rename(columns=new_column_names)        
+        df = df.rename(columns=new_column_names) 
+        print(df.info())       
                      
     else:
         items = []

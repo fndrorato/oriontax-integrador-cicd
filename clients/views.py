@@ -92,8 +92,6 @@ class ClientUpdateView(UpdateView):
         self.object = form.save(commit=False)
         password_route = form.cleaned_data.get('password_route')
         
-        print('Pass:', password_route)
-        
         if password_route:
             self.object.password_route = password_route
         else:
@@ -257,7 +255,6 @@ class XLSXSimulateValidateItems(View):
 
 class RunSelectView(View):
     def get(self, request, client_id):
-        print(f"Received client_id: {client_id}")
         client = get_object_or_404(Client, id=client_id)
         try:
             # Obter o caminho completo para o script run_select.py
