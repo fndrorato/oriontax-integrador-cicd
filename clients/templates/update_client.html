@@ -410,7 +410,9 @@
                                                         <div class="circ3 loader-primary"></div>
                                                         <div class="circ4 loader-primary"></div>
                                                     </div> 
-                                                    <button class="btn btn-inverse w-100" style="position: relative; z-index: 1;">
+                                                    <button class="btn btn-inverse w-100" 
+                                                        style="position: relative; z-index: 1;"
+                                                        onclick="runUpdate({{ client.pk }})">
                                                         <i class="icofont icofont-ui-rotation"></i>
                                                         enviar dados para o cliente
                                                     </button>
@@ -904,7 +906,7 @@
         }   
 
         
-        function runSelect(clientId) {
+        function runSelect(clientId, typeRun) {
             $('#loader-load-data').show();
             fetch(`/clientes/executar-sincronizacao/${clientId}/`)
             .then(response => response.json())
@@ -926,7 +928,31 @@
                     $('#loader-load-data').hide();
                 }
             });
-        }        
+        } 
+        
+        function runUpdate(clientId) {
+            $('#loader-sent-data').show();
+            fetch(`/clientes/executar-atualizacoes/${clientId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    swal(
+                        'Sucesso!',
+                        'Dados enviados com sucesso.',
+                        'success'
+                    );
+                    $('#loader-load-data').hide();
+                } else {
+                    swal(
+                        'Erro!',
+                        'Ocorreu um erro ao enviar os dados do cliente.',
+                        'error'
+                    );                    
+                    console.log('Error: ' + data.message);
+                    $('#loader-sent-data').hide();
+                }
+            });
+        }          
              
       </script>  
 {% endblock anotherjs %}
