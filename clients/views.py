@@ -274,4 +274,26 @@ class RunSelectView(View):
         except Exception as e:
             print(f"Error: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)})
+        
+class RunUpdateView(View):
+    def get(self, request, client_id):
+        client = get_object_or_404(Client, id=client_id)
+        try:
+            # Obter o caminho completo para o script run_select.py
+            script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', 'run_update_sysmo.py')
+            
+            # Obter o caminho do interpretador Python atual
+            python_executable = sys.executable
+            
+            # Executar o script como um subprocesso
+            # result = subprocess.run(['python', script_path, '--client_id', str(client_id)])
+            result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
+
+            if result.returncode == 0:  # Código de saída 0 indica sucesso
+                return JsonResponse({'status': 'success', 'message': 'Script executed successfully'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Error executing script'})
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': str(e)})        
              
