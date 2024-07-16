@@ -9,8 +9,11 @@
 {% endblock title %}
 
 {% block customcss %}
-    <!-- Handson table css start -->
+    <!-- Handson table css start 
     <link rel="stylesheet" type="text/css" href="https://docs.handsontable.com/pro/bower_components/handsontable-pro/dist/handsontable.full.min.css">
+    -->
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
                                                 
     <!-- Notification.css -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/notification/notification.css' %}">
@@ -322,8 +325,13 @@
 {% endblock content %}
 
 {% block anotherjs %}
-    <!-- Handson table js -->
+    <!-- Handson table js 
     <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>  
+    -->
+    
+    <script src="
+    https://cdn.jsdelivr.net/npm/handsontable@14.4.0/dist/handsontable.full.min.js
+    "></script>    
     <!-- notification js -->
     <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script> 
     
@@ -530,6 +538,21 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                 'CBENEF.OT', 'CBENEF', 'Prot.OT', 'Prot', 'PIS/COFINS.OT', 'PIS/COFINS', 'Al.PIS.OT', 'Aliq.PIS', 
                 'Al.COFINS.OT', 'Al.COFINS', 'Nat.Rec.OT', 'Nat.Rec', 'T.Prod.', 'Validado'
             ],
+            nestedHeaders: [
+                [
+                    { label: '', colspan: 10 },
+                    { label: 'ICMS', colspan: 6 },
+                    { label: '', colspan: 4 },
+                    { label: 'PIS/COFINS', colspan: 6 },
+                    { label: '', colspan: 3 }
+                ],
+                [
+                    'Código', 'Cód.Barras.OTX', 'Cód.Barras', 'Descrição.OT', 'NCM.OT', 'NCM', 'CEST.OT', 'CEST', 
+                    'CF.OT', 'CFOP', 'CST.OT', 'CST', 'Al.OT', 'Al.', 'Al.Red.OT', 'Al.Red', 
+                    'CBENEF.OT', 'CBENEF', 'Prot.OT', 'Prot', 'CST.OT', 'CST', 'Al.PIS.OT', 'Al.PIS', 
+                    'Al.COFINS.OT', 'Al.COFINS', 'Nat.Rec.OT', 'Nat.Rec', 'T.Prod.', 'Validado'
+                ] 
+            ],            
             columns: [
                 { data: 0, readOnly: true },
                 { data: 1 },
@@ -598,12 +621,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                 },
                 { data: 30, type: 'checkbox' }
             ],
-            stretchH: 'all',
-            hiddenColumns: {
-                columns: [3, 5, 9],
-                // show UI indicators to mark hidden columns
-                indicators: true,
-            },            
+            stretchH: 'all',           
             autoWrapRow: false,
             height: 500,
             manualRowResize: false,
@@ -617,7 +635,8 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             allowRemoveRow: false,
             allowInsertColumn: false,
             allowRemoveColumn: false,    
-            autoWrapCol: true,                    
+            autoWrapCol: true, 
+            licenseKey: 'non-commercial-and-evaluation',                   
             cells: function(row, col) {
                 var cellProperties = {};
                 cellProperties.renderer = compareColumnsRenderer;
