@@ -243,7 +243,57 @@
                                                     </select>
                                                 </div>                                                
                                             </div>                                            
-                                        </div>                                                                                   
+                                        </div>   
+                                        
+                                        <hr>
+
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Endereço para conectar</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.connection_route.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.connection_route|add_class:"form-control"|attr:"placeholder:host.ddns.net" }}
+                                                    </div>
+                                                </div>                                                  
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Banco de Dados</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.database_route.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.database_route|add_class:"form-control"|attr:"placeholder:Base de Dados" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Porta</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.port_route.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.port_route|add_class:"form-control"|attr:"placeholder:5432" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Usuário</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.user_route.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.user_route|add_class:"form-control"|attr:"placeholder:usuario" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Senha</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.password_route.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.password_route|add_class:"form-control"|attr:"placeholder:Senha" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                                                                                                                    
+                                        </div>                                         
 
                                         <div class="row">
                                             <div class="col-sm-12">

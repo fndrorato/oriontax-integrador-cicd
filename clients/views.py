@@ -85,7 +85,24 @@ class ClientUpdateView(UpdateView):
         # Obtendo o log das integrações para esse cliente
         logs = LogIntegration.objects.filter(client_id=client_id)
         context['logs'] = logs
-        return context      
+        return context   
+    
+    def form_valid(self, form):
+        # Obter a instância atual do cliente
+        self.object = form.save(commit=False)
+        password_route = form.cleaned_data.get('password_route')
+        
+        print('Pass:', password_route)
+        
+        if password_route:
+            self.object.password_route = password_route
+        else:
+            # Não salva o campo password_route vazio
+            self.object.password_route = self.object.__class__.objects.get(pk=self.object.pk).password_route
+        
+        
+        self.object.save()
+        return super().form_valid(form)       
 
     def get_success_url(self):
         return reverse_lazy('client_update', kwargs={'pk': self.object.pk})     
