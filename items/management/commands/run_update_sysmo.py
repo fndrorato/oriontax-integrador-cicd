@@ -66,6 +66,8 @@ def connect_and_update(host, user, password, port, database, client_name, items_
                 )
                 for _, row in items_df.iterrows()
             ]
+            
+            return True, initial_log
 
             # Executa a inserção em massa
             execute_values(cursor, """
