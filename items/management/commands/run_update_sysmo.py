@@ -70,7 +70,7 @@ def connect_and_update(host, user, password, port, database, client_name, items_
             for column_name, max_length in column_sizes.items():
                 print("{:<24} | {:<25}".format(column_name, max_length))                      
                 
-            return False, initial_log
+            # return False, initial_log
 
             # Prepara os dados para inserção em massa
             values = [
@@ -98,7 +98,7 @@ def connect_and_update(host, user, password, port, database, client_name, items_
                 ) VALUES %s
             """, values)
 
-            # connection.commit()  # Confirma a transação
+            connection.commit()  # Confirma a transação
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
             print(f"Atualização realizada com sucesso para o cliente {client_name}")
             return True, initial_log
@@ -179,6 +179,23 @@ if __name__ == "__main__":
         # Supondo que você já tenha o DataFrame items_df
         sequencial_unicos_zero = items_df[items_df['sequencial'] == 0]['sequencial'].unique()
         print(sequencial_unicos_zero)        
+        
+        # Calcular o tamanho de cada célula na coluna 'description'
+        items_df['description_length'] = items_df['description'].apply(len)
+
+        # Encontrar o índice da célula com o maior tamanho
+        max_length_index = items_df['description_length'].idxmax()
+
+        # Obter o conteúdo e o tamanho da maior célula
+        max_description = items_df.loc[max_length_index, 'description']
+        max_description_length = items_df.loc[max_length_index, 'description_length']
+
+        # Obter o 'code' correspondente ao índice da maior célula
+        max_description_code = items_df.loc[max_length_index, 'code']
+
+        print(f"O conteúdo da maior célula é: {max_description}")
+        print(f"A maior célula tem {max_description_length} caracteres")
+        print(f"O 'code' correspondente à maior célula é: {max_description_code}")      
         
         print(len(items_df))
         
