@@ -84,8 +84,8 @@ def connect_and_update(host, user, password, port, database, client_name, items_
                 for _, row in items_df.iterrows()
             ]
 
-            for _, row in items_df.iterrows():
-                print(len(row['barcode']), len(row['description']), len(row['ncm']))  # Verifica os comprimentos
+            # for _, row in items_df.iterrows():
+            #     print(len(row['barcode']), len(row['description']), len(row['ncm']))  # Verifica os comprimentos
             
 
             # Executa a inserção em massa
