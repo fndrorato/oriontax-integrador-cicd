@@ -249,6 +249,9 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     ################################
     # 1- Encontrar os novos produtos
     # Realizar a junção para encontrar os itens presentes em df mas não em items_df
+    print('Mostrando a info das duas DF')
+    print(items_df.info())
+    print(df.info())
     merged_df = df.merge(items_df[['code']], on='code', how='left', indicator=True)
     # Filtrar os itens que estão em df mas não em items_df
     new_items_df = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
