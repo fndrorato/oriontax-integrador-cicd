@@ -42,7 +42,6 @@ def get_clients():
 
 def connect_and_update(host, user, password, port, database, client_name, items_df, initial_log):
     try:
-        return True, initial_log
         connection = psycopg2.connect(
             user=user,
             password=password,
