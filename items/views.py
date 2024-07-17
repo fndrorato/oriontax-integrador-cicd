@@ -17,6 +17,7 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db import transaction, connection
 from django.db.models import Value, CharField, OuterRef,  Subquery
+from django.db.models.functions import Trim
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db.utils import DataError

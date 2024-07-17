@@ -54,6 +54,23 @@ def connect_and_update(host, user, password, port, database, client_name, items_
 
         try:
             cursor = connection.cursor()
+            
+            # Consulta SQL para obter os tamanhos máximos das colunas
+            cursor.execute("""
+                SELECT column_name, character_maximum_length
+                FROM information_schema.columns
+                WHERE table_name = 'tb_sysmointegradorrecebimento'
+                AND data_type = 'character varying';
+            """)
+            column_sizes = {row[0]: row[1] for row in cursor.fetchall()}  
+            
+            # Imprimir a estrutura de colunas e tamanhos máximos
+            print("column_name | character_maximum_length")
+            print("------------------------+--------------------------")
+            for column_name, max_length in column_sizes.items():
+                print("{:<24} | {:<25}".format(column_name, max_length))                      
+                
+            return False, initial_log
 
             # Prepara os dados para inserção em massa
             values = [
@@ -67,6 +84,10 @@ def connect_and_update(host, user, password, port, database, client_name, items_
                 for _, row in items_df.iterrows()
             ]
 
+            for _, row in items_df.iterrows():
+                print(len(row['barcode']), len(row['description']), len(row['ncm']))  # Verifica os comprimentos
+            
+
             # Executa a inserção em massa
             execute_values(cursor, """
                 INSERT INTO tb_sysmointegradorrecebimento (
@@ -77,7 +98,7 @@ def connect_and_update(host, user, password, port, database, client_name, items_
                 ) VALUES %s
             """, values)
 
-            connection.commit()  # Confirma a transação
+            # connection.commit()  # Confirma a transação
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
             print(f"Atualização realizada com sucesso para o cliente {client_name}")
             return True, initial_log
