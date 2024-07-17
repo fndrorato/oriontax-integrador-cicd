@@ -20,7 +20,7 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        clients = Client.objects.all()
+        clients = Client.objects.all().order_by('name')
         clients_with_item_count = []
         total_items = 0
         total_stores = 0
