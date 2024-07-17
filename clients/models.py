@@ -24,6 +24,7 @@ class Client(models.Model):
     ]  
     
     name = models.CharField(max_length=255)
+    cnpj = models.CharField(max_length=18, blank=True, null=True, default='', verbose_name="CNPJ")
     num_stores = models.IntegerField()
     date_contract = models.DateField()
     date_send = models.DateField()

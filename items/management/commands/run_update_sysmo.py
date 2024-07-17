@@ -42,6 +42,7 @@ def get_clients():
 
 def connect_and_update(host, user, password, port, database, client_name, items_df, initial_log):
     try:
+        return True, initial_log
         connection = psycopg2.connect(
             user=user,
             password=password,
@@ -59,15 +60,13 @@ def connect_and_update(host, user, password, port, database, client_name, items_
             values = [
                 (
                     row['sequencial'], row['code'], row['barcode'], row['description'], row['ncm'],
-                    row['cest'], row['cfop'], row['icms_cst'], row['icms_aliquota'],
-                    row['icms_aliquota_reduzida'], row['protege'], row['cbenef'], row['piscofins_cst'],
-                    row['pis_aliquota'], row['piscofins_cst'], row['cofins_aliquota'], 
+                    row['cest'], row['cfop_id'], row['icms_cst_id'], row['icms_aliquota_id'],
+                    row['icms_aliquota_reduzida'], row['protege_id'], row['cbenef_id'], row['piscofins_cst_id'],
+                    row['pis_aliquota'], row['piscofins_cst_id'], row['cofins_aliquota'], 
                     row['naturezareceita_code'], row['estado_origem'], row['estado_destino']
                 )
                 for _, row in items_df.iterrows()
             ]
-            
-            return True, initial_log
 
             # Executa a inserção em massa
             execute_values(cursor, """
@@ -144,7 +143,24 @@ if __name__ == "__main__":
         items_list = list(items_queryset.values())
 
         # Cria um DataFrame a partir da lista de dicionários
-        items_df = pd.DataFrame(items_list)  
+        items_df = pd.DataFrame(items_list) 
+        # Substitui None por string vazia na coluna 'cbenef_id'
+        items_df['cbenef_id'] = items_df['cbenef_id'].fillna('') 
+        # Tenta converter para numérico, valores não numéricos se tornam NaN
+        items_df['piscofins_cst_id'] = items_df['piscofins_cst_id'].astype(int)        
+        
+        # Substitui None por 0 na coluna 'naturezareceita_code'
+        items_df['naturezareceita_code'] = items_df['naturezareceita_code'].fillna(0)
+
+        # Converte a coluna 'naturezareceita_code' para inteiro
+        items_df['naturezareceita_code'] = items_df['naturezareceita_code'].astype(int)
+        
+        print(items_df['sequencial'].unique())
+        # Supondo que você já tenha o DataFrame items_df
+        sequencial_unicos_zero = items_df[items_df['sequencial'] == 0]['sequencial'].unique()
+        print(sequencial_unicos_zero)        
+        
+        print(len(items_df))
         
         # Verifica se a quantidade de itens é maior que 1
         if len(items_df) == 0:

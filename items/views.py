@@ -29,14 +29,15 @@ from clients.models import Client
 from .models import Item, ImportedItem
 from .forms import ItemForm, CSVUploadForm, ImportedItemForm
 from impostos.models import IcmsCst, IcmsAliquota, IcmsAliquotaReduzida, Protege, CBENEF, PisCofinsCst, NaturezaReceita, Cfop
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from .models import Item, ImportedItem
 from itertools import chain
 from django.db.models import Q, F
 import openpyxl
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 from openpyxl.utils import get_column_letter
+from io import BytesIO
 from auditlog.models import LogEntry
 from auditlog.registry import auditlog
 from app.utils import get_auditlog_history
@@ -1027,7 +1028,7 @@ class XLSXUploadView(View):
                 current_time = timezone.now()
                 errors = []
 
-                batch_size = 10000
+                batch_size = 5000
 
                 with transaction.atomic():                
                     for index, row in df.iterrows():

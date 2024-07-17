@@ -21,7 +21,7 @@ class Item(models.Model):
     ]    
         
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
-    code = models.PositiveIntegerField()
+    code = models.CharField(max_length=50, null=True, blank=True, default='0')
     sequencial = models.PositiveIntegerField(null=True, blank=True, default=0)
     barcode = models.CharField(max_length=255, null=True, blank=True, default='')
     description = models.CharField(max_length=255)
@@ -66,7 +66,7 @@ class ImportedItem(models.Model):
     ]       
            
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
-    code = models.PositiveIntegerField()
+    code = models.CharField(max_length=50, null=True, blank=True, default='0')
     sequencial = models.PositiveIntegerField(null=True, blank=True, default=0)    
     barcode = models.CharField(max_length=255, null=True, blank=True, default='')
     description = models.CharField(max_length=255)
