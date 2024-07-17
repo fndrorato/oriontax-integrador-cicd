@@ -254,7 +254,10 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     print(df.info())
     # Remover espaços extras da coluna 'code' em ambos os DataFrames
     df['code'] = df['code'].astype(str).str.strip()
-    items_df['code'] = items_df['code'].astype(str).str.strip()    
+    items_df['code'] = items_df['code'].astype(str).str.strip()
+    
+    df['description'] = df['description'].astype(str).str.strip()
+    items_df['description'] = items_df['description'].astype(str).str.strip()
     
     merged_df = df.merge(items_df[['code']], on='code', how='left', indicator=True)
     # Filtrar os itens que estão em df mas não em items_df
