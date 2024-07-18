@@ -1029,7 +1029,7 @@ class XLSXUploadView(View):
                 current_time = timezone.now()
                 errors = []
 
-                batch_size = 5000
+                batch_size = 1000
 
                 with transaction.atomic():                
                     for index, row in df.iterrows():
@@ -1048,7 +1048,7 @@ class XLSXUploadView(View):
 
                             item_data = {
                                 'client': client,
-                                'code': row['codigo'],
+                                'code': str(row['codigo']).strip(),
                                 'barcode': row['barcode'],
                                 'description': row['description'],
                                 'ncm': row['ncm'],
@@ -1071,8 +1071,8 @@ class XLSXUploadView(View):
                                 'user_updated': user,
                             }
 
-                            if str(row['codigo']) in existing_items:
-                                item = existing_items[str(row['codigo'])]  # Converter para string
+                            if str(row['codigo']).strip() in existing_items:
+                                item = existing_items[str(row['codigo']).strip()]  # Converter para string
                                 for key, value in item_data.items():
                                     setattr(item, key, value)
                                 items_to_update.append(item)
@@ -1658,7 +1658,7 @@ class XLSXUploadDivergentView(View):
                 current_time = timezone.now()
                 errors = []
 
-                batch_size = 5000
+                batch_size = 1000
                 
                 print(df)
 
