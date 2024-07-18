@@ -152,6 +152,7 @@ if __name__ == "__main__":
 
             # Cria um DataFrame a partir da lista de dicionários
             items_df = pd.DataFrame(items_list)  
+            print(df_client.head())
             
             for i, descricao in enumerate(df_client['tx_descricaoproduto']):
                 print(f"{i+1}. {descricao}")  # Imprime o índice e a descrição            
