@@ -81,7 +81,12 @@
                 <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#uploadModal"> 
                     <i class="feather icon-upload-cloud"></i>
                     Fazer Upload em Excel
-                </button>                 
+                </button>    
+
+                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" id="checkAllValidate"> 
+                    <i class="icofont icofont-verification-check"></i>
+                    Validar Todos
+                </button>  
                 
                 <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
                     <i class="icofont icofont-save"></i>
@@ -701,6 +706,13 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                 return null; // ou qualquer outro valor padrão
             }
         }  
+
+        $('#checkAllValidate').click(function() {
+            const rowCount = hot.countRows();
+            for (let row = 0; row < rowCount; row++) {
+                hot.setDataAtCell(row, 29, true);
+            }
+        });    
 
         // Adiciona evento de clique ao botão "Validar"
         var btnValidate = document.getElementById('btn-validate');

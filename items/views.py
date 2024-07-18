@@ -1071,8 +1071,8 @@ class XLSXUploadView(View):
                                 'user_updated': user,
                             }
 
-                            if row['codigo'] in existing_items:
-                                item = existing_items[row['codigo']]
+                            if str(row['codigo']) in existing_items:
+                                item = existing_items[str(row['codigo'])]  # Converter para string
                                 for key, value in item_data.items():
                                     setattr(item, key, value)
                                 items_to_update.append(item)
@@ -1506,7 +1506,7 @@ class XLSXUploadDivergentView(View):
                     'naturezareceita_base': str,
                     'tipo_produto': str,  # Adicionar tipo_produto
                 })
-                print(df.head())
+                
                 
                 # 1. Remover colunas específicas
                 columns_to_remove = [col for col in df.columns if col.endswith('_cliente')]
@@ -1659,6 +1659,8 @@ class XLSXUploadDivergentView(View):
                 errors = []
 
                 batch_size = 5000
+                
+                print(df)
 
                 with transaction.atomic():                
                     for index, row in df.iterrows():
@@ -1701,8 +1703,8 @@ class XLSXUploadDivergentView(View):
                                 'status_item': 2,
                             }
 
-                            if row['codigo'] in existing_items:
-                                item = existing_items[row['codigo']]
+                            if str(row['codigo']) in existing_items:
+                                item = existing_items[str(row['codigo'])]  # Converter para string
                                 for key, value in item_data.items():
                                     setattr(item, key, value)
                                 items_to_update.append(item)

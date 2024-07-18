@@ -87,6 +87,8 @@ def connect_and_update(host, user, password, port, database, client_name, items_
             # for _, row in items_df.iterrows():
             #     print(len(row['barcode']), len(row['description']), len(row['ncm']))  # Verifica os comprimentos
             
+            # EXECUTAR DELETE ANTES NESSA TABELA
+            # tb_sysmointegradorrecebimento
 
             # Executa a inserção em massa
             execute_values(cursor, """
@@ -233,6 +235,7 @@ if __name__ == "__main__":
                     save_imported_logs(client_id, initial_log)
                     if args.client_id:
                         sys.exit(0)  # Sair com código de sucesso
+                        
                 except Exception as e:
                     initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Ocorreu um erro durante a atualização dos itens: {e}\n"
                     print(f"Ocorreu um erro durante a atualização dos itens: {e}")                

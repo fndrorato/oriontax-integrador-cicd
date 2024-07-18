@@ -293,6 +293,7 @@ class RunUpdateView(View):
                 return JsonResponse({'status': 'success', 'message': 'Script executed successfully'})
             else:
                 return JsonResponse({'status': 'error', 'message': 'Error executing script'})
+            
         except Exception as e:
             print(f"Error: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)})        
