@@ -62,15 +62,17 @@ def connect_and_query(host, user, password, port, database, client_name, initial
                 ORDER BY cd_sequencial ASC
             """)
             
-            search_term = "&"  
             query = sql.SQL("""
                 SELECT cd_sequencial, cd_produto, tx_codigobarras, tx_descricaoproduto, tx_ncm, tx_cest, nr_cfop, nr_cst_icms, vl_aliquota_integral_icms,
                 vl_aliquota_final_icms, vl_aliquota_fcp, tx_cbenef, nr_cst_pis, vl_aliquota_pis, nr_cst_cofins, vl_aliquota_cofins, nr_naturezareceita,
                 tx_estadoorigem, tx_estadodestino 
                 FROM tb_sysmointegradorenvio 
-                WHERE tx_descricaoproduto LIKE {placeholder} 
+                WHERE cd_produto = 21512
+                OR cd_produto = 41776
+                OR cd_produto = 41777
+                OR cd_produto = 41778
                 ORDER BY cd_sequencial ASC
-            """).format(placeholder=sql.Literal(search_term))            
+            """)            
 
             cursor.execute(query)
             rows = cursor.fetchall()
