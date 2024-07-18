@@ -60,19 +60,7 @@ def connect_and_query(host, user, password, port, database, client_name, initial
                 tx_estadoorigem, tx_estadodestino 
                 FROM tb_sysmointegradorenvio 
                 ORDER BY cd_sequencial ASC
-            """)
-            
-            query = sql.SQL("""
-                SELECT cd_sequencial, cd_produto, tx_codigobarras, tx_descricaoproduto, tx_ncm, tx_cest, nr_cfop, nr_cst_icms, vl_aliquota_integral_icms,
-                vl_aliquota_final_icms, vl_aliquota_fcp, tx_cbenef, nr_cst_pis, vl_aliquota_pis, nr_cst_cofins, vl_aliquota_cofins, nr_naturezareceita,
-                tx_estadoorigem, tx_estadodestino 
-                FROM tb_sysmointegradorenvio 
-                WHERE cd_produto = 21512
-                OR cd_produto = 41776
-                OR cd_produto = 41777
-                OR cd_produto = 41778
-                ORDER BY cd_sequencial ASC
-            """)            
+            """)          
 
             cursor.execute(query)
             rows = cursor.fetchall()
@@ -154,12 +142,12 @@ if __name__ == "__main__":
 
             # Cria um DataFrame a partir da lista de dicionários
             items_df = pd.DataFrame(items_list)  
-            print(df_client.head())
+            # print(df_client.head())
             
-            for i, descricao in enumerate(df_client['tx_descricaoproduto']):
-                print(f"{i+1}. {descricao}")  # Imprime o índice e a descrição            
+            # for i, descricao in enumerate(df_client['tx_descricaoproduto']):
+            #     print(f"{i+1}. {descricao}")  # Imprime o índice e a descrição            
             
-            sys.exit(1)
+            # sys.exit(1)
             
             try:
                 # Chama a função de validação
