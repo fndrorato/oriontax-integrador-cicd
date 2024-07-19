@@ -343,7 +343,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
         code__in=codes_to_update, 
         status_item=2, 
         client_id=client_id
-    ).values('code', 'description')   
+    ).values('code', 'description').order_by('description')  
     print(codigos_para_atulizar) 
     return 
     
