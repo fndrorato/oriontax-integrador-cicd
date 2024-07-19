@@ -233,7 +233,7 @@ if __name__ == "__main__":
                         status_item=1, 
                         client=client
                     ).update(
-                        status_item=3,
+                        status_item=2,
                         sync_at=F('sync_at')
                     )
                     # num_updated = Item.objects.filter(client=client, status_item=2).update(status_item=3)
@@ -244,10 +244,10 @@ if __name__ == "__main__":
                               
 
                     if num_updated > 0:
-                        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens validados com sucesso\n"
+                        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens aguardando validação.\n"
                         print(f"{num_updated} itens atualizados com sucesso!")
                     else:
-                        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item validado\n"
+                        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"
                         print("Nenhum item foi atualizado.")
 
                     save_imported_logs(client_id, initial_log)
