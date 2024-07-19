@@ -307,12 +307,12 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     columns_not_compare = ['sequencial', 'estado_origem', 'estado_destino']
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare] 
-    # print(merged_df.info())
-    # return    
+    ignored_codes = []  # Lista para armazenar os códigos ignorados
     for col in filtered_columns:
         if col in ['icms_aliquota', 'icms_aliquota_reduzida'] and \
         merged_df[f'icms_cst_items_df'].iloc[0] == merged_df[f'icms_cst_df'].iloc[0] and \
         merged_df[f'icms_cst_df'].iloc[0] in [40, 41, 60]:
+            ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
             continue  # Ignora a comparação e segue para a próxima coluna
         
         try:
@@ -329,6 +329,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Cria um DataFrame com os itens que NÃO divergiram
     # com isso sera possivel atualizar o status dos itens que estao como 2
     print('XX-items NAO divergentes')
+    print("Códigos ignorados:", ignored_codes)
     df_items_not_divergent = merged_df[~divergence_mask]
     # 1. Extrair os códigos
     codes_to_update = df_items_not_divergent['code'].unique().tolist()
