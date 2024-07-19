@@ -1204,6 +1204,9 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
         cliente_filters = {key[8:]: value for key, value in filters.items() if key.startswith('cliente-')}
         
+        print(base_filters)
+        print(cliente_filters)
+        
         # Aplicar filtros ao imported_items_queryset
         for key, value in cliente_filters.items():
             imported_items_queryset = imported_items_queryset.filter(Q(**{key: value}))        
@@ -1214,6 +1217,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             origem=Value('Base', output_field=CharField()),
             piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
         ).order_by('description')
+        
         # Subquery para obter os dados da base de itens correspondentes
         items_subquery = Item.objects.filter(
             client=client, code=OuterRef('code')
@@ -1229,6 +1233,10 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         # Aplicar filtros ao items_queryset
         for key, value in base_filters.items():
             items_queryset = items_queryset.filter(Q(**{key: value}))
+            
+        # Aplicar filtros ao items_subquery
+        for key, value in base_filters.items():
+            items_subquery = items_subquery.filter(Q(**{key: value}))            
 
         # Combinar os querysets usando um left outer join
         combined_queryset = imported_items_queryset.annotate(
