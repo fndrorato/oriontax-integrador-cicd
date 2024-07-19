@@ -1286,9 +1286,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         # Separar filtros baseados nos parâmetros GET
         base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
         cliente_filters = {key[8:]: value for key, value in filters.items() if key.startswith('cliente-')}
-        
-        print(base_filters)
-        print(cliente_filters)
+
         
         # Aplicar filtros ao imported_items_queryset
         for key, value in cliente_filters.items():
@@ -1303,7 +1301,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         
         # Subquery para obter os dados da base de itens correspondentes
         items_subquery = Item.objects.filter(
-            client=client, code=OuterRef('code')
+            client=client, code=OuterRef('code'), status_item=3
         ).annotate(
             piscofins_cst_code=F('piscofins_cst__code')
         ).values(
@@ -1471,7 +1469,7 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
         ).order_by('description')
         # Subquery para obter os dados da base de itens correspondentes
         items_subquery = Item.objects.filter(
-            client=client, code=OuterRef('code')
+            client=client, code=OuterRef('code'), status_item=3
         ).annotate(
             piscofins_cst_code=F('piscofins_cst__code')
         ).values(
