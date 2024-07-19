@@ -155,11 +155,11 @@ if __name__ == "__main__":
         print(f"Verificando se há atualizações para o cliente: {client.name}")
         
         # Pega todos os itens relacionados a esse cliente
-        items_queryset = Item.objects.filter(client=client, status_item=1).values(
+        items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).values(
             'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
             'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
             'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'sequencial', 
-            'estado_origem', 'estado_destino',
+            'estado_origem', 'estado_destino', 'sync_at', 'status_item',
             naturezareceita_code=F('naturezareceita__code')
         )        
         # Converte o queryset em uma lista de dicionários
@@ -224,11 +224,24 @@ if __name__ == "__main__":
             if result == True:
                 try:
                     # Realiza o bulk update
-                    # num_updated = Item.objects.filter(client=client, status_item=2).update(status_item=3)
-                    num_updated = Item.objects.filter(client=client, status_item=1).update(
-                        status_item=2,
+                    # Vamos atualizar apenas os itens que estao com staus = 1, ou seja Aguardando Sincronização
+                    # os com status 2, apesar de ter sido enviado, não será atualizado novamente para manter
+                    # a mesma data de envio original
+                    codes_to_update = items_df[items_df['status_item'] == 1]['code'].tolist()
+                    num_updated = Item.objects.filter(
+                        code__in=codes_to_update, 
+                        status_item=1, 
+                        client=client
+                    ).update(
+                        status_item=3,
                         sync_at=F('sync_at')
-                    )                
+                    )
+                    # num_updated = Item.objects.filter(client=client, status_item=2).update(status_item=3)
+                    # num_updated = Item.objects.filter(client=client, status_item=1).update(
+                    #     status_item=2,
+                    #     sync_at=F('sync_at')
+                    # )      
+                              
 
                     if num_updated > 0:
                         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens validados com sucesso\n"

@@ -329,9 +329,11 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     num_updated = Item.objects.filter(
         code__in=codes_to_update, 
         status_item=2, 
-        client_id=client_id,
+        client_id=client_id
+    ).update(
+        status_item=3,
         sync_validate_at=current_time
-    ).update(status_item=3)
+    )
 
     df_items_divergent = merged_df[divergence_mask]
     # Ordenar colunas do df_items_divergent, exceto a primeira coluna
