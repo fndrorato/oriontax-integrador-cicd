@@ -313,17 +313,17 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     rows_ignorar = 0
     for col in filtered_columns:
         # Verifica se a coluna é uma das desejadas
-        if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
-            # Verifica se os valores de icms_cst são iguais
-            cols_aliquotas += 1
-            icms_cst_items_value = merged_df[f'icms_cst_items_df'].iloc[0]
-            icms_cst_df_value = merged_df[f'icms_cst_df'].iloc[0]    
-            if icms_cst_df_value in [40, 41, 60]:
-                rows_cst += 1
-                if icms_cst_items_value == icms_cst_df_value:
-                    rows_ignorar += 1
-                    ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
-                    continue  # Ignora a comparação e segue para a próxima coluna                    
+        # if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
+        #     # Verifica se os valores de icms_cst são iguais
+        #     cols_aliquotas += 1
+        #     icms_cst_items_value = merged_df[f'icms_cst_items_df'].iloc[0]
+        #     icms_cst_df_value = merged_df[f'icms_cst_df'].iloc[0]    
+        #     if icms_cst_df_value in [40, 41, 60]:
+        #         rows_cst += 1
+        #         if icms_cst_items_value == icms_cst_df_value:
+        #             rows_ignorar += 1
+        #             ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
+        #             continue  # Ignora a comparação e segue para a próxima coluna                    
                 
        
         # if col in ['icms_aliquota', 'icms_aliquota_reduzida'] and \
@@ -333,9 +333,23 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
         #     continue  # Ignora a comparação e segue para a próxima coluna
         
         try:
-            col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
-            divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
-            divergence_mask |= col_mask
+            comparar_colunas = True
+            if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
+                # Verifica se os valores de icms_cst são iguais
+                cols_aliquotas += 1
+                icms_cst_items_value = merged_df[f'icms_cst_items_df'].iloc[0]
+                icms_cst_df_value = merged_df[f'icms_cst_df'].iloc[0]    
+                if icms_cst_df_value in [40, 41, 60]:
+                    rows_cst += 1
+                    if icms_cst_items_value == icms_cst_df_value:
+                        comparar_colunas = False
+                        rows_ignorar += 1
+                        ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
+            
+            if comparar_colunas == True:
+                col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
+                divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
+                divergence_mask |= col_mask
         except Exception as e:
             # print(f"Erro na comparação da coluna '{col}': {e}")
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
