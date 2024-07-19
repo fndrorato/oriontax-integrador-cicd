@@ -306,7 +306,9 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
 
     columns_not_compare = ['sequencial', 'estado_origem', 'estado_destino']
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
-    filtered_columns = [col for col in expected_columns if col not in columns_not_compare]    
+    filtered_columns = [col for col in expected_columns if col not in columns_not_compare] 
+    print(merged_df.info())
+    return    
     for col in filtered_columns:
         try:
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
