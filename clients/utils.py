@@ -339,13 +339,13 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     ).count()
 
     print(f"Número de itens que serão atualizados: {num_to_update}")    
-    codigos_para_atulizar = Item.objects.filter(
-        code__in=codes_to_update, 
-        status_item=2, 
-        client_id=client_id
-    ).values('code', 'description').order_by('description')  
-    print(codigos_para_atulizar) 
-    return 
+    # codigos_para_atulizar = Item.objects.filter(
+    #     code__in=codes_to_update, 
+    #     status_item=2, 
+    #     client_id=client_id
+    # ).values('code', 'description').order_by('description')  
+    # print(codigos_para_atulizar) 
+    # return 
     
     current_time = timezone.now() 
     num_updated = Item.objects.filter(
