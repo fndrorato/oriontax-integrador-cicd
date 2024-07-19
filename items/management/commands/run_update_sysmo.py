@@ -89,7 +89,7 @@ def connect_and_update(host, user, password, port, database, client_name, items_
             
             # EXECUTAR DELETE ANTES NESSA TABELA
             # Executa a exclusão de todos os registros da tabela
-            # cursor.execute("DELETE FROM tb_sysmointegradorrecebimento")
+            cursor.execute("DELETE FROM tb_sysmointegradorrecebimento")
 
             # Executa a inserção em massa
             execute_values(cursor, """
