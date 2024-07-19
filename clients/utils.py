@@ -335,16 +335,22 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
         try:
             comparar_colunas = True
             if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
-                # Verifica se os valores de icms_cst são iguais
-                cols_aliquotas += 1
-                icms_cst_items_value = merged_df[f'icms_cst_items_df'].iloc[0]
-                icms_cst_df_value = merged_df[f'icms_cst_df'].iloc[0]    
-                if icms_cst_df_value in [40, 41, 60]:
-                    rows_cst += 1
-                    if icms_cst_items_value == icms_cst_df_value:
-                        comparar_colunas = False
-                        rows_ignorar += 1
-                        ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
+                icms_cst_df_value = merged_df['icms_cst_df']
+                icms_cst_items_df_value = merged_df['icms_cst_items_df']
+                if (icms_cst_df_value == icms_cst_items_df_value) & (icms_cst_df_value.isin([40, 41, 60])).all():
+                    ignored_codes.extend(merged_df['code'].unique().tolist())
+                    continue            
+            # if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
+            #     # Verifica se os valores de icms_cst são iguais
+            #     cols_aliquotas += 1
+            #     icms_cst_items_value = merged_df[f'icms_cst_items_df'].iloc[0]
+            #     icms_cst_df_value = merged_df[f'icms_cst_df'].iloc[0]    
+            #     if icms_cst_df_value in [40, 41, 60]:
+            #         rows_cst += 1
+            #         if icms_cst_items_value == icms_cst_df_value:
+            #             comparar_colunas = False
+            #             rows_ignorar += 1
+            #             ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
             
             if comparar_colunas == True:
                 col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
