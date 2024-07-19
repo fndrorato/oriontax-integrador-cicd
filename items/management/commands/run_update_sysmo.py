@@ -225,10 +225,13 @@ if __name__ == "__main__":
                 try:
                     # Realiza o bulk update
                     # num_updated = Item.objects.filter(client=client, status_item=2).update(status_item=3)
+                    # num_updated = Item.objects.filter(client=client, status_item=2).update(
+                    #     status_item=3,
+                    #     sync_at=F('sync_at')
+                    # )
                     num_updated = Item.objects.filter(client=client, status_item=2).update(
-                        status_item=3,
                         sync_at=F('sync_at')
-                    )
+                    )                    
 
                     if num_updated > 0:
                         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens validados com sucesso\n"
