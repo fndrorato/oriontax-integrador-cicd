@@ -11,17 +11,13 @@
 {% block customcss %}
     <!-- Handson table css start -->
     <link rel="stylesheet" type="text/css" href="https://docs.handsontable.com/pro/bower_components/handsontable-pro/dist/handsontable.full.min.css">
-                                                
     <!-- Notification.css -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/notification/notification.css' %}">
     <!-- Animate.css -->
     <link rel="stylesheet" type="text/css" href="{% static 'bower_components/animate.css/css/animate.css' %}">    
     <style>
-        .tabledit-input {
-            height: 20px !important;
-            font-size: 10px  !important;
-            padding: 0rem !important;
-            width: 95% !important;
+        .limit-field {
+            max-width: 80px !important;
         }
         .success-row {
             background-color: #d9f9d9 !important;
@@ -29,7 +25,9 @@
         .error-row {
             background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
         }
+        
     </style>
+   
 {% endblock customcss %}
 
 
@@ -49,21 +47,17 @@
             <div class="card-header">
                 <h5>Lista de Produtos Novos ou com Divergências: {{ client_name }} </h5>
 
-                <a href="{% url 'export_items_to_excel' client_id=client.id table='divergent' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                <a href="{% url 'export_items_to_excel' client_id=client.id table='await' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
-                    Exportar Cadastros de Itens Divergentes
-                </a>    
+                    Exportar Cadastros de Itens Aguardando Sincronização
+                </a>       
                 
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
                     <i class="icofont icofont-filter"></i>
-                </button>    
-                
-                <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
-                    <i class="icofont icofont-save"></i>
-                    Salvar Dados
-                </button>                 
+                </button>  
+                             
                                                                    
-                <span class="text-danger">Total de produtos com descrição diferente: {{ total_items }}</span>
+                <span class="text-danger">Total de produtos aguardando envio/validação: {{ total_items }}</span>
 
             </div>
             <div class="card-block"> 
@@ -80,13 +74,13 @@
                                     <div class="slide"></div>
                                 </li>  
                                 <li class="nav-item">
-                                    <a class="nav-link active" data-toggle="tab" href="#divergent-items" role="tab">
+                                    <a class="nav-link" href={% url 'imported_descricao_item_list' client_id=client_id %} role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-error"></i>
                                         </div>
                                         Descrição Divergente</a>
                                     <div class="slide"></div>
-                                </li> 
+                                </li>                                  
                                 <li class="nav-item">
                                     <a class="nav-link" href={% url 'imported_divergent_item_list' client_id=client_id %} role="tab">
                                         <div class="f-20">
@@ -96,20 +90,20 @@
                                     <div class="slide"></div>
                                 </li>  
                                 <li class="nav-item">
-                                    <a class="nav-link" href={% url 'awaiting_item_list' client_id=client_id %} role="tab">
+                                    <a class="nav-link active" href={% url 'awaiting_item_list' client_id=client_id %} role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-history"></i>
                                         </div>
                                         Aguardando Validação/Envio</a>
                                     <div class="slide"></div>
-                                </li>                                                                                                                                                                                           
+                                </li>                                                                                                                                                                                         
                             </ul>
                             <!-- Tab panes -->
-                            <div class="tab-content">       
-                                <!-- Inicio Tab Produtos Divergentes -->
-                                <div class="tab-pane active" id="divergent-items" role="tabpanel">                                   
+                            <div class="tab-content">   
+                                <!-- Inicio Tab Novos Produtos -->
+                                <div class="tab-pane active" id="new-items" role="tabpanel">                                   
                                     <div class="card">
-                                        <div class="card-block">  
+                                        <div class="card-block">   
                                             <div id="loader" class="preloader5 loader-block" style="
                                                 position: absolute;
                                                 top: 0;
@@ -126,10 +120,11 @@
                                                 <div class="circle-5 m"></div>
                                                 <div class="circle-5 r"></div>
                                                 
-                                            </div>                                                                                 
-                                            <div id="divergent-items-table" class="handsontable"></div>
+                                            </div>                                                                                
+                                            <div id="new-items-table" class="handsontable"></div>
+                                            
                                             <!-- Paginação -->  
-                                            <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center">
+                                            <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center m-t-2">
                                                 <ul class="pagination">
                                                     {% if page_obj.has_previous %}
                                                         <li class="page-item">
@@ -171,7 +166,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- End Tab Novos Produtos -->                                                                                         
+                                <!-- End Tab Novos Produtos -->                                                                                             
                             </div>
                         </div>
                     </div>
@@ -195,14 +190,7 @@
             <div class="modal-body">
                 <div id="form-container" class="container mt-2">
                     <div class="form-row">
-                        <div class="form-group col-md-3">
-                            <label for="select_origem">Origem</label>
-                            <select class="form-control" id="select_origem">
-                                <option value="base">Base</option>
-                                <option value="cliente">Integração</option>
-                            </select>
-                        </div>                        
-                        <div class="form-group col-md-5">
+                        <div class="form-group col-md-6">
                             <label for="select_filtros">Campo</label>
                             <select class="form-control" id="select_filtros">
                                 <option value="cfop">CFOP</option>
@@ -213,7 +201,7 @@
                                 <option value="naturezareceita">Natureza Receita</option>
                             </select>
                         </div>
-                        <div class="form-group col-md-3">
+                        <div class="form-group col-md-4">
                             <label for="input1">Valor</label>
                             <input type="text" class="form-control" id="valor_filtro" placeholder="valor">
                         </div>
@@ -237,10 +225,27 @@
 
 {% block anotherjs %}
     <!-- Handson table js -->
-    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>  
     <!-- notification js -->
-    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>    
+    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>     
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Pega os parâmetros da URL e preenche os campos do formulário
+        var url = new URL(window.location.href);
+        var urlParams = new URLSearchParams(window.location.search);
+        var fields = [
+            'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'cst_icms',
+            'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege',
+            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita'
+        ];
+
+        fields.forEach(function(field) {
+            if (urlParams.has(field)) {
+                document.getElementById('search_' + field).value = urlParams.get(field);
+            }
+        });
+    });
+
     document.getElementById('clearSearch').addEventListener('click', function() {
         // Obtém a URL sem os parâmetros da query string
         const baseUrl = window.location.origin + window.location.pathname;
@@ -256,48 +261,47 @@
         // Clone the form row
         const formRow = button.parentNode.parentNode;
         const newFormRow = formRow.cloneNode(true);
-    
+
         // Clear the input value in the cloned row
         newFormRow.querySelector('input').value = '';
-    
+
         // Update the button to be a remove button
         const newButton = newFormRow.querySelector('button');
         newButton.textContent = '-';
         newButton.classList.remove('btn-primary');
         newButton.classList.add('btn-danger');
         newButton.setAttribute('onclick', 'removeRow(this)');
-    
+
         // Append the new row to the form container
         document.getElementById('form-container').appendChild(newFormRow);
     }
-    
+
     function removeRow(button) {
         // Remove the form row
         const formRow = button.parentNode.parentNode;
         formRow.parentNode.removeChild(formRow);
     }
-    
+
     document.getElementById('applySearch').addEventListener('click', function() {
         const rows = document.querySelectorAll('#form-container .form-row');
         const params = new URLSearchParams();
-    
+
         rows.forEach(row => {
-            const selectFiltro = row.querySelector('#select_filtros').value;
-            const selectOrigem = row.querySelector('#select_origem').value;
+            const select = row.querySelector('select').value;
             const input = row.querySelector('input').value;
-            if (selectFiltro && input) {
-                params.append(`${selectOrigem}-${selectFiltro}`, input);
+            if (select && input) {
+                params.append(select, input);
             }
         });
-    
+
         window.location.search = params.toString();
     });
-    
+
     function getQueryParams() {
         const params = {};
         const queryString = window.location.search.slice(1);
         const queries = queryString.split('&');
-    
+
         queries.forEach(query => {
             const [key, value] = query.split('=');
             if (key && value) {
@@ -307,41 +311,38 @@
                 params[key].push(decodeURIComponent(value));
             }
         });
-    
+
         return params;
     }
-    
+
     document.addEventListener('DOMContentLoaded', () => {
         const queryParams = getQueryParams();
-    
+
         Object.keys(queryParams).forEach(key => {
             queryParams[key].forEach(value => {
-                const [selectOrigem, selectFiltro] = key.split('-');
                 const formRow = document.querySelector('#form-container .form-row');
                 const newFormRow = formRow.cloneNode(true);
-                newFormRow.querySelector('#select_origem').value = selectOrigem;
-                newFormRow.querySelector('#select_filtros').value = selectFiltro;
+                newFormRow.querySelector('select').value = key;
                 newFormRow.querySelector('input').value = value;
-    
+
                 const newButton = newFormRow.querySelector('button');
                 newButton.textContent = '-';
                 newButton.classList.remove('btn-primary');
                 newButton.classList.add('btn-danger');
                 newButton.setAttribute('onclick', 'removeRow(this)');
-    
+
                 document.getElementById('form-container').appendChild(newFormRow);
             });
         });
-    
+
         // Remove the initial form row if queryParams are present
         if (Object.keys(queryParams).length > 0) {
             const initialFormRow = document.querySelector('#form-container .form-row');
             initialFormRow.parentNode.removeChild(initialFormRow);
         }
-    });        
+    });
     
     var piscofinsData = {};
-
     // Adicionar os dados ao objeto
 {% for piscofins in piscofins_choices %}
     piscofinsData['{{ piscofins.code }}'] = {
@@ -368,58 +369,48 @@
     };
 {% endfor %}
 
-var naturezareceitaData = {};
-// Populate the naturezareceitaData object
-{% for naturezareceita in naturezareceita_choices %}
-naturezareceitaData['{{ naturezareceita.code }}'] = {
-    id: '{{ naturezareceita.id }}',
-    code: '{{ naturezareceita.code }}',
-    piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %},
-};
-{% endfor %}
-
     var urlValidateCode = '{% url "validate_code_item" %}';
-    var urlFixItem = '{% url "save_imported_item" %}';
+    var urlNewItem = '{% url "save_imported_item" %}';
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
 
-    document.addEventListener("DOMContentLoaded", function() {
-        var container = document.getElementById('divergent-items-table');
+    var naturezareceitaData = {};
+    // Populate the naturezareceitaData object
+{% for naturezareceita in naturezareceita_choices %}
+    naturezareceitaData['{{ naturezareceita.code }}'] = {
+        id: '{{ naturezareceita.id }}',
+        code: '{{ naturezareceita.code }}',
+        piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %},
+    };
+{% endfor %}
     
-        var data = [
+    document.addEventListener("DOMContentLoaded", function() {
+        var container = document.getElementById('new-items-table');
+    
+        var dataOrigin = [
             {% for item in imported_items %}
                 [
                     "{{ item.code }}",
-                    "{{ item.barcode_base|zero_to_empty|default_if_none:'' }}",
-                    "{{ item.barcode_cliente|zero_to_empty|default_if_none:'' }}",
-                    "{{ item.description_base }}",
-                    "{{ item.description_cliente }}",
-                    "{{ item.ncm_base }}",
-                    "{{ item.ncm_cliente }}",
-                    "{{ item.cest_base|zero_to_empty|default_if_none:'' }}",
-                    "{{ item.cest_cliente|zero_to_empty|default_if_none:'' }}",
-                    "{{ item.cfop_base }}",
-                    "{{ item.cfop_cliente }}",
-                    "{{ item.icms_cst_base }}",
-                    "{{ item.icms_cst_cliente }}",
-                    "{{ item.icms_aliquota_base }}",
-                    "{{ item.icms_aliquota_cliente }}",
-                    "{{ item.icms_aliquota_reduzida_base }}",
-                    "{{ item.icms_aliquota_reduzida_cliente }}",
-                    "{{ item.cbenef_base|default_if_none:'' }}",
-                    "{{ item.cbenef_cliente|default_if_none:'' }}",
-                    "{{ item.protege_base }}",
-                    "{{ item.protege_cliente }}",
-                    "{{ item.piscofins_cst_base }}".padStart(2, '0'),
-                    "{{ item.piscofins_cst_cliente }}".padStart(2, '0'),
-                    "{{ item.pis_aliquota_base }}",
-                    "{{ item.pis_aliquota_cliente }}",
-                    "{{ item.cofins_aliquota_base }}",
-                    "{{ item.cofins_aliquota_cliente }}",
-                    "{{ item.naturezareceita_base|default_if_none:'' }}",
-                    "{{ item.naturezareceita_cliente|default_if_none_or_zero:'' }}",
-                    "{{ form.type_product.value|default_if_none:'' }}",
-                    false // valor inicial do checkbox
+                    "{{ item.barcode|zero_to_empty|default_if_none:'' }}",
+                    "{{ item.description }}",
+                    "{{ item.ncm }}",
+                    "{{ item.cest|zero_to_empty|default_if_none:'' }}",
+                    "{{ item.cfop }}",
+                    "{{ item.icms_cst }}",
+                    "{{ item.icms_aliquota }}",
+                    "{{ item.icms_aliquota_reduzida }}",
+                    "{{ item.cbenef|default_if_none:'' }}",
+                    "{{ item.protege }}",
+                    "{{ item.piscofins_cst.code }}".padStart(2, '0'),
+                    "{{ item.pis_aliquota }}",
+                    "{{ item.cofins_aliquota }}",
+                    "{{ item.naturezareceita|default_if_none:'' }}",
+                    "{{ item.type_product }}",
+                    "{{ item.sequencial }}",
+                    "{{ item.estado_origem }}",
+                    "{{ item.estado_destino }}",
+                    "{{ item.await_sync_at|date:"d/m/y H:i" }}",
+                    "{{ item.sync_at|date:"d/m/y H:i" }}"
                 ],
             {% endfor %}
         ];
@@ -430,83 +421,58 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             {% endfor %}
         ];        
         var hot = new Handsontable(container, {
-            data: data,
+            data: dataOrigin,
             rowHeaders: true,
             colHeaders: [
-                'Código', 'Cód.Barras.OTX', 'Cód.Barras', 'Descrição.OTX', 'Descrição', 'NCM.OTX', 'NCM', 'CEST.OTX', 'CEST', 
-                'CFOP.OTX', 'CFOP', 'CST Icms.OTX', 'CST Icms', 'Aliq.Icms.OTX', 'Aliq.Icms', 'Aliq.IcmsRed.OTX', 'Aliq.IcmsRed', 
-                'CBENEF.OTX', 'CBENEF', 'Protege.OTX', 'Protege', 'CST PIS/COFINS.OTX', 'CST PIS/COFINS', 'Aliq.PIS.OTX', 'Aliq.PIS', 
-                'Aliq.COFINS.OTX', 'Aliq.COFINS', 'Nat.Receita.OTX', 'Nat.Receita', 'T.Prod.', 'Validado'
+                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'T.Prod.', 'A Enviar', 'Enviado em'
             ],
             columns: [
                 { data: 0, readOnly: true },
-                { data: 1 },
-                { data: 2 , readOnly: true},
-                { data: 3 },
-                { data: 4 , readOnly: true},
-                { data: 5 },
-                { data: 6 , readOnly: true},
-                { data: 7 }, //CEST
-                { data: 8 , readOnly: true},                                
+                { data: 1, readOnly: true },
+                { data: 2, readOnly: true },
+                { data: 3, readOnly: true },
+                { data: 4 , readOnly: true },
+                { 
+                    data: 5, 
+                    readOnly: true
+                },
+                { 
+                    data: 6, 
+                    readOnly: true
+                },
+                { 
+                    data: 7, 
+                    readOnly: true
+                },
+                { 
+                    data: 8, 
+                    readOnly: true
+                },
                 { 
                     data: 9, 
-                    editor: 'select', 
-                    selectOptions: [ {% for code, code_label in cfop_choices %} '{{ code }}', {% endfor %} ] 
+                    readOnly: true
                 },
-                { data: 10 , readOnly: true},
+                { 
+                    data: 10, 
+                    readOnly: true
+                },
                 { 
                     data: 11, 
-                    editor: 'select', 
-                    selectOptions: [ {% for code, code_label in icms_cst_choices %} '{{ code }}', {% endfor %} ] 
+                    readOnly: true
                 },
-                { data: 12 , readOnly: true},
+                { data: 12, readOnly: true },
+                { data: 13, readOnly: true },
                 { 
-                    data: 13, 
-                    editor: 'select', 
-                    selectOptions: [ {% for aliq in icmsaliquota_choices %} '{{ aliq.code }}', {% endfor %} ] 
+                    data: 14, 
+                    readOnly: true
                 },
-                { data: 14 , readOnly: true},
-                { 
-                    data: 15, 
-                    editor: 'select', 
-                    selectOptions: [ {% for aliq in icmsaliquota_choices %} '{{ aliq.code }}', {% endfor %} ] 
-                },
-                { data: 16 , readOnly: true},
-                { 
-                    data: 17, 
-                    editor: 'select', 
-                    selectOptions: [ {% for cbenef in cbenef_choices %} '{{ cbenef.code }}', {% endfor %} ] 
-                },
-                { data: 18 , readOnly: true},
-                { 
-                    data: 19, 
-                    editor: 'select', 
-                    selectOptions: [ {% for protege in protege_choices %} '{{ protege.code }}', {% endfor %} ] 
-                },
-                { data: 20 , readOnly: true},
-                { 
-                    data: 21, 
-                    editor: 'select', 
-                    selectOptions: [ {% for piscofins_cst in piscofins_choices %} '{{ piscofins_cst.code }}', {% endfor %} ] 
-                },
-                { data: 22 , readOnly: true},
-                { data: 23, readOnly: true },
-                { data: 24, readOnly: true },
-                { data: 25 , readOnly: true},
-                { data: 26 , readOnly: true},
-                { 
-                    data: 27, 
-                    editor: 'select', 
-                    selectOptions: [ {% for naturezareceita in naturezareceita_choices %} '{{ naturezareceita.code }}', {% endfor %} ] 
-                },
-                { data: 28 , readOnly: true},
                 {
-                    data: 29,
-                    editor: 'select',
-                    selectOptions: typeProductOptions.map(option => option.value !== null ? option.value : '')
+                    data: 15,
+                    readOnly: true
                 },
-                { data: 30, type: 'checkbox' }
-            ],
+                { data: 19, readOnly: true },
+                { data: 20, readOnly: true }                              
+            ],     
             stretchH: 'all',
             autoWrapRow: true,
             height: 500,
@@ -516,28 +482,42 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column'
             ],
             filters: true,
+            hiddenColumns: true,
             dropdownMenu: true,
             allowInsertRow: false,
             allowRemoveRow: false,
             allowInsertColumn: false,
-            allowRemoveColumn: false,            
+            allowRemoveColumn: false,             
             cells: function(row, col) {
                 var cellProperties = {};
-                cellProperties.renderer = compareColumnsRenderer;
-                return cellProperties;                
-
-            },             
+                if (row % 2 === 0) {
+                    cellProperties.renderer = evenRowRenderer;
+                } else {
+                    cellProperties.renderer = oddRowRenderer;
+                }
+                return cellProperties;
+            },   
+            afterCreateRow: function(index, amount) {
+                // Adiciona o listener de change ao select da coluna 11 nas novas linhas criadas
+                this.addChangeEventListenerToColumnSelects(11);
+            },
+            afterCreateCol: function(index, amount) {
+                // Adiciona o listener de change ao select da coluna 11 nas novas colunas criadas
+                this.addChangeEventListenerToColumnSelects(11);
+            },           
             afterChange: function(changes, source) {
+                console.log('Source:', source)
                 if (source === 'edit' || source === 'CopyPaste.paste') {
                     changes.forEach(([row, prop, oldValue, newValue]) => {
-                        if (prop === 21) { // Verifica se a mudança ocorreu na coluna 11 (piscofins_cst)
+                        console.log('Change:', row, prop, oldValue, newValue);
+                        if (prop === 11) { // Verifica se a mudança ocorreu na coluna 11 (piscofins_cst)
                             var aliquotas = getAliquotas(newValue); // Obtém as aliquotas baseado no novo valor
-                            this.setDataAtCell(row, 23, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
-                            this.setDataAtCell(row, 25, aliquotas ? aliquotas.cofins_aliquota : ''); // Define cofins_aliquota na coluna 13
+                            this.setDataAtCell(row, 12, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
+                            this.setDataAtCell(row, 13, aliquotas ? aliquotas.cofins_aliquota : ''); // Define cofins_aliquota na coluna 13
                         } 
                     });
                 }
-            },
+            }   
                         
         });
 
@@ -549,35 +529,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
         function oddRowRenderer(instance, td, row, col, prop, value, cellProperties) {
             Handsontable.renderers.TextRenderer.apply(this, arguments);
             td.style.backgroundColor = '#ffffff'; // Cor da linha ímpar
-        }   
-
-        function compareColumnsRenderer(instance, td, row, col, prop, value, cellProperties) {
-            if (col === 30) { 
-                Handsontable.renderers.CheckboxRenderer.apply(this, arguments);
-                return;
-            }            
-            Handsontable.renderers.TextRenderer.apply(this, arguments);
-        
-            const comparisonPairs = [
-                [1, 2], [3, 4], [5, 6], [7, 8], [9, 10],
-                [11, 12], [13, 14], [15, 16], [17, 18], [19, 20],
-                [21, 22], [23, 24], [25, 26], [27, 28]
-            ];
-        
-            comparisonPairs.forEach(([col1, col2]) => {
-                if (
-                    (col === col1 || col === col2) && 
-                    instance.getDataAtCell(row, col1) !== instance.getDataAtCell(row, col2)
-                ) {
-                    instance.setCellMeta(row, col1, 'className', 'error-row');
-                    instance.setCellMeta(row, col2, 'className', 'error-row');
-                } else {
-                    // Remove a classe se os valores forem iguais
-                    instance.setCellMeta(row, col1, 'className', ''); 
-                    instance.setCellMeta(row, col2, 'className', '');
-                }
-            });
-        }        
+        }           
 
         function getAliquotas(code) {
             if (piscofinsData.hasOwnProperty(code)) {
@@ -585,7 +537,14 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             } else {
                 return null; // ou qualquer outro valor padrão
             }
-        }  
+        } 
+        
+        $('#checkAllRevenda').click(function() {
+            const rowCount = hot.countRows();
+            for (let row = 0; row < rowCount; row++) {
+                hot.setDataAtCell(row, 15, 'Revenda');
+            }
+        });        
 
         // Adiciona evento de clique ao botão "Validar"
         var btnValidate = document.getElementById('btn-validate');
@@ -593,7 +552,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             validateTable();
         });   
         
-        var tableContainer = document.getElementById('divergent-items-table'); // Obtém a referência da div da tabela
+        var tableContainer = document.getElementById('new-items-table'); // Obtém a referência da div da tabela
         var errorContainer = document.createElement('div');
         errorContainer.id = 'error-container';
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
@@ -603,7 +562,6 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
         function validateTable() {
             $('#loader').show();
             var data = hot.getData();
-            data = data.filter(row => row[30] === true || row[30] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
         
@@ -611,37 +569,32 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                 var validationPromise = validateData({
                     id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
                     client_id: client_id, // Certifique-se de ter accesso ao client_id aqui
-                    description: rowData[23],
-                    ncm: rowData[5],
-                    cest: rowData[7],
-                    cfop: rowData[9],
-                    icms_cst: rowData[11],
-                    icms_aliquota: rowData[13],
-                    icms_aliquota_reduzida: rowData[15],
-                    cbenef: rowData[17],
-                    piscofins_cst: rowData[21], // Ajuste conforme a estrutura real dos dados na tabela
-                    naturezareceita: rowData[27],
-                    type_product: rowData[29] // Ajuste conforme a estrutura real dos dados na tabela
+                    ncm: rowData[3],
+                    cest: rowData[4],
+                    description: rowData[2],
+                    cfop: rowData[5],
+                    icms_cst: rowData[6],
+                    icms_aliquota: rowData[7],
+                    icms_aliquota_reduzida: rowData[8],
+                    cbenef: rowData[9],
+                    piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
+                    naturezareceita: rowData[14],
+                    type_product: rowData[15] // Ajuste conforme a estrutura real dos dados na tabela
                 }, rowIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
                     for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
                         if (result.isValid) {
-                            //if (colIndex != 30)
-                                hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
+                            hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
                         } else {
-                            //if (colIndex != 30)
-                            //{
-                                hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
-                                // Exibe mensagem de erro usando setDataAtRowProp
-                                result.errors.forEach(function(error) {
-                                    var field = error.field;
-                                    var message = error.message;
-                                    hot.setDataAtRowProp(rowIndex, field, message); 
-                                }); 
-                            //}
-                           
+                            hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
+                            // Exibe mensagem de erro usando setDataAtRowProp
+                            result.errors.forEach(function(error) {
+                                var field = error.field;
+                                var message = error.message;
+                                hot.setDataAtRowProp(rowIndex, field, message); 
+                            });                            
                         }
                     }
                 });
@@ -653,8 +606,13 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             hot.updateSettings({
                 cells: function(row, col) {
                     var cellProperties = {};
-                    cellProperties.renderer = compareColumnsRenderer;
-                    return cellProperties; 
+                    if (row % 2 === 0) {
+                        cellProperties.renderer = evenRowRenderer;
+                    } else {
+                        cellProperties.renderer = oddRowRenderer;
+                    }
+                    delete cellProperties.className;  // Remove className se existir
+                    return cellProperties;
                 }
             });            
         
@@ -686,69 +644,111 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                         errorContainer.classList.add('alert-danger');  
                         $('#loader').hide();                      
                     } else { // If all fields are valid, proceed with code validation
-                        var dataToSend = hot.getData();
-                        // Filter rows where checkbox is checked
-                        var filteredDataToSend = dataToSend.filter(row => row[30] === true || row[30] === 1); // Filter based on boolean or 1
-                        // Remove specific columns from each row
-                        const columnsToRemove = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
-                        filteredDataToSend = filteredDataToSend.map(row => {
-                            return row.filter((_, index) => !columnsToRemove.includes(index));
-                        });                        
-
-
-                        // Find the ID for each row based on piscofinsCst and code
-                        filteredDataToSend = filteredDataToSend.map(row => {
-                            var piscofinsCst = row[11];
-                            var code = row[14];
-
-                            var matchingId = findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst);
-
-
-                            row.push('1'); // Add 'fix_item'
-                            row.push(matchingId || ''); // Add the found ID (or empty string if not found)
-                            row.push(client_id)
-                            return row;
-                        });                                     
-
-                        $.ajax({
-                            url: urlFixItem,
-                            type: 'POST',
-                            data: {
-                                items: JSON.stringify(filteredDataToSend), // Send entire table data as JSON
-                                csrfmiddlewaretoken: '{{ csrf_token }}' // Include CSRF token
-                            },
-                            success: function(response) {
-                                if (response.status === 'success') {
-                                    errorContainer.textContent = response.message;
-                                    errorContainer.classList.add('alert-success');
-                                    errorContainer.classList.remove('alert-danger');
-                                    $('#loader').hide();
-                                    // Apply success class to all rows
-                                    for (var i = 0; i < hot.countRows(); i++) {
-                                        if (dataToSend[i][30]) { // Check if the checkbox value is true
-                                            for (var j = 0; j < hot.countCols(); j++) {
-                                                hot.getCellMeta(i, j).className = 'success-row'; 
-                                                hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell
+                        var codes = data.map(rowData => rowData[0]);
+                        console.log(codes)
+                    
+                        Promise.all(codes.map(code => validateCodes(code, client_id)))
+                            .then(function(codeValidationResults) {
+                                // Check if any code validation failed
+                                if (codeValidationResults.some(isValid => !isValid)) {
+                                    // Handle code validation errors (e.g., display in errorContainer)
+                                    errorContainer.innerHTML = '';
+                                    var errorList = document.createElement('ul');
+                                    codeValidationResults.forEach((isValid, index) => {
+                                        if (!isValid) {
+                                            var listItem = document.createElement('li');
+                                            listItem.classList.add('error'); 
+                                            listItem.textContent = `Linha ${index + 1}: Código inválido`;
+                                            errorList.appendChild(listItem);
+                    
+                                            // Apply error styling to invalid code row
+                                            for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
+                                                hot.getCellMeta(index, colIndex).className = 'error-row';
                                             }
                                         }
-                                    }                                              
-                                } else {
-                                    // Handle errors from the Django view
-                                    errorContainer.textContent = response.message;
+                                    });
+                                    errorContainer.appendChild(errorList);
                                     errorContainer.classList.remove('alert-success');
                                     errorContainer.classList.add('alert-danger');
                                     $('#loader').hide();
+                                } else {
+                                    // If all codes are valid, display success message
+                                    var dataToSend = hot.getData();
+
+                                    // Find the ID for each row based on piscofinsCst and code
+                                    dataToSend = dataToSend.map(row => {
+                                        var piscofinsCst = row[11];
+                                        var code = row[14];
+                                        var codeItem = row[0];
+
+                                        // Find the ID from naturezareceitaData
+                                        var matchingId = null;
+                                        for (var id in naturezareceitaData) {
+                                            if (naturezareceitaData[id].piscofinsCst === piscofinsCst && naturezareceitaData[id].code === code) {
+                                                matchingId = id;
+                                                break; // Stop searching once found
+                                            }
+                                        }
+
+                                        // Find matching row in 'data' based on code
+                                        var matchingRow = dataOrigin.find(dataRow => dataRow[0] === codeItem);                                        
+
+                                        row.push('0'); // Add 'fix_item'
+                                        row.push(matchingId || ''); // Add the found ID (or empty string if not found)
+                                        row.push(client_id)
+                                        row.push(matchingRow[16]); // Push column 16 from 'data' (index adjusted)
+                                        row.push(matchingRow[17]); // Push column 17 from 'data' (index adjusted)
+                                        row.push(matchingRow[18]);                                        
+
+                                        return row;
+                                    });                                     
+
+                                    $.ajax({
+                                        url: urlNewItem,
+                                        type: 'POST',
+                                        data: {
+                                            items: JSON.stringify(dataToSend), // Send entire table data as JSON
+                                            csrfmiddlewaretoken: '{{ csrf_token }}' // Include CSRF token
+                                        },
+                                        success: function(response) {
+                                            if (response.status === 'success') {
+                                                errorContainer.textContent = response.message;
+                                                errorContainer.classList.add('alert-success');
+                                                errorContainer.classList.remove('alert-danger');
+                                                $('#loader').hide();
+                                                // Apply success class to all rows
+                                                for (var i = 0; i < hot.countRows(); i++) {
+                                                    for (var j = 0; j < hot.countCols(); j++) {
+                                                        hot.getCellMeta(i, j).className = 'success-row';
+                                                    }
+                                                }
+
+                                                // Disable editing in the table
+                                                hot.updateSettings({
+                                                    readOnly: true
+                                                });                                                
+                                            } else {
+                                                // Handle errors from the Django view
+                                                errorContainer.textContent = response.message;
+                                                errorContainer.classList.remove('alert-success');
+                                                errorContainer.classList.add('alert-danger');
+                                                $('#loader').hide();
+                                            }
+                                        },
+                                        error: function(jqXHR, textStatus, errorThrown) {
+                                            // Handle AJAX errors (display message to the user)
+                                            errorContainer.textContent = 'Erro ao salvar os itens. Tente novamente.';
+                                            errorContainer.classList.remove('alert-success');
+                                            errorContainer.classList.add('alert-danger');
+                                            $('#loader').hide();
+                                        }
+                                    });                                    
                                 }
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                // Handle AJAX errors (display message to the user)
-                                errorContainer.textContent = 'Erro ao salvar os itens. Tente novamente.';
-                                errorContainer.classList.remove('alert-success');
-                                errorContainer.classList.add('alert-danger');
+                            })
+                            .catch(function(error) {
+                                console.error('Erro ao validar códigos:', error);
                                 $('#loader').hide();
-                            }
-                        });                        
-                    
+                            });
                     }                 
                     
                 })
@@ -768,18 +768,6 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                 }
             }
             return -1; // Retorna -1 se o campo não for encontrado
-        }   
-        
-        function findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst) {
-            for (const key in naturezareceitaData) {
-                if (naturezareceitaData.hasOwnProperty(key)) {
-                    const entry = naturezareceitaData[key];
-                    if (entry.code === code && entry.piscofinsCst === piscofinsCst) {
-                        return entry.id;
-                    }
-                }
-            }
-            return null; // Retorna null se não encontrar a combinação
         }        
                 
         function validateData(data, rowIndex) {
@@ -917,9 +905,14 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
         }        
 
     });
-       
+    
+    
+
 </script>
 
+    <!-- Custom js -->
+    <script type="text/javascript" src="{% static 'assets/pages/handson-table/new-items.js' %}"></script>
+    
 
     
 

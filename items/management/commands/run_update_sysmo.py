@@ -155,7 +155,7 @@ if __name__ == "__main__":
         print(f"Verificando se há atualizações para o cliente: {client.name}")
         
         # Pega todos os itens relacionados a esse cliente
-        items_queryset = Item.objects.filter(client=client, status_item=2).values(
+        items_queryset = Item.objects.filter(client=client, status_item=1).values(
             'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
             'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
             'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'sequencial', 
@@ -225,13 +225,10 @@ if __name__ == "__main__":
                 try:
                     # Realiza o bulk update
                     # num_updated = Item.objects.filter(client=client, status_item=2).update(status_item=3)
-                    # num_updated = Item.objects.filter(client=client, status_item=2).update(
-                    #     status_item=3,
-                    #     sync_at=F('sync_at')
-                    # )
-                    num_updated = Item.objects.filter(client=client, status_item=2).update(
+                    num_updated = Item.objects.filter(client=client, status_item=1).update(
+                        status_item=2,
                         sync_at=F('sync_at')
-                    )                    
+                    )                
 
                     if num_updated > 0:
                         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens validados com sucesso\n"

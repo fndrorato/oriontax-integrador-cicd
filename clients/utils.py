@@ -319,6 +319,12 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
             save_imported_logs(client_id, result_integration)
             problematic_columns.append(col)
 
+    # Cria um DataFrame com os itens que NÃO divergiram
+    # com isso sera possivel atualizar o status dos itens que estao como 2
+    df_items_not_divergent = merged_df[~divergence_mask]
+    print(df_items_not_divergent.info())
+    return {'message': f"Print Items Not Divergent", 'status': 'error'}
+
     df_items_divergent = merged_df[divergence_mask]
     # Ordenar colunas do df_items_divergent, exceto a primeira coluna
     first_column = df_items_divergent.columns[0]
@@ -328,9 +334,9 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # print(df_items_divergent.head())
     # df_items_divergent.to_excel('df_items_divergent.xlsx', index=False) 
     print('13-montando o message')
-    if len(new_items_df) > 0 and len(df_items_divergent) > 0:
+    if len(new_items_df) > 0 or len(df_items_divergent) > 0:
         message = (f"Foram encontrados {len(new_items_df)} novos produtos "
-                f"e {len(df_items_divergent)} linhas com divergência no cadastro.")
+                f"e {len(df_items_divergent)} linhas com divergência no cadastro ")
     elif len(new_items_df) > 0:
         message = f"Foram encontrados {len(new_items_df)} novos produtos."
     elif len(df_items_divergent) > 0:
@@ -630,3 +636,5 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     save_imported_logs(client_id, result_integration)         
 
     return {'message': message, 'status': 'success'}
+
+

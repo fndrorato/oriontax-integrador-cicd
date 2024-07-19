@@ -11,7 +11,7 @@ from .views import (
     ItemUpdateView,
     XLSXUploadView,
     ImportedItemListViewNewItem,
-    ImportedItemListViewDivergentItem,
+    ImportedItemListViewAwaitSyncItem,
     ImportedItemListViewDivergentItemExcelVersion,
     ImportedItemListViewDivergentDescriptionItemExcelVersion,
     XLSXUploadDivergentView
@@ -28,6 +28,7 @@ urlpatterns = [
     path('clientes/items/<int:client_id>/upload/', XLSXUploadView.as_view(), name='items_upload'),
     
     path('clientes/items-pendentes-novos/<int:client_id>/', ImportedItemListViewNewItem.as_view(), name='imported_item_list'),    
+    path('clientes/items-aguardando-validacao/<int:client_id>/', ImportedItemListViewAwaitSyncItem.as_view(), name='awaiting_item_list'),    
     path('clientes/items-pendentes-divergentes/<int:client_id>/', ImportedItemListViewDivergentItemExcelVersion.as_view(), name='imported_divergent_item_list'),    
     path('clientes/items-pendentes-descricao/<int:client_id>/', ImportedItemListViewDivergentDescriptionItemExcelVersion.as_view(), name='imported_descricao_item_list'),        
     path('clientes/items-pendentes/save-imported-item/', save_bulk_imported_item, name='save_imported_item'),

@@ -121,12 +121,19 @@ def export_items_to_excel(request, client_id, table):
             'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
             'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information'
         )
+    elif table == 'await':
+        items = Item.objects.filter(client=client, status_item__in=[1, 2]).values(
+            'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
+            'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
+            'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
+            'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information', 'await_sync_at', 'sync_at'
+        )        
     elif table == 'new':
         items = ImportedItem.objects.filter(client=client, status_item=0).values(
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita'
+            'cofins_aliquota', 'naturezareceita', 'await_sync_at', 'sync_at' 
         )
     elif table == 'divergent':
         # Queryset de itens importados
@@ -176,7 +183,6 @@ def export_items_to_excel(request, client_id, table):
         # Converter para DataFrame (se necessário)
         df = pd.DataFrame(list(combined_queryset))
         
-
         # Ordem desejada das colunas
         desired_order = [
             'client__name', 'code', 'barcode_base', 'barcode', 
@@ -200,8 +206,7 @@ def export_items_to_excel(request, client_id, table):
         new_column_names['other_information'] = 'outros_detalhes'
 
         # Renomear as colunas do DataFrame
-        df = df.rename(columns=new_column_names) 
-        print(df.info())       
+        df = df.rename(columns=new_column_names)    
                      
     else:
         items = []
@@ -214,13 +219,20 @@ def export_items_to_excel(request, client_id, table):
             df['tipo_produto'] = ''
             df['outros_detalhes'] = ''
         
-        # Renomear colunas, se necessário
-        df.columns = [
-            'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
-            'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
-            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
-            'tipo_produto', 'outros_detalhes'
-        ]        
+        if table == 'await':
+            df.columns = [
+                'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
+                'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
+                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
+                'tipo_produto', 'outros_detalhes', 'a_enviar', 'enviado_em'
+            ]             
+        else:
+            df.columns = [
+                'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
+                'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
+                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
+                'tipo_produto', 'outros_detalhes'
+            ]        
 
     # Salvar o DataFrame em um arquivo Excel
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -229,6 +241,8 @@ def export_items_to_excel(request, client_id, table):
         response['Content-Disposition'] = f'attachment; filename=items_Novos_{client.name}.xlsx'
     elif table == 'divergent':
         response['Content-Disposition'] = f'attachment; filename=items_Divergentes_{client.name}.xlsx'
+    elif table == 'await':
+        response['Content-Disposition'] = f'attachment; filename=items_Aguardando_{client.name}.xlsx'        
     else:
         response['Content-Disposition'] = f'attachment; filename=items_{client.name}.xlsx'
         
@@ -514,50 +528,115 @@ class ImportedItemListViewNewItem(ListView):
         context['page_range'] = page_range
         return context
     
+# @method_decorator(login_required(login_url='login'), name='dispatch')
+# class ImportedItemListViewDivergentItem(ListView):
+#     model = ImportedItem
+#     template_name = 'list_imported_divergent_items.html'
+#     context_object_name = 'imported_items'
+#     paginate_by = 50  # Defina quantos itens você quer por página
+
+#     def get_queryset(self):
+#         client_id = self.kwargs.get('client_id')
+#         client = get_object_or_404(Client, id=client_id)
+#         filters = self.request.GET.dict()
+        
+#         # Anota os querysets com a coluna 'origem'
+#         imported_items_queryset = ImportedItem.objects.filter(
+#             client=client, status_item=1, is_pending=True
+#         ).annotate(origem=Value('Integração', output_field=CharField()))
+        
+#         # Separar filtros baseados nos parâmetros GET
+#         base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
+#         cliente_filters = {key[8:]: value for key, value in filters.items() if key.startswith('cliente-')}
+        
+#         # Aplicar filtros ao imported_items_queryset
+#         for key, value in cliente_filters.items():
+#             imported_items_queryset = imported_items_queryset.filter(Q(**{key: value}))        
+
+#         items_queryset = Item.objects.filter(
+#             client=client, code__in=imported_items_queryset.values('code')
+#         ).annotate(
+#             origem=Value('Base', output_field=CharField()),
+#             piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
+#         ).order_by('description')
+        
+#         # Aplicar filtros ao items_queryset
+#         for key, value in base_filters.items():
+#             items_queryset = items_queryset.filter(Q(**{key: value}))
+
+#         # Combine os querysets e ordena por 'description' e 'origem'
+#         combined_queryset = sorted(
+#             chain(imported_items_queryset, items_queryset),
+#             key=lambda item: (item.description, item.origem)
+#         )
+        
+#         return combined_queryset
+   
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
+#         context['client'] = client
+#         context['client_name'] = client.name
+#         context['client_id'] = client.id
+#         context['filter_params'] = self.request.GET
+#         icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
+#         cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
+#         # Adicionando cbenef ao contexto
+#         context['cbenef_choices'] = CBENEF.objects.all()         
+#         context['icms_cst_choices'] = icms_cst_choices        
+#         context['cfop_choices'] = cfop_choices
+#         context['protege_choices'] = Protege.objects.all()
+#         context['piscofins_choices'] = PisCofinsCst.objects.all()
+#         context['naturezareceita_choices'] = NaturezaReceita.objects.all()
+#         context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
+#         icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
+#         context['icmsaliquotareduzida_codes'] = set(icmsaliquotareduzida_codes)
+#         context['form'] = ImportedItemForm()
+#         # Adiciona os cálculos de paginação
+#         paginator = context['paginator']
+#         page_obj = context['page_obj']
+#         total_pages = paginator.num_pages
+#         current_page = page_obj.number
+
+#         if total_pages <= 10:
+#             page_range = range(1, total_pages + 1)
+#         else:
+#             if current_page <= 4:
+#                 page_range = list(range(1, 6)) + ['...'] + [total_pages - 1, total_pages]
+#             elif current_page > total_pages - 4:
+#                 page_range = [1, 2, '...'] + list(range(total_pages - 4, total_pages + 1))
+#             else:
+#                 page_range = [1, 2, '...'] + list(range(current_page - 2, current_page + 3)) + ['...'] + [total_pages - 1, total_pages]
+
+#         context['page_range'] = page_range
+#         return context    
+
 @method_decorator(login_required(login_url='login'), name='dispatch')
-class ImportedItemListViewDivergentItem(ListView):
+class ImportedItemListViewAwaitSyncItem(ListView):
     model = ImportedItem
-    template_name = 'list_imported_divergent_items.html'
+    template_name = 'handsome_await_imported_items.html'
+    # template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
-    paginate_by = 50  # Defina quantos itens você quer por página
+    paginate_by = 100  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
         client = get_object_or_404(Client, id=client_id)
+
+        queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).order_by('description')  
+        
+        # Adicionar filtros baseados nos parâmetros GET, exceto 'page'
         filters = self.request.GET.dict()
+        filters.pop('page', None)  # Remover o parâmetro 'page' dos filtros
+        for key, value in filters.items():
+            if key and value:
+                queryset = queryset.filter(Q(**{key: value}))
+                
+        # Salva o total de itens no queryset combinado
+        self.total_items = queryset.count()
         
-        # Anota os querysets com a coluna 'origem'
-        imported_items_queryset = ImportedItem.objects.filter(
-            client=client, status_item=1, is_pending=True
-        ).annotate(origem=Value('Integração', output_field=CharField()))
-        
-        # Separar filtros baseados nos parâmetros GET
-        base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
-        cliente_filters = {key[8:]: value for key, value in filters.items() if key.startswith('cliente-')}
-        
-        # Aplicar filtros ao imported_items_queryset
-        for key, value in cliente_filters.items():
-            imported_items_queryset = imported_items_queryset.filter(Q(**{key: value}))        
+        return queryset
 
-        items_queryset = Item.objects.filter(
-            client=client, code__in=imported_items_queryset.values('code')
-        ).annotate(
-            origem=Value('Base', output_field=CharField()),
-            piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
-        ).order_by('description')
-        
-        # Aplicar filtros ao items_queryset
-        for key, value in base_filters.items():
-            items_queryset = items_queryset.filter(Q(**{key: value}))
-
-        # Combine os querysets e ordena por 'description' e 'origem'
-        combined_queryset = sorted(
-            chain(imported_items_queryset, items_queryset),
-            key=lambda item: (item.description, item.origem)
-        )
-        
-        return combined_queryset
-   
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
@@ -565,6 +644,7 @@ class ImportedItemListViewDivergentItem(ListView):
         context['client_name'] = client.name
         context['client_id'] = client.id
         context['filter_params'] = self.request.GET
+        context['total_items'] = self.total_items
         icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
         cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
         # Adicionando cbenef ao contexto
@@ -595,7 +675,8 @@ class ImportedItemListViewDivergentItem(ListView):
                 page_range = [1, 2, '...'] + list(range(current_page - 2, current_page + 3)) + ['...'] + [total_pages - 1, total_pages]
 
         context['page_range'] = page_range
-        return context    
+        return context
+
 
 @csrf_exempt
 def save_imported_item(request):
@@ -809,8 +890,9 @@ def save_bulk_imported_item(request):
                         item.cofins_aliquota = cofins_aliquota
                         item.naturezareceita = naturezareceita_instance
                         item.type_product = type_product
-                        item.status_item = 2  # Verifique se precisa atualizar o status do item
+                        item.status_item = 1  # Verifique se precisa atualizar o status do item
                         item.updated_at= current_time
+                        item.await_sync_at = current_time
                         item.user_updated = user                        
                         item.save()
 
@@ -845,9 +927,10 @@ def save_bulk_imported_item(request):
                             estado_destino=estado_destino,
                             created_at= current_time,
                             updated_at= current_time,
+                            await_sync_at = current_time,
                             user_created = user,
                             user_updated = user,
-                            status_item=2  # Verifique se precisa definir o status do item
+                            status_item=1  # Verifique se precisa definir o status do item
                         )
                         item.save()
 
@@ -1736,8 +1819,9 @@ class XLSXUploadDivergentView(View):
                                 'is_active': True,
                                 'is_pending_sync': True,
                                 'updated_at': current_time,
+                                'await_sync_at': current_time,
                                 'user_updated': user,
-                                'status_item': 2,
+                                'status_item': 1,
                             }
 
                             if str(row['codigo']) in existing_items:

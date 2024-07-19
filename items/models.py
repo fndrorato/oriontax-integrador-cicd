@@ -15,8 +15,8 @@ class Item(models.Model):
     
     STATUS_CHOICES = [
         (0, 'Produto Novo'),
-        (1, 'Problemas Encontrados'),
-        (2, 'Aguardando Sincronização'),
+        (1, 'Aguardando Sincronização'),        
+        (2, 'Enviado - Aguard Validação'),
         (3, 'Validado'),
     ]    
         
@@ -46,8 +46,9 @@ class Item(models.Model):
     is_active = models.BooleanField(default=True)
     is_pending_sync = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    sync_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    sync_at = models.DateTimeField(auto_now=True, null=True)
+    await_sync_at = models.DateTimeField(auto_now=True, null=True)
     user_created = models.ForeignKey(User, related_name='items_created', on_delete=models.SET_NULL, null=True, blank=True)
     user_updated = models.ForeignKey(User, related_name='items_updated', on_delete=models.SET_NULL, null=True, blank=True)
     
