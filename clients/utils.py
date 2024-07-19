@@ -366,6 +366,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     ).count()
 
     print(f"Número de itens que serão atualizados: {num_to_update}")    
+    print(codes_to_update)
     return 
     
     current_time = timezone.now() 
