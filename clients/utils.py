@@ -307,9 +307,14 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     columns_not_compare = ['sequencial', 'estado_origem', 'estado_destino']
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare] 
-    print(merged_df.info())
-    return    
+    # print(merged_df.info())
+    # return    
     for col in filtered_columns:
+        if col in ['icms_aliquota', 'icms_aliquota_reduzida'] and \
+        merged_df[f'icms_cst_items_df'].iloc[0] == merged_df[f'icms_cst_df'].iloc[0] and \
+        merged_df[f'icms_cst_df'].iloc[0] in [40, 41, 60]:
+            continue  # Ignora a comparação e segue para a próxima coluna
+        
         try:
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
             divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
