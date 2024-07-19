@@ -321,9 +321,17 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
 
     # Cria um DataFrame com os itens que NÃO divergiram
     # com isso sera possivel atualizar o status dos itens que estao como 2
+    print('XX-items NAO divergentes')
     df_items_not_divergent = merged_df[~divergence_mask]
-    print(df_items_not_divergent.info())
-    return {'message': f"Print Items Not Divergent", 'status': 'error'}
+    # 1. Extrair os códigos
+    codes_to_update = df_items_not_divergent['code'].unique().tolist()
+    current_time = timezone.now() 
+    num_updated = Item.objects.filter(
+        code__in=codes_to_update, 
+        status_item=2, 
+        client_id=client_id,
+        sync_validate_at=current_time
+    ).update(status_item=3)
 
     df_items_divergent = merged_df[divergence_mask]
     # Ordenar colunas do df_items_divergent, exceto a primeira coluna
@@ -334,15 +342,12 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # print(df_items_divergent.head())
     # df_items_divergent.to_excel('df_items_divergent.xlsx', index=False) 
     print('13-montando o message')
-    if len(new_items_df) > 0 or len(df_items_divergent) > 0:
+    if len(new_items_df) > 0 or len(df_items_divergent) > 0 or num_updated > 0:
         message = (f"Foram encontrados {len(new_items_df)} novos produtos "
-                f"e {len(df_items_divergent)} linhas com divergência no cadastro ")
-    elif len(new_items_df) > 0:
-        message = f"Foram encontrados {len(new_items_df)} novos produtos."
-    elif len(df_items_divergent) > 0:
-        message = f"Foram encontradas {len(df_items_divergent)} linhas com divergência no cadastro."
+                f"e {len(df_items_divergent)} linhas com divergência no cadastro "
+                f"e {num_updated} produtos passaram para validados e sincronizados. ")
     else:
-        message = "Nenhum novo produto ou divergência encontrada."  
+        message = "Nenhum novo produto, divergência encontrada ou produtos para ser validado e sincronizado"  
         
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - {message} \n'   
