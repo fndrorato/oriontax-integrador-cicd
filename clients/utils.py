@@ -308,12 +308,29 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare] 
     ignored_codes = []  # Lista para armazenar os códigos ignorados
+    cols_aliquotas = 0
+    rows_cst = 0
+    rows_ignorar = 0
     for col in filtered_columns:
-        if col in ['icms_aliquota', 'icms_aliquota_reduzida'] and \
-        merged_df[f'icms_cst_items_df'].iloc[0] == merged_df[f'icms_cst_df'].iloc[0] and \
-        merged_df[f'icms_cst_df'].iloc[0] in [40, 41, 60]:
-            ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
-            continue  # Ignora a comparação e segue para a próxima coluna
+        # Verifica se a coluna é uma das desejadas
+        if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
+            # Verifica se os valores de icms_cst são iguais
+            cols_aliquotas += 1
+            icms_cst_items_value = merged_df[f'icms_cst_items_df'].iloc[0]
+            icms_cst_df_value = merged_df[f'icms_cst_df'].iloc[0]    
+            if icms_cst_df_value in [40, 41, 60]:
+                rows_cst += 1
+                if icms_cst_items_value == icms_cst_df_value:
+                    rows_ignorar += 1
+                    ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
+                    continue  # Ignora a comparação e segue para a próxima coluna                    
+                
+       
+        # if col in ['icms_aliquota', 'icms_aliquota_reduzida'] and \
+        # merged_df[f'icms_cst_items_df'].iloc[0] == merged_df[f'icms_cst_df'].iloc[0] and \
+        # merged_df[f'icms_cst_df'].iloc[0] in [40, 41, 60]:
+        #     ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
+        #     continue  # Ignora a comparação e segue para a próxima coluna
         
         try:
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
@@ -329,6 +346,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Cria um DataFrame com os itens que NÃO divergiram
     # com isso sera possivel atualizar o status dos itens que estao como 2
     print('XX-items NAO divergentes')
+    print("cols_aliquotas:", cols_aliquotas, " => rows_cst:", rows_cst, " =>", rows_ignorar)
     print("Códigos ignorados:", ignored_codes)
     df_items_not_divergent = merged_df[~divergence_mask]
     # 1. Extrair os códigos
