@@ -88,7 +88,8 @@ def connect_and_update(host, user, password, port, database, client_name, items_
             #     print(len(row['barcode']), len(row['description']), len(row['ncm']))  # Verifica os comprimentos
             
             # EXECUTAR DELETE ANTES NESSA TABELA
-            # tb_sysmointegradorrecebimento
+            # Executa a exclusão de todos os registros da tabela
+            cursor.execute("DELETE FROM tb_sysmointegradorrecebimento")
 
             # Executa a inserção em massa
             execute_values(cursor, """
@@ -223,7 +224,11 @@ if __name__ == "__main__":
             if result == True:
                 try:
                     # Realiza o bulk update
-                    num_updated = Item.objects.filter(client=client, status_item=2).update(status_item=3)
+                    # num_updated = Item.objects.filter(client=client, status_item=2).update(status_item=3)
+                    num_updated = Item.objects.filter(client=client, status_item=2).update(
+                        status_item=3,
+                        sync_at=F('sync_at')
+                    )
 
                     if num_updated > 0:
                         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens validados com sucesso\n"

@@ -523,7 +523,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                     "{{ item.cofins_aliquota_cliente }}",
                     "{{ item.naturezareceita_base|default_if_none:'' }}",
                     "{{ item.naturezareceita_cliente|default_if_none_or_zero:'' }}",
-                    "{{ form.type_product.value|default_if_none:'' }}",
+                    "{{ item.type_product_base }}", 
                     false // valor inicial do checkbox
                 ],
             {% endfor %}
@@ -821,12 +821,12 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                         filteredDataToSend = filteredDataToSend.map(row => {
                             return row.filter((_, index) => !columnsToRemove.includes(index));
                         });                        
-
+                        console.log(filteredDataToSend)
 
                         // Find the ID for each row based on piscofinsCst and code
                         filteredDataToSend = filteredDataToSend.map(row => {
-                            var piscofinsCst = row[10];
-                            var code = row[13];
+                            var piscofinsCst = row[11];
+                            var code = row[14];
 
                             var matchingId = findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst);
 
@@ -898,6 +898,9 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
         }   
         
         function findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst) {
+            console.log(naturezareceitaData)
+            console.log(code)
+            console.log(piscofinsCst)
             for (const key in naturezareceitaData) {
                 if (naturezareceitaData.hasOwnProperty(key)) {
                     const entry = naturezareceitaData[key];

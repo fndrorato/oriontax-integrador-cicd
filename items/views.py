@@ -785,7 +785,12 @@ def save_bulk_imported_item(request):
                     
                     if naturezareceita_id:
                         naturezareceita_instance = get_object_or_404(NaturezaReceita, id=naturezareceita_id)                    
-                                         
+                    
+                    user = request.user
+                    current_time = timezone.now()  
+                    
+                    # return JsonResponse({'status': 'error', 'message': 'rrro'})                           
+                    
                     if tipo_produto == '1':
                         # Atualiza o item existente se tipo_produto for igual a 1
                         item = get_object_or_404(Item, code=code, client=client)
@@ -805,6 +810,8 @@ def save_bulk_imported_item(request):
                         item.naturezareceita = naturezareceita_instance
                         item.type_product = type_product
                         item.status_item = 2  # Verifique se precisa atualizar o status do item
+                        item.updated_at= current_time
+                        item.user_updated = user                        
                         item.save()
 
                         # Update the ImportedItem model
@@ -836,6 +843,10 @@ def save_bulk_imported_item(request):
                             sequencial=sequencial,
                             estado_origem=estado_origem,
                             estado_destino=estado_destino,
+                            created_at= current_time,
+                            updated_at= current_time,
+                            user_created = user,
+                            user_updated = user,
                             status_item=2  # Verifique se precisa definir o status do item
                         )
                         item.save()
@@ -1159,6 +1170,10 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         client = get_object_or_404(Client, id=client_id)
         filters = self.request.GET.dict()
         
+        # codigos_desejados = [
+        #     '57','64','66','70','79','86','2465','4049','4788','4800','4825','4915','4990','4992','4993','4994','4995','4996','4998','4999','5000','5002','5003','5004','5005','5006','5007','5008','5009','5010','5011','5012','5013','5014','5015','5016','5023','5039','5052','5087','5088','5138','5144','5175','5200','5203','5254','5295','5300','5803','5810','5814','5910','6129','6241','6305','6454','6532','6550','6579','7131','7149','7166','7257','7259','7262','7292','7354','7560','7584','7591','8008','8032','8375','8675','8754','8775','8844','8879','9064','9210','9279','9283','9284','9285','9416','9548','10003','10157','10194','10201','10203','10204','10211','10380','10956','11384','11534','12359','12474','12502','13022','13589','13914','14484','14981','15258','15452','15453','15524','15537','15623','16430','16983','17425','17535','18011','18272','18391','18689','20532','20599','20600','21060','22704','23298','23647','24061','24218','24219','25862','25863','25995','26065','26079','26436','26706','26708','26771','26941','27002','27305','27801','27802','28403','28464','28667','28836','29083','29208','29411','29465','29467','29931','30189','30191','30192','31197','31505','31506','31511','31526','32990','33243','33458','34241','34451','36300','36301','36800','37368','38223','41103','41196','41550','41552','41701','41835','41851','41852','44740','45124','46164','46177','46220','46221','46452','46923','47161','47414','47422','47423','48527','50171','50181','50254','50344','50345','50346','50583','50598','51489','52399','52526','52541','52938','53306','53878','54057','54300','54665','55046','55059','57552','57665','57666','58410','58419','58542','58667','59085','59579','60201','60321','60378','60385','60462','60747','60907','60933','60985','60989','60990','60991','61039','61040','61041','61499','61908','62234','62235','62238','62240','62244','62245','62246','62247','62257','62258','62695','63549','63702','64688','64689','64690','64692','64693','64694','64696','64697','64698','64699','64702','64705','64706','64707','64709','64710','64711','64712','64713','64714','64715','64716','64718','64719','64720','64721','64722','64723','64724','64725','64726','64727','64729','65139','65140','65141','65142','65143','65144','65145','65146','65147','65148','65149','65150','65151','65152','65153','65154','65155','65156','65157','65158','65159','65160','65207','65370','65393','65394','65397','65466','66133','66248','66249','66914','67738','67739','67740','67996','67997','67998','68524','70243','70244','70304','70998','71211','71304','71663','72056','72107','72194','72377','72482','72493','72582','72664','72731','72732','72753','72754','72757','72821','72822','72824','73374','73375','73376','73377','73502','73770','73902','73903','73904','73985','74101','74131','74132','74133','74134','74208','74404','74442','74498','74617','75595','75817','75818','76268','76675','76676','76230','76621','76622','76652','76669','76771','76948','76951','76958','77270','77278','77280','77745','77870','77871','77872','77874','77877','77879','77880','77881','77884','77885','77886','77887','77888','77889','77890','77891','77892','77893','77894','77895','77897','77900','77901','77902','77903','77904','77905','77906','77907','77908','77909','77910','77911','77912','77913','77914','77915','77916','77917','77918','77919','77920','77921','77922','77923','77924','77925','77926','77927','77928','77929','77931','77932','77933','77934','77940','77941','77942','77982','78008','78106','78163','78234','78253','78254','78255','78256','78257','78258','78259','78260','78264','78430','78439','78443','78477','78480','78499','78500','78501','78533','78580','78587','78588','78589','78623','78634','78638','78642','78650','78956','79000','79001','79069','79088','79089','79093','79107','79243','79244','79245','79479','79480','79614','79633','79649','79675','79798','79799','79889','79897','79921','80101','80147','80148','80467','80619','46203','80948','81164','81314','81440','81456','81528','81599','81600','81601','81602','81839','81864','81875','81891','81915','81960'
+        # ]
+        
         # Anota os querysets com a coluna 'origem'
         imported_items_queryset = ImportedItem.objects.filter(
             client=client, status_item=1, is_pending=True
@@ -1170,6 +1185,20 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
             'cofins_aliquota', 'naturezareceita'
         )
+        
+        # imported_items_queryset = ImportedItem.objects.filter(
+        #     client=client,
+        #     status_item=1,
+        #     is_pending=True,
+        #     code__in=codigos_desejados  # Filtrar pelos códigos desejados
+        # ).annotate(
+        #     origem=Value('Integração', output_field=CharField())
+        # ).values(
+        #     'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
+        #     'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
+        #     'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
+        #     'cofins_aliquota', 'naturezareceita'
+        # )        
         
         # Separar filtros baseados nos parâmetros GET
         base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
@@ -1217,7 +1246,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             pis_aliquota_base=Subquery(items_subquery.values('pis_aliquota')[:1]),
             cofins_aliquota_base=Subquery(items_subquery.values('cofins_aliquota')[:1]),
             naturezareceita_base=Subquery(items_subquery.values('naturezareceita__code')[:1]), 
-            type_product=Subquery(items_subquery.values('type_product')[:1]),       
+            type_product_base=Subquery(items_subquery.values('type_product')[:1]),       
         ).annotate(
             description_cliente=F('description')
         ).filter(
@@ -1256,7 +1285,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             'cofins_aliquota',
             'naturezareceita_base',
             'naturezareceita',
-            'type_product'
+            'type_product_base'
         )
         
         # Salva o total de itens no queryset combinado

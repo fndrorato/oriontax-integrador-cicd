@@ -47,6 +47,7 @@ class Item(models.Model):
     is_pending_sync = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    sync_at = models.DateTimeField(auto_now=True)
     user_created = models.ForeignKey(User, related_name='items_created', on_delete=models.SET_NULL, null=True, blank=True)
     user_updated = models.ForeignKey(User, related_name='items_updated', on_delete=models.SET_NULL, null=True, blank=True)
     
