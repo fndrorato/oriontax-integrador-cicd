@@ -333,29 +333,17 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
         #     continue  # Ignora a comparação e segue para a próxima coluna
         
         try:
-            comparar_colunas = True
             if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
                 icms_cst_df_value = merged_df['icms_cst_df']
                 icms_cst_items_df_value = merged_df['icms_cst_items_df']
                 if (icms_cst_df_value == icms_cst_items_df_value) & (icms_cst_df_value.isin([40, 41, 60])).all():
-                    ignored_codes.extend(merged_df['code'].unique().tolist())
-                    continue            
-            # if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
-            #     # Verifica se os valores de icms_cst são iguais
-            #     cols_aliquotas += 1
-            #     icms_cst_items_value = merged_df[f'icms_cst_items_df'].iloc[0]
-            #     icms_cst_df_value = merged_df[f'icms_cst_df'].iloc[0]    
-            #     if icms_cst_df_value in [40, 41, 60]:
-            #         rows_cst += 1
-            #         if icms_cst_items_value == icms_cst_df_value:
-            #             comparar_colunas = False
-            #             rows_ignorar += 1
-            #             ignored_codes.extend(merged_df['code'].unique().tolist())  # Adiciona os códigos à lista
-            
-            if comparar_colunas == True:
-                col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
-                divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
-                divergence_mask |= col_mask
+                    ignored_codes.extend(merged_df.loc[(icms_cst_df_value == icms_cst_items_df_value) & 
+                                                    (icms_cst_df_value.isin([40, 41, 60])), 'code'].tolist())
+                    continue    
+
+            col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
+            divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
+            divergence_mask |= col_mask
         except Exception as e:
             # print(f"Erro na comparação da coluna '{col}': {e}")
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
@@ -366,7 +354,6 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Cria um DataFrame com os itens que NÃO divergiram
     # com isso sera possivel atualizar o status dos itens que estao como 2
     print('XX-items NAO divergentes')
-    print("cols_aliquotas:", cols_aliquotas, " => rows_cst:", rows_cst, " =>", rows_ignorar)
     print("Códigos ignorados:", ignored_codes)
     df_items_not_divergent = merged_df[~divergence_mask]
     # 1. Extrair os códigos
