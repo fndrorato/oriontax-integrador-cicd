@@ -325,6 +325,16 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     df_items_not_divergent = merged_df[~divergence_mask]
     # 1. Extrair os códigos
     codes_to_update = df_items_not_divergent['code'].unique().tolist()
+    # Contagem de itens a serem atualizados
+    num_to_update = Item.objects.filter(
+        code__in=codes_to_update, 
+        status_item=2, 
+        client_id=client_id
+    ).count()
+
+    print(f"Número de itens que serão atualizados: {num_to_update}")    
+    return {'message': f"Errror", 'status': 'error'}
+    
     current_time = timezone.now() 
     num_updated = Item.objects.filter(
         code__in=codes_to_update, 
@@ -427,9 +437,14 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     
     unique_values = df['protege'].unique()
     print('3-Rename colunas')
+    print(unique_values)
+    df['protege'] = df['protege'].fillna(0)
+    unique_values = df['protege'].unique()
+    print(unique_values)
+    
     df['protege'] = df['protege'].apply(lambda x: int(x))
     unique_values = df['protege'].unique()
-
+    print('3-Rename colunas2')
     
     # Verificar se as colunas existem
     expected_columns = ['barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
