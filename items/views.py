@@ -1040,7 +1040,7 @@ class XLSXUploadView(View):
                 current_time = timezone.now()
                 errors = []
 
-                batch_size = 1000
+                batch_size = 500
 
                 with transaction.atomic():                
                     for index, row in df.iterrows():
