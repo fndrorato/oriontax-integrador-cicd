@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from django.utils.timesince import timesince
 from django.views.generic import TemplateView, ListView
 from django.core.paginator import Paginator  # Importando o Paginator
-from django.db.models import Q, Value, CharField, F
+from django.db.models import Q, Value, CharField, F, Subquery, OuterRef
 from django.db.models.functions import Concat, Cast
 from clients.models import Client, Store
 from items.models import Item, ImportedItem
@@ -29,20 +29,43 @@ class HomeView(TemplateView):
         for client in clients:
             item_count = Item.objects.filter(client=client).count()
             store_count = Store.objects.filter(client=client).count()
-            imported_itens_count_news = ImportedItem.objects.filter(client=client, is_pending=True, status_item=1).count()
+            
+            imported_itens_count_news = ImportedItem.objects.filter(client=client, is_pending=True, status_item=0).count()
+            
+            # Subconsulta para encontrar os itens no modelo Item com client e code iguais e com status_item igual a 1 ou 2
+            item_subquery = Item.objects.filter(
+                client=OuterRef('client'),
+                code=OuterRef('code'),
+                status_item__in=[1, 2]
+            ).values('code')
+            
+            # imported_itens_count_diver = ImportedItem.objects.filter(
+            #     client=client, 
+            #     is_pending=True, 
+            #     status_item=1
+            # ).exclude(
+            #     divergent_columns__icontains="description"
+            # ).count()
+            # Filtro para contar os itens do modelo ImportedItem
             imported_itens_count_diver = ImportedItem.objects.filter(
-                client=client, 
-                is_pending=True, 
-                status_item=0
+                client=client,
+                is_pending=True,
+                status_item=1
             ).exclude(
                 divergent_columns__icontains="description"
-            ).count()
+            ).exclude(
+                code__in=Subquery(item_subquery)
+            ).count()        
+            
             imported_itens_count_with_description = ImportedItem.objects.filter(
                 client=client, 
                 is_pending=True, 
-                status_item=0,
+                status_item=1,
                 divergent_columns__icontains="description"
+            ).exclude(
+                code__in=Subquery(item_subquery)
             ).count()    
+            
             itens_await_sync = Item.objects.filter(
                 client=client
             ).filter(
