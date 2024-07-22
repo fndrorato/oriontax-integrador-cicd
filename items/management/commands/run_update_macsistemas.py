@@ -142,12 +142,6 @@ if __name__ == "__main__":
         items_df['naturezareceita_code'] = items_df['naturezareceita_code'].fillna(0)
         items_df['naturezareceita_code'] = items_df['naturezareceita_code'].astype(int)
         
-        print(items_df['sequencial'].unique())
-        sequencial_unicos_zero = items_df[items_df['sequencial'] == 0]['sequencial'].unique()
-        print(sequencial_unicos_zero)        
-        
-        print(len(items_df))
-        
         if len(items_df) == 0:
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             initial_log += f'[{timestamp}] - Não há atualizações para o cliente: {client.name} \n'        

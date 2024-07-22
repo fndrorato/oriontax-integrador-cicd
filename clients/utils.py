@@ -279,8 +279,12 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
                 icms_cst_df_value = merged_df['icms_cst_df'].astype(int)  # Converter para inteiro
                 icms_cst_items_df_value = merged_df['icms_cst_items_df'].astype(int)  # Converter para inteiro
 
-                if (icms_cst_df_value == icms_cst_items_df_value).all() and icms_cst_df_value.isin([40, 41, 60]).all():
-                    continue
+                if (icms_cst_df_value == icms_cst_items_df_value).all():
+                    print('icms_cst iguais')
+                    if icms_cst_df_value.isin([40, 41, 60]).all():
+                        continue
+                    else:
+                        print('nao esta na lista 40,41,60')
 
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
             divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
@@ -539,17 +543,56 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     columns_not_compare = ['sequencial', 'estado_origem', 'estado_destino']
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare]    
+    # Criar uma nova coluna vazia para armazenar as colunas divergentes
+    merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]        
     for col in filtered_columns:
         try:
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
             divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
             divergence_mask |= col_mask
+            for idx in merged_df.index[col_mask]:
+                merged_df.at[idx, "divergent_columns_df"].append(col)             
         except Exception as e:
             # print(f"Erro na comparação da coluna '{col}': {e}")
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             result_integration += f'[{timestamp}] - Erro na comparação da coluna \'{col}\': {e} \n'
             save_imported_logs(client_id, result_integration)
             problematic_columns.append(col)
+
+    # Converte listas para strings separadas por vírgulas e listas vazias para strings vazias
+    merged_df["divergent_columns_df"] = merged_df["divergent_columns_df"].apply(lambda x: ', '.join(x) if x else '')
+
+    # Cria um DataFrame com os itens que NÃO divergiram
+    # com isso sera possivel atualizar o status dos itens que estao como 2
+    print('XX-items NAO divergentes')
+    df_items_not_divergent = merged_df[~divergence_mask]
+    # 1. Extrair os códigos
+    codes_to_update = df_items_not_divergent['code'].unique().tolist()
+    # Contagem de itens a serem atualizados
+    num_to_update = Item.objects.filter(
+        code__in=codes_to_update, 
+        status_item=2, 
+        client_id=client_id
+    ).count()
+
+    print(f"Número de itens que serão atualizados: {num_to_update}")    
+    # codigos_para_atulizar = Item.objects.filter(
+    #     code__in=codes_to_update, 
+    #     status_item=2, 
+    #     client_id=client_id
+    # ).values('code', 'description').order_by('description')  
+    # print(codigos_para_atulizar) 
+    # return 
+    
+    current_time = timezone.now() 
+    num_updated = Item.objects.filter(
+        code__in=codes_to_update, 
+        status_item=2, 
+        client_id=client_id
+    ).update(
+        status_item=3,
+        sync_validate_at=current_time
+    )
 
     df_items_divergent = merged_df[divergence_mask]
     # Ordenar colunas do df_items_divergent, exceto a primeira coluna
@@ -560,15 +603,12 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # print(df_items_divergent.head())
     # df_items_divergent.to_excel('df_items_divergent.xlsx', index=False) 
     print('13-montando o message')
-    if len(new_items_df) > 0 and len(df_items_divergent) > 0:
+    if len(new_items_df) > 0 or len(df_items_divergent) > 0 or num_updated > 0:
         message = (f"Foram encontrados {len(new_items_df)} novos produtos "
-                f"e {len(df_items_divergent)} linhas com divergência no cadastro.")
-    elif len(new_items_df) > 0:
-        message = f"Foram encontrados {len(new_items_df)} novos produtos."
-    elif len(df_items_divergent) > 0:
-        message = f"Foram encontradas {len(df_items_divergent)} linhas com divergência no cadastro."
+                f"e {len(df_items_divergent)} linhas com divergência no cadastro "
+                f"e {num_updated} produtos passaram para validados e sincronizados. ")
     else:
-        message = "Nenhum novo produto ou divergência encontrada."  
+        message = "Nenhum novo produto, divergência encontrada ou produtos para ser validado e sincronizado"  
         
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - {message} \n'   
@@ -591,12 +631,13 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     new_items_df['piscofins_cst'] = new_items_df['piscofins_cst'].astype(int)
     # print(new_items_df.info())
     # print(new_items_df.head(2).transpose())    
-    new_items_df.to_excel('new_items_df17jul.xlsx', index=False) 
-    
+
     print(message)
     # Inserindo os itens novos na tabela de importacao
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Gravando novos itens \n'            
+    # Inicializar a coluna com listas vazias
+    new_items_df["divergent_columns"] = [[] for _ in range(len(new_items_df))]         
     try:
         insert_result = insert_new_items(client_id, new_items_df, 0)
     except Exception as e:

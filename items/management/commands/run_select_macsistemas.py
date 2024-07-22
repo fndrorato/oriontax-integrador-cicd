@@ -21,6 +21,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
 django.setup()
 
 from django.conf import settings
+from django.db import models
 from django.db.models import F
 from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
@@ -202,9 +203,8 @@ if __name__ == "__main__":
                 sys.exit(1)  # Sair com código de erro 1             
         else:
             # converter df_client par versão OrionTAX
-            
             df_client_converted = convert_df_client_to_df_otx_version(df_client)
-            
+
             # Pega todos os itens relacionados a esse cliente
             items_queryset = Item.objects.filter(client=client).values(
                 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
@@ -212,11 +212,21 @@ if __name__ == "__main__":
                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 
                 naturezareceita_code=F('naturezareceita__code')
             )        
-            # Converte o queryset em uma lista de dicionários
-            items_list = list(items_queryset.values())
+            if items_queryset:
+                items_df = pd.DataFrame(list(items_queryset.values()))
+            else: 
+                # Lista das colunas desejadas
+                colunas_desejadas = [
+                    'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
+                    'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
+                    'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_code',
+                    'id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 
+                    'is_pending_sync', 'history', 'other_information', 'type_product'
+                ]
 
-            # Cria um DataFrame a partir da lista de dicionários
-            items_df = pd.DataFrame(items_list)  
+                # Criar um DataFrame vazio com as colunas desejadas
+                items_df = pd.DataFrame(columns=colunas_desejadas)
+                           
             items_df.drop(columns=['id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 'is_pending_sync', 'history', 'other_information', 'type_product'], inplace=True)            
             # print(items_df.info())
             try:
