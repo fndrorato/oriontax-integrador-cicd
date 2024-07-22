@@ -704,26 +704,45 @@ def save_imported_item(request):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
-def comparar_item_filtrado(erp, variaveis, item_filtrado):
+def comparar_item_filtrado(erp, variaveis, itens_filtrados_dict):
     """Compara os campos de um item filtrado com as variáveis fornecidas."""
+    print(f"Tipo de item_filtrado: {type(itens_filtrados_dict)}")
+    print("itens_filtrados_dict.......")
+    print(itens_filtrados_dict) 
 
-    # Iterar sobre as chaves do dicionário (nomes dos campos)
+    # Verifique se a lista contém pelo menos um item
+    if not itens_filtrados_dict:
+        raise ValueError("A lista item_filtrado está vazia.")
+
+    # Acesse o primeiro elemento da lista (o dicionário)
+    item_filtrado = itens_filtrados_dict[0]
+
+    # # Verifique os campos e tipos das variáveis
+    # print(f"Campos e tipos em variaveis:")
+    # for campo, valor in variaveis.items():
+    #     print(f"{campo}: {valor} (Tipo: {type(valor)})")
+
+    # # Verifique os campos e tipos do item_filtrado
+    # print(f"Campos e tipos em item_filtrado:")
+    # for campo in variaveis.keys():
+    #     valor_item = item_filtrado.get(campo, None)
+    #     print(f"{campo}: {valor_item} (Tipo: {type(valor_item)})")
+
     for campo, valor_variavel in variaveis.items():
-        # Obter o valor do campo no item filtrado
-        valor_item = getattr(item_filtrado, campo)
+        valor_item = item_filtrado.get(campo, None)
         
         # Regra do ERP SYSMO:
-        if erp.name == 'SYSMO' and campo in ['icms_aliquota', 'icms_aliquota_reduzida']:
-            icms_cst_df_value = getattr(item_filtrado, 'icms_cst')
+        if erp == 'SYSMO' and campo in ['icms_aliquota', 'icms_aliquota_reduzida']:
+            icms_cst_df_value = item_filtrado.get('icms_cst', None)
             icms_cst_items_df_value = variaveis.get('icms_cst')
-            if (icms_cst_df_value == icms_cst_items_df_value) & (icms_cst_df_value.isin([40, 41, 60])).all():
-                continue  # Pula a comparação se a regra for satisfeita        
+            if (icms_cst_df_value == icms_cst_items_df_value) and (icms_cst_df_value in [40, 41, 60]):
+                continue  # Pula a comparação se a regra for satisfeita
 
         # Comparar os valores
         if valor_variavel != valor_item:
             return 1  # Retorna se algum campo for diferente
 
-    return 3  # Retorna True se todos os campos forem iguais
+    return 3  # Retorna True se todos os campos forem iguais    
 
 
 @csrf_exempt
@@ -736,6 +755,8 @@ def save_bulk_imported_item(request):
             # return JsonResponse({'status': 'error', 'message': 'rrro'})
             
             # Validate each item and collect errors if any
+            # Lista para armazenar todos os itens
+            items_list = []            
             all_errors = []
             for i, row in enumerate(data):
                 item_data = {
@@ -761,6 +782,8 @@ def save_bulk_imported_item(request):
                 errors = validate_item_data(item_data)
                 if errors:
                     all_errors.extend([f"Linha {i + 1}: {err}" for err in errors])
+                else:
+                    items_list.append(item_data)            
 
             if all_errors:
                 return JsonResponse({'status': 'error', 'message': '\n'.join(all_errors)})
@@ -770,22 +793,37 @@ def save_bulk_imported_item(request):
             codes_unicos = set()
             fix_item_unicos = set()
 
-            for item in item_data:
-                client_id_unicos.add(item['client_id'])
-                codes_unicos.add(item['code'])
-                fix_item_unicos.add(item['fix_item'])
+            # Itera sobre cada item na lista de itens
+            for item in items_list:
+                try:
+                    # Converte client_id para inteiro antes de adicionar ao conjunto
+                    client_id = int(item['client_id'])
+                    client_id_unicos.add(client_id)
+                    codes_unicos.add(item['code'])
+                    fix_item_unicos.add(item['fix_item'])
+                except KeyError as e:
+                    # Lida com a exceção se a chave não existir no dicionário
+                    print(f"KeyError: {e} is missing in item {item}")
+                except ValueError as e:
+                    # Lida com a exceção se client_id não puder ser convertido para inteiro
+                    print(f"ValueError: {e} for client_id {item['client_id']} in item {item}")
+
 
             # Converter os conjuntos em listas, se necessário
             client_id_unicos = list(client_id_unicos)
             codes_unicos = list(codes_unicos)  
             fix_item_unicos = list(fix_item_unicos)  
             
-            if 1 in fix_item_unicos: 
-                itens_filtrados = ImportedItem.objects.filter(
+            if '1' in fix_item_unicos: 
+                # Obtendo uma lista de tuplas
+                itens_filtrados_tuples = ImportedItem.objects.filter(
                     Q(code__in=codes_unicos) & 
                     Q(client_id__in=client_id_unicos)
-                )                   
+                ).values_list('id', 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege', 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita')
 
+                # Convertendo as tuplas em dicionários
+                field_names = ['id', 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege', 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita']
+                itens_filtrados_dict = [{field: value for field, value in zip(field_names, item)} for item in itens_filtrados_tuples]
             
             # If all items are valid, process them
             with transaction.atomic():
@@ -813,6 +851,9 @@ def save_bulk_imported_item(request):
                     
                     pis_aliquota = convert_to_decimal(pis_aliquota_str)
                     cofins_aliquota = convert_to_decimal(cofins_aliquota_str)
+                    
+                    protege_code = protege
+                    piscofins_cst_code = piscofins_cst
                                         
                     # Verificar se o client_id é válido
                     client = get_object_or_404(Client, id=client_id)  
@@ -827,6 +868,9 @@ def save_bulk_imported_item(request):
                     
                     if naturezareceita_id:
                         naturezareceita_instance = get_object_or_404(NaturezaReceita, id=naturezareceita_id)                    
+                        naturezareceita_code = naturezareceita_instance.code
+                    else:
+                        naturezareceita_code = 0
                     
                     user = request.user
                     current_time = timezone.now()  
@@ -841,18 +885,24 @@ def save_bulk_imported_item(request):
                             'description': description,
                             'ncm': ncm,
                             'cest': cest,
-                            'cfop': cfop,
+                            'cfop': cfop_code,
                             'icms_cst': icms_cst_code,
                             'icms_aliquota': icms_aliquota_code,
                             'icms_aliquota_reduzida': icms_aliquota_reduzida,
                             'cbenef': cbenef_code,
-                            'protege': protege,
-                            'piscofins_cst': piscofins_cst,
+                            'protege': protege_code,
+                            'piscofins_cst': piscofins_cst_code,
                             'pis_aliquota': pis_aliquota,
                             'cofins_aliquota': cofins_aliquota,
-                            'naturezareceita': naturezareceita_instance.code,
+                            'naturezareceita': naturezareceita_code,
                         }
-                        var_status_item = comparar_item_filtrado(client.erp.name, variavel_oriontax, itens_filtrados)
+                        variavel_oriontax['cfop'] = int(variavel_oriontax['cfop'])
+                        variavel_oriontax['icms_cst'] = int(variavel_oriontax['icms_cst'])
+                        variavel_oriontax['icms_aliquota'] = int(variavel_oriontax['icms_aliquota'])
+                        variavel_oriontax['icms_aliquota_reduzida'] = int(variavel_oriontax['icms_aliquota_reduzida'])
+                        variavel_oriontax['protege'] = int(variavel_oriontax['protege'])
+                        variavel_oriontax['piscofins_cst'] = int(variavel_oriontax['piscofins_cst'])
+                        var_status_item = comparar_item_filtrado(client.erp.name, variavel_oriontax, itens_filtrados_dict)
                         # Regras:
                         # Quando estiver atualizando e ver  que ficou igual ao dos
                         # itens importados, mudar o status diretamente para 3,
