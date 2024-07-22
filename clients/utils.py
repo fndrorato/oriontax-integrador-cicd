@@ -320,10 +320,10 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
                     divergence_counts[col] += 1
             
             # Imprime o resultado para a linha atual
-            print(f"Code: {code}")
-            for result in comparison_results:
-                print(f"  Column: {result['column']}, DF Value: {result['df_value']}, Items DF Value: {result['items_df_value']}, Divergence: {result['divergence']}")
-            print(f"  Divergent Columns: {merged_df.at[idx, 'divergent_columns_df']}")
+            # print(f"Code: {code}")
+            # for result in comparison_results:
+            #     print(f"  Column: {result['column']}, DF Value: {result['df_value']}, Items DF Value: {result['items_df_value']}, Divergence: {result['divergence']}")
+            # print(f"  Divergent Columns: {merged_df.at[idx, 'divergent_columns_df']}")
         
                     
         except Exception as e:
