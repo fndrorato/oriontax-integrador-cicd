@@ -298,6 +298,9 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
             save_imported_logs(client_id, result_integration)
             problematic_columns.append(col)
 
+    # Converte listas para strings separadas por vírgulas e listas vazias para strings vazias
+    merged_df["divergent_columns_df"] = merged_df["divergent_columns_df"].apply(lambda x: ', '.join(x) if x else '')
+
     # Cria um DataFrame com os itens que NÃO divergiram
     # com isso sera possivel atualizar o status dos itens que estao como 2
     print('XX-items NAO divergentes')
