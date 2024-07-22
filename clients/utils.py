@@ -276,8 +276,9 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     for col in filtered_columns:
         try:
             if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
-                icms_cst_df_value = merged_df['icms_cst_df']
-                icms_cst_items_df_value = merged_df['icms_cst_items_df']
+                icms_cst_df_value = merged_df['icms_cst_df'].astype(int)  # Converter para inteiro
+                icms_cst_items_df_value = merged_df['icms_cst_items_df'].astype(int)  # Converter para inteiro
+
                 # Ajuste na condição para usar .all() corretamente
                 print('icms_cst_df_value:', icms_cst_df_value)
                 print('icms_cst_items_df_value:', icms_cst_items_df_value)
