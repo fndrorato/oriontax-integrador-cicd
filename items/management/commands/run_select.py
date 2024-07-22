@@ -59,16 +59,16 @@ def connect_and_query(host, user, password, port, database, client_name, initial
                 vl_aliquota_final_icms, vl_aliquota_fcp, tx_cbenef, nr_cst_pis, vl_aliquota_pis, nr_cst_cofins, vl_aliquota_cofins, nr_naturezareceita,
                 tx_estadoorigem, tx_estadodestino 
                 FROM tb_sysmointegradorenvio
-                WHERE cd_produto  = 76230 OR 
-                cd_produto  = 12546 OR cd_produto  = 62691 OR
-                cd_produto  = 4966 OR cd_produto  = 14579 OR
-                cd_produto  = 13291 OR cd_produto  = 79602 OR
-                cd_produto  = 1919 OR cd_produto  = 8485 OR
-                cd_produto  = 73129 OR cd_produto = 46441 OR
-                cd_produto = 46442 OR cd_produto = 36844
                 ORDER BY cd_sequencial ASC
             """)          
             
+                # WHERE cd_produto  = 76230 OR 
+                # cd_produto  = 12546 OR cd_produto  = 62691 OR
+                # cd_produto  = 4966 OR cd_produto  = 14579 OR
+                # cd_produto  = 13291 OR cd_produto  = 79602 OR
+                # cd_produto  = 1919 OR cd_produto  = 8485 OR
+                # cd_produto  = 73129 OR cd_produto = 46441 OR
+                # cd_produto = 46442 OR cd_produto = 36844            
                 # WHERE cd_produto  = 76230 OR 
                 # cd_produto  = 12546 OR cd_produto  = 62691 OR
                 # cd_produto  = 4966 OR cd_produto  = 14579 OR
