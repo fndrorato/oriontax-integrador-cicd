@@ -29,7 +29,28 @@ class HomeView(TemplateView):
         for client in clients:
             item_count = Item.objects.filter(client=client).count()
             store_count = Store.objects.filter(client=client).count()
-            imported_itens_count = ImportedItem.objects.filter(client=client, is_pending=True).count()
+            imported_itens_count_news = ImportedItem.objects.filter(client=client, is_pending=True, status_item=1).count()
+            imported_itens_count_diver = ImportedItem.objects.filter(
+                client=client, 
+                is_pending=True, 
+                status_item=0
+            ).exclude(
+                divergent_columns__icontains="description"
+            ).count()
+            imported_itens_count_with_description = ImportedItem.objects.filter(
+                client=client, 
+                is_pending=True, 
+                status_item=0,
+                divergent_columns__icontains="description"
+            ).count()    
+            itens_await_sync = Item.objects.filter(
+                client=client
+            ).filter(
+                Q(status_item=1) | Q(status_item=2)
+            ).count()    
+            
+            imported_itens_count = imported_itens_count_news + imported_itens_count_diver + imported_itens_count_with_description              
+            
             total_imported_itens += imported_itens_count
             total_items += item_count
             total_stores += store_count
@@ -37,7 +58,11 @@ class HomeView(TemplateView):
                 'client': client,
                 'item_count': item_count,
                 'store_count': store_count,
-                'imported_itens_count': imported_itens_count
+                'imported_itens_count': imported_itens_count,
+                'produtos_novos_pendentes': imported_itens_count_news,
+                'produtos_com_descricao_divergente': imported_itens_count_with_description,                
+                'produtos_com_divergencia': imported_itens_count_diver,
+                'produtos_aguardando_sync': itens_await_sync,
             })
         context['total_stores'] = total_stores
         context['media_items'] = round(total_items / clients.count(),1)
