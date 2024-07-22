@@ -277,7 +277,10 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     # Itera sobre as linhas do DataFrame
     for idx, row in merged_df.iterrows():
         try:
-            # Valida se o icms_cst_df_value é igual ao icms_cst_items_df_value e está na lista
+            # Recupera o código para imprimir
+            code = row.get('code', 'N/A')
+            
+            # Obtém os valores icms_cst
             icms_cst_df_value = int(row['icms_cst_df'])
             icms_cst_items_df_value = int(row['icms_cst_items_df'])
 
@@ -287,15 +290,37 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
             if icms_cst_df_value == icms_cst_items_df_value and icms_cst_df_value in [40, 41, 60]:
                 skip_icms_comparison = True
             
+            # Lista para armazenar os resultados da comparação
+            comparison_results = []
+            
             # Comparar todas as colunas, exceto 'icms_aliquota' e 'icms_aliquota_reduzida' se a flag for True
             for col in filtered_columns:
                 if skip_icms_comparison and col in ['icms_aliquota', 'icms_aliquota_reduzida']:
                     continue  # Pular comparação dessas colunas
                 
-                col_mask = row[f'{col}_df'] != row[f'{col}_items_df']
+                # Verifica se há divergência na coluna
+                col_df_value = row[f'{col}_df']
+                col_items_df_value = row[f'{col}_items_df']
+                col_mask = col_df_value != col_items_df_value
+                
+                # Armazena o resultado da comparação
+                comparison_results.append({
+                    'column': col,
+                    'df_value': col_df_value,
+                    'items_df_value': col_items_df_value,
+                    'divergence': col_mask
+                })
+                
                 if col_mask:
                     # Adiciona o nome da coluna nas divergências para a linha
-                    merged_df.at[idx, "divergent_columns_df"].append(col)    
+                    merged_df.at[idx, "divergent_columns_df"].append(col)
+            
+            # Imprime o resultado para a linha atual
+            print(f"Code: {code}")
+            for result in comparison_results:
+                print(f"  Column: {result['column']}, DF Value: {result['df_value']}, Items DF Value: {result['items_df_value']}, Divergence: {result['divergence']}")
+            print(f"  Divergent Columns: {merged_df.at[idx, 'divergent_columns_df']}")
+        
                     
         except Exception as e:
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
