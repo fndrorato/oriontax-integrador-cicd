@@ -303,6 +303,9 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
                 col_items_df_value = row[f'{col}_items_df']
                 col_mask = col_df_value != col_items_df_value
                 
+                # Atualiza a máscara de divergência
+                divergence_mask.at[idx] = divergence_mask.at[idx] or col_mask                
+                
                 # Armazena o resultado da comparação
                 comparison_results.append({
                     'column': col,
@@ -314,6 +317,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
                 if col_mask:
                     # Adiciona o nome da coluna nas divergências para a linha
                     merged_df.at[idx, "divergent_columns_df"].append(col)
+                    divergence_counts[col] += 1
             
             # Imprime o resultado para a linha atual
             print(f"Code: {code}")
