@@ -278,8 +278,11 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
             if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
                 icms_cst_df_value = merged_df['icms_cst_df']
                 icms_cst_items_df_value = merged_df['icms_cst_items_df']
-                if (icms_cst_df_value == icms_cst_items_df_value) & (icms_cst_df_value.isin([40, 41, 60])).all():
-                    continue    
+                # Ajuste na condição para usar .all() corretamente
+                if (icms_cst_df_value == icms_cst_items_df_value).all() and icms_cst_df_value.isin([40, 41, 60]).all():
+                    continue                  
+                # if (icms_cst_df_value == icms_cst_items_df_value) & (icms_cst_df_value.isin([40, 41, 60])).all():
+                #     continue    
 
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
             divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
