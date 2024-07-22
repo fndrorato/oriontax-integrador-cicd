@@ -90,6 +90,7 @@ class ImportedItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     status_item = models.IntegerField(choices=STATUS_CHOICES, default=1)
     is_pending = models.BooleanField(default=True)
+    divergent_columns = models.CharField(max_length=255, null=True, blank=True, default='')
 
     def __str__(self):
         return self.description    

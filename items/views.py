@@ -528,89 +528,6 @@ class ImportedItemListViewNewItem(ListView):
         context['page_range'] = page_range
         return context
     
-# @method_decorator(login_required(login_url='login'), name='dispatch')
-# class ImportedItemListViewDivergentItem(ListView):
-#     model = ImportedItem
-#     template_name = 'list_imported_divergent_items.html'
-#     context_object_name = 'imported_items'
-#     paginate_by = 50  # Defina quantos itens você quer por página
-
-#     def get_queryset(self):
-#         client_id = self.kwargs.get('client_id')
-#         client = get_object_or_404(Client, id=client_id)
-#         filters = self.request.GET.dict()
-        
-#         # Anota os querysets com a coluna 'origem'
-#         imported_items_queryset = ImportedItem.objects.filter(
-#             client=client, status_item=1, is_pending=True
-#         ).annotate(origem=Value('Integração', output_field=CharField()))
-        
-#         # Separar filtros baseados nos parâmetros GET
-#         base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
-#         cliente_filters = {key[8:]: value for key, value in filters.items() if key.startswith('cliente-')}
-        
-#         # Aplicar filtros ao imported_items_queryset
-#         for key, value in cliente_filters.items():
-#             imported_items_queryset = imported_items_queryset.filter(Q(**{key: value}))        
-
-#         items_queryset = Item.objects.filter(
-#             client=client, code__in=imported_items_queryset.values('code')
-#         ).annotate(
-#             origem=Value('Base', output_field=CharField()),
-#             piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
-#         ).order_by('description')
-        
-#         # Aplicar filtros ao items_queryset
-#         for key, value in base_filters.items():
-#             items_queryset = items_queryset.filter(Q(**{key: value}))
-
-#         # Combine os querysets e ordena por 'description' e 'origem'
-#         combined_queryset = sorted(
-#             chain(imported_items_queryset, items_queryset),
-#             key=lambda item: (item.description, item.origem)
-#         )
-        
-#         return combined_queryset
-   
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
-#         context['client'] = client
-#         context['client_name'] = client.name
-#         context['client_id'] = client.id
-#         context['filter_params'] = self.request.GET
-#         icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
-#         cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
-#         # Adicionando cbenef ao contexto
-#         context['cbenef_choices'] = CBENEF.objects.all()         
-#         context['icms_cst_choices'] = icms_cst_choices        
-#         context['cfop_choices'] = cfop_choices
-#         context['protege_choices'] = Protege.objects.all()
-#         context['piscofins_choices'] = PisCofinsCst.objects.all()
-#         context['naturezareceita_choices'] = NaturezaReceita.objects.all()
-#         context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
-#         icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
-#         context['icmsaliquotareduzida_codes'] = set(icmsaliquotareduzida_codes)
-#         context['form'] = ImportedItemForm()
-#         # Adiciona os cálculos de paginação
-#         paginator = context['paginator']
-#         page_obj = context['page_obj']
-#         total_pages = paginator.num_pages
-#         current_page = page_obj.number
-
-#         if total_pages <= 10:
-#             page_range = range(1, total_pages + 1)
-#         else:
-#             if current_page <= 4:
-#                 page_range = list(range(1, 6)) + ['...'] + [total_pages - 1, total_pages]
-#             elif current_page > total_pages - 4:
-#                 page_range = [1, 2, '...'] + list(range(total_pages - 4, total_pages + 1))
-#             else:
-#                 page_range = [1, 2, '...'] + list(range(current_page - 2, current_page + 3)) + ['...'] + [total_pages - 1, total_pages]
-
-#         context['page_range'] = page_range
-#         return context    
-
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class ImportedItemListViewAwaitSyncItem(ListView):
     model = ImportedItem
@@ -787,6 +704,28 @@ def save_imported_item(request):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
+def comparar_item_filtrado(erp, variaveis, item_filtrado):
+    """Compara os campos de um item filtrado com as variáveis fornecidas."""
+
+    # Iterar sobre as chaves do dicionário (nomes dos campos)
+    for campo, valor_variavel in variaveis.items():
+        # Obter o valor do campo no item filtrado
+        valor_item = getattr(item_filtrado, campo)
+        
+        # Regra do ERP SYSMO:
+        if erp.name == 'SYSMO' and campo in ['icms_aliquota', 'icms_aliquota_reduzida']:
+            icms_cst_df_value = getattr(item_filtrado, 'icms_cst')
+            icms_cst_items_df_value = variaveis.get('icms_cst')
+            if (icms_cst_df_value == icms_cst_items_df_value) & (icms_cst_df_value.isin([40, 41, 60])).all():
+                continue  # Pula a comparação se a regra for satisfeita        
+
+        # Comparar os valores
+        if valor_variavel != valor_item:
+            return 1  # Retorna se algum campo for diferente
+
+    return 3  # Retorna True se todos os campos forem iguais
+
+
 @csrf_exempt
 def save_bulk_imported_item(request):
     if request.method == 'POST':
@@ -816,7 +755,8 @@ def save_bulk_imported_item(request):
                     'cofins_aliquota': row[13],
                     'naturezareceita': row[17],
                     'type_product': row[15],
-                    'fix_item': row[16]  # Get fix_item from the last column
+                    'fix_item': row[16],  # Get fix_item from the last column
+                    'client_id': row[18]
                 }              
                 errors = validate_item_data(item_data)
                 if errors:
@@ -824,6 +764,27 @@ def save_bulk_imported_item(request):
 
             if all_errors:
                 return JsonResponse({'status': 'error', 'message': '\n'.join(all_errors)})
+            
+            # Criando os dados para verificar se é para atualizar apenas na base da oriontax
+            client_id_unicos = set()
+            codes_unicos = set()
+            fix_item_unicos = set()
+
+            for item in item_data:
+                client_id_unicos.add(item['client_id'])
+                codes_unicos.add(item['code'])
+                fix_item_unicos.add(item['fix_item'])
+
+            # Converter os conjuntos em listas, se necessário
+            client_id_unicos = list(client_id_unicos)
+            codes_unicos = list(codes_unicos)  
+            fix_item_unicos = list(fix_item_unicos)  
+            
+            if 1 in fix_item_unicos: 
+                itens_filtrados = ImportedItem.objects.filter(
+                    Q(code__in=codes_unicos) & 
+                    Q(client_id__in=client_id_unicos)
+                )                   
 
             
             # If all items are valid, process them
@@ -870,9 +831,35 @@ def save_bulk_imported_item(request):
                     user = request.user
                     current_time = timezone.now()  
                     
+                    
                     # return JsonResponse({'status': 'error', 'message': 'rrro'})                           
                     
                     if tipo_produto == '1':
+                        variavel_oriontax = {
+                            'code': code,
+                            'barcode': barcode,
+                            'description': description,
+                            'ncm': ncm,
+                            'cest': cest,
+                            'cfop': cfop,
+                            'icms_cst': icms_cst_code,
+                            'icms_aliquota': icms_aliquota_code,
+                            'icms_aliquota_reduzida': icms_aliquota_reduzida,
+                            'cbenef': cbenef_code,
+                            'protege': protege,
+                            'piscofins_cst': piscofins_cst,
+                            'pis_aliquota': pis_aliquota,
+                            'cofins_aliquota': cofins_aliquota,
+                            'naturezareceita': naturezareceita_instance.code,
+                        }
+                        var_status_item = comparar_item_filtrado(client.erp.name, variavel_oriontax, itens_filtrados)
+                        # Regras:
+                        # Quando estiver atualizando e ver  que ficou igual ao dos
+                        # itens importados, mudar o status diretamente para 3,
+                        # pois não tem a necessidade de enviar novamente
+                        # Obs.: Quando o sistema do cliente for SYSMO
+                        # Para os casos de CST ICMS 40,41,60 ignorar as aliquotas de ICMS
+                        
                         # Atualiza o item existente se tipo_produto for igual a 1
                         item = get_object_or_404(Item, code=code, client=client)
                         item.barcode = barcode
@@ -890,7 +877,7 @@ def save_bulk_imported_item(request):
                         item.cofins_aliquota = cofins_aliquota
                         item.naturezareceita = naturezareceita_instance
                         item.type_product = type_product
-                        item.status_item = 1  # Verifique se precisa atualizar o status do item
+                        item.status_item = var_status_item  # Verifique se precisa atualizar o status do item
                         item.updated_at= current_time
                         item.await_sync_at = current_time
                         item.user_updated = user                        

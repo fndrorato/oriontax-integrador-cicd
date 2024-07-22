@@ -64,6 +64,7 @@ def insert_new_items(client_id, df, status_id, batch_size=5000):
                         sequencial=row['sequencial'],
                         estado_origem=row['estado_origem'],
                         estado_destino=row['estado_destino'],
+                        divergent_columns=row['divergent_columns'],
                         created_at=current_time,
                         status_item=status_id
                     )
@@ -307,6 +308,8 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     columns_not_compare = ['sequencial', 'estado_origem', 'estado_destino']
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare] 
+    # Criar uma nova coluna vazia para armazenar as colunas divergentes
+    merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]    
     for col in filtered_columns:
         try:
             if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
@@ -318,6 +321,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
             divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
             divergence_mask |= col_mask
+            merged_df.loc[col_mask, "divergent_columns_df"] += [col]       
         except Exception as e:
             # print(f"Erro na comparação da coluna '{col}': {e}")
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
@@ -387,7 +391,9 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     print(message)
     # Inserindo os itens novos na tabela de importacao
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    result_integration += f'[{timestamp}] - Gravando novos itens \n'            
+    result_integration += f'[{timestamp}] - Gravando novos itens \n'   
+    # Inicializar a coluna com listas vazias
+    new_items_df["divergent_columns"] = [[] for _ in range(len(new_items_df))]     
     try:
         insert_result = insert_new_items(client_id, new_items_df, 0)
     except Exception as e:
