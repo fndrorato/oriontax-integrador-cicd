@@ -15,12 +15,14 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.urls import reverse_lazy
+from django.db import models
 from django.db import transaction, connection
 from django.db.models import Value, CharField, OuterRef,  Subquery
 from django.db.models.functions import Trim
+from django.db.utils import DataError
+from django.db.models import Q, F
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.db.utils import DataError
 from django.apps import apps  # Adicione esta linha para importar o módulo apps
 from django.core.exceptions import FieldDoesNotExist
 from django.views import View
@@ -34,7 +36,6 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from .models import Item, ImportedItem
 from itertools import chain
-from django.db.models import Q, F
 import openpyxl
 from openpyxl import load_workbook, Workbook
 from openpyxl.utils import get_column_letter
@@ -549,9 +550,28 @@ class ImportedItemListViewAwaitSyncItem(ListView):
             if key and value:
                 queryset = queryset.filter(Q(**{key: value}))
                 
+        # Subquery para obter divergent_columns de ImportedItem
+        imported_item_subquery = ImportedItem.objects.filter(
+            code=OuterRef('code'), client_id=client_id
+        ).values('divergent_columns')
+
+        # Anotar o queryset com divergent_columns (ou valor vazio se não existir)
+        queryset = queryset.annotate(
+            divergent_columns=Subquery(
+                imported_item_subquery, output_field=CharField()
+            )
+        ).annotate(
+            divergent_columns=models.Case(
+                models.When(divergent_columns__isnull=True, then=Value('')),
+                default=models.F('divergent_columns'),
+            ),
+            info=Value('info', output_field=CharField()) 
+            
+        )                
+                
         # Salva o total de itens no queryset combinado
         self.total_items = queryset.count()
-        
+
         return queryset
 
     def get_context_data(self, **kwargs):

@@ -25,6 +25,29 @@
         .error-row {
             background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
         }
+
+        .info-button {
+            background-color: #4CAF50; /* Cor de fundo verde */
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }      
+        
+        .myBt {
+            width: 99%;
+            height: 100%;
+            background: #345ee0;
+            box-sizing: border-box;
+            text-align: center;
+            font: 16px sans-serif;
+            color: #fff;
+          }        
         
     </style>
    
@@ -225,7 +248,7 @@
 
 {% block anotherjs %}
     <!-- Handson table js -->
-    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>  
+    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
     <!-- notification js -->
     <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>     
 <script>
@@ -410,7 +433,9 @@
                     "{{ item.estado_origem }}",
                     "{{ item.estado_destino }}",
                     "{{ item.await_sync_at|date:"d/m/y H:i" }}",
-                    "{{ item.sync_at|date:"d/m/y H:i" }}"
+                    "{{ item.sync_at|date:"d/m/y H:i" }}",
+                    "{{ item.info }}",
+                    "{{ item.divergent_columns }}"
                 ],
             {% endfor %}
         ];
@@ -424,7 +449,7 @@
             data: dataOrigin,
             rowHeaders: true,
             colHeaders: [
-                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'T.Prod.', 'A Enviar', 'Enviado em'
+                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'T.Prod.', 'A Enviar', 'Enviado em', 'Col.Div.'
             ],
             columns: [
                 { data: 0, readOnly: true },
@@ -471,7 +496,8 @@
                     readOnly: true
                 },
                 { data: 19, readOnly: true },
-                { data: 20, readOnly: true }                              
+                { data: 20, readOnly: true },
+                { data: 21, readOnly: true }                                                                      
             ],     
             stretchH: 'all',
             autoWrapRow: true,
@@ -487,7 +513,8 @@
             allowInsertRow: false,
             allowRemoveRow: false,
             allowInsertColumn: false,
-            allowRemoveColumn: false,             
+            allowRemoveColumn: false,  
+            selectionMode: 'single',            
             cells: function(row, col) {
                 var cellProperties = {};
                 if (row % 2 === 0) {
@@ -497,6 +524,15 @@
                 }
                 return cellProperties;
             },   
+            beforeOnCellMouseDown: function(event, coords, TD) {
+                if (event.button === 0 && coords.col >= 18 && coords.col <= 21) {
+                    event.stopImmediatePropagation(); // Impede a propagação do evento
+                    var code = this.getDataAtCell(coords.row, 0);
+                    //alert('Código: ' + code);
+                    fetchInfo(code)
+                    return false; // Impede a seleção de células
+                }
+            },            
             afterCreateRow: function(index, amount) {
                 // Adiciona o listener de change ao select da coluna 11 nas novas linhas criadas
                 this.addChangeEventListenerToColumnSelects(11);
@@ -504,12 +540,10 @@
             afterCreateCol: function(index, amount) {
                 // Adiciona o listener de change ao select da coluna 11 nas novas colunas criadas
                 this.addChangeEventListenerToColumnSelects(11);
-            },           
+            },                  
             afterChange: function(changes, source) {
-                console.log('Source:', source)
                 if (source === 'edit' || source === 'CopyPaste.paste') {
                     changes.forEach(([row, prop, oldValue, newValue]) => {
-                        console.log('Change:', row, prop, oldValue, newValue);
                         if (prop === 11) { // Verifica se a mudança ocorreu na coluna 11 (piscofins_cst)
                             var aliquotas = getAliquotas(newValue); // Obtém as aliquotas baseado no novo valor
                             this.setDataAtCell(row, 12, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
@@ -519,7 +553,21 @@
                 }
             }   
                         
-        });
+        });  
+        
+        function fetchInfo(code) {
+            // Filtra a dataOrigin para encontrar a linha correspondente ao código
+            var item = dataOrigin.find(function(row) {
+                return row[0] === code;
+            });
+        
+            if (item) {
+                var info = item[22]; // Obtém a informação da coluna 22
+                alert('Informação para o código ' + code + ': ' + info); // Exemplo de exibição da informação
+            } else {
+                alert('Código ' + code + ' não encontrado.');
+            }
+        }        
 
         function evenRowRenderer(instance, td, row, col, prop, value, cellProperties) {
             Handsontable.renderers.TextRenderer.apply(this, arguments);
@@ -538,19 +586,7 @@
                 return null; // ou qualquer outro valor padrão
             }
         } 
-        
-        $('#checkAllRevenda').click(function() {
-            const rowCount = hot.countRows();
-            for (let row = 0; row < rowCount; row++) {
-                hot.setDataAtCell(row, 15, 'Revenda');
-            }
-        });        
-
-        // Adiciona evento de clique ao botão "Validar"
-        var btnValidate = document.getElementById('btn-validate');
-        btnValidate.addEventListener('click', function() {
-            validateTable();
-        });   
+              
         
         var tableContainer = document.getElementById('new-items-table'); // Obtém a referência da div da tabela
         var errorContainer = document.createElement('div');
@@ -902,7 +938,9 @@
                     }
                 });
             });
-        }        
+        } 
+
+
 
     });
     
