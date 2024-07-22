@@ -281,8 +281,12 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
                 # Ajuste na condição para usar .all() corretamente
                 print('icms_cst_df_value:', icms_cst_df_value)
                 print('icms_cst_items_df_value:', icms_cst_items_df_value)
-                if (icms_cst_df_value == icms_cst_items_df_value).all() and icms_cst_df_value.isin([40, 41, 60]).all():
-                    continue                  
+                if (icms_cst_df_value == icms_cst_items_df_value).all():
+                    print('ICMS CST sao iguais')
+                    if icms_cst_df_value.isin([40, 41, 60]).all():
+                        continue
+                    else:
+                        print('não eh 40,41,60')                  
 
             col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
             divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
