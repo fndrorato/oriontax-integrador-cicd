@@ -273,32 +273,60 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare] 
     # Criar uma nova coluna vazia para armazenar as colunas divergentes
     merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]    
-    for col in filtered_columns:
+    
+    # Itera sobre as linhas do DataFrame
+    for idx, row in merged_df.iterrows():
         try:
-            if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
-                icms_cst_df_value = merged_df['icms_cst_df'].astype(int)  # Converter para inteiro
-                icms_cst_items_df_value = merged_df['icms_cst_items_df'].astype(int)  # Converter para inteiro
+            # Valida se o icms_cst_df_value é igual ao icms_cst_items_df_value e está na lista
+            icms_cst_df_value = int(row['icms_cst_df'])
+            icms_cst_items_df_value = int(row['icms_cst_items_df'])
 
-                if (icms_cst_df_value == icms_cst_items_df_value).all():
-                    print('icms_cst iguais')
-                    if icms_cst_df_value.isin([40, 41, 60]).all():
-                        continue
-                    else:
-                        print('nao esta na lista 40,41,60')
-
-            col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
-            divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
-            divergence_mask |= col_mask
-            # merged_df.loc[col_mask, "divergent_columns_df"] += [col]       
-            # Adiciona o nome da coluna nas linhas onde há divergência
-            for idx in merged_df.index[col_mask]:
-                merged_df.at[idx, "divergent_columns_df"].append(col)            
+            # Flag para indicar se deve pular a comparação de 'icms_aliquota' e 'icms_aliquota_reduzida'
+            skip_icms_comparison = False
+            
+            if icms_cst_df_value == icms_cst_items_df_value and icms_cst_df_value in [40, 41, 60]:
+                skip_icms_comparison = True
+            
+            # Comparar todas as colunas, exceto 'icms_aliquota' e 'icms_aliquota_reduzida' se a flag for True
+            for col in filtered_columns:
+                if skip_icms_comparison and col in ['icms_aliquota', 'icms_aliquota_reduzida']:
+                    continue  # Pular comparação dessas colunas
+                
+                col_mask = row[f'{col}_df'] != row[f'{col}_items_df']
+                if col_mask:
+                    # Adiciona o nome da coluna nas divergências para a linha
+                    merged_df.at[idx, "divergent_columns_df"].append(col)    
+                    
         except Exception as e:
-            # print(f"Erro na comparação da coluna '{col}': {e}")
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-            result_integration += f'[{timestamp}] - Erro na comparação da coluna \'{col}\': {e} \n'
+            result_integration = f'[{timestamp}] - Erro na comparação da linha {idx}: {e} \n'
             save_imported_logs(client_id, result_integration)
-            problematic_columns.append(col)
+            problematic_columns.append(col) 
+    # for col in filtered_columns:
+    #     try:
+    #         if col in ['icms_aliquota', 'icms_aliquota_reduzida']:
+    #             icms_cst_df_value = merged_df['icms_cst_df'].astype(int)  # Converter para inteiro
+    #             icms_cst_items_df_value = merged_df['icms_cst_items_df'].astype(int)  # Converter para inteiro
+
+    #             if (icms_cst_df_value == icms_cst_items_df_value).all():
+    #                 print('icms_cst iguais')
+    #                 if icms_cst_df_value.isin([40, 41, 60]).all():
+    #                     continue
+    #                 else:
+    #                     print('nao esta na lista 40,41,60')
+
+    #         col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
+    #         divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
+    #         divergence_mask |= col_mask       
+    #         # Adiciona o nome da coluna nas linhas onde há divergência
+    #         for idx in merged_df.index[col_mask]:
+    #             merged_df.at[idx, "divergent_columns_df"].append(col)            
+    #     except Exception as e:
+    #         # print(f"Erro na comparação da coluna '{col}': {e}")
+    #         timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+    #         result_integration += f'[{timestamp}] - Erro na comparação da coluna \'{col}\': {e} \n'
+    #         save_imported_logs(client_id, result_integration)
+    #         problematic_columns.append(col)
 
     # Converte listas para strings separadas por vírgulas e listas vazias para strings vazias
     merged_df["divergent_columns_df"] = merged_df["divergent_columns_df"].apply(lambda x: ', '.join(x) if x else '')
