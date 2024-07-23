@@ -257,8 +257,12 @@ class RunSelectView(View):
     def get(self, request, client_id):
         client = get_object_or_404(Client, id=client_id)
         try:
+            if client.erp.name == 'SYSMO':
+                script_execute = 'run_select.py'
+            else:
+                script_execute = 'run_select_macsistemas.py' 
             # Obter o caminho completo para o script run_select.py
-            script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', 'run_select.py')
+            script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', script_execute)
             
             # Obter o caminho do interpretador Python atual
             python_executable = sys.executable
@@ -279,8 +283,12 @@ class RunUpdateView(View):
     def get(self, request, client_id):
         client = get_object_or_404(Client, id=client_id)
         try:
+            if client.erp.name == 'SYSMO':
+                script_execute = 'run_update_sysmo.py'
+            else:
+                script_execute = 'run_update_macsistemas.py'             
             # Obter o caminho completo para o script run_select.py
-            script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', 'run_update_sysmo.py')
+            script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', script_execute)
             
             # Obter o caminho do interpretador Python atual
             python_executable = sys.executable
