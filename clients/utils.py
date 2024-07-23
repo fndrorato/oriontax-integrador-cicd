@@ -602,19 +602,67 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare]    
     # Criar uma nova coluna vazia para armazenar as colunas divergentes
     merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]        
-    for col in filtered_columns:
+
+    # Itera sobre as linhas do DataFrame
+    for idx, row in merged_df.iterrows():
         try:
-            col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
-            divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
-            divergence_mask |= col_mask
-            for idx in merged_df.index[col_mask]:
-                merged_df.at[idx, "divergent_columns_df"].append(col)             
+            # Recupera o código para imprimir
+            code = row.get('code', 'N/A')
+            
+            # Lista para armazenar os resultados da comparação
+            comparison_results = []
+            
+            # Comparar todas as colunas, exceto 'icms_aliquota' e 'icms_aliquota_reduzida' se a flag for True
+            for col in filtered_columns:
+                # Verifica se há divergência na coluna
+                col_df_value = row[f'{col}_df']
+                col_items_df_value = row[f'{col}_items_df']
+                col_mask = col_df_value != col_items_df_value
+                
+                # Atualiza a máscara de divergência
+                divergence_mask.at[idx] = divergence_mask.at[idx] or col_mask                
+                
+                # Armazena o resultado da comparação
+                comparison_results.append({
+                    'column': col,
+                    'df_value': col_df_value,
+                    'items_df_value': col_items_df_value,
+                    'divergence': col_mask
+                })
+                
+                if col_mask:
+                    # Adiciona o nome da coluna nas divergências para a linha
+                    merged_df.at[idx, "divergent_columns_df"].append(col)
+                    divergence_counts[col] += 1
+            
+            # Imprime o resultado para a linha atual
+            print(f"Code: {code}")
+            for result in comparison_results:
+                print(f"  Column: {result['column']}, DF Value: {result['df_value']}, Items DF Value: {result['items_df_value']}, Divergence: {result['divergence']}")
+            print(f"  Divergent Columns: {merged_df.at[idx, 'divergent_columns_df']}")
+        
+                    
         except Exception as e:
-            # print(f"Erro na comparação da coluna '{col}': {e}")
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-            result_integration += f'[{timestamp}] - Erro na comparação da coluna \'{col}\': {e} \n'
+            result_integration = f'[{timestamp}] - Erro na comparação da linha {idx}: {e} \n'
             save_imported_logs(client_id, result_integration)
-            problematic_columns.append(col)
+            problematic_columns.append(col) 
+
+
+
+    # for col in filtered_columns:
+    #     try:
+    #         col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
+    #         divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
+    #         divergence_mask |= col_mask
+            
+    #         for idx in merged_df.index[col_mask]:
+    #             merged_df.at[idx, "divergent_columns_df"].append(col)                            
+    #     except Exception as e:
+    #         timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+    #         result_integration += f'[{timestamp}] - Erro na comparação da coluna \'{col}\': {e} \n'
+    #         save_imported_logs(client_id, result_integration)
+    #         problematic_columns.append(col)
 
     # Converte listas para strings separadas por vírgulas e listas vazias para strings vazias
     merged_df["divergent_columns_df"] = merged_df["divergent_columns_df"].apply(lambda x: ', '.join(x) if x else '')
