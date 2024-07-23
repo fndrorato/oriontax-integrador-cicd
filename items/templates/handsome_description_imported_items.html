@@ -239,7 +239,9 @@
     <!-- Handson table js -->
     <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
     <!-- notification js -->
-    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>    
+    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script> 
+    <!-- Validações -->
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/validate.js' %}"></script>         
 <script>
     document.getElementById('clearSearch').addEventListener('click', function() {
         // Obtém a URL sem os parâmetros da query string
@@ -781,7 +783,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
             }
             return null; // Retorna null se não encontrar a combinação
         }        
-                
+        /*        
         function validateData(data, rowIndex) {
             return new Promise(function(resolve, reject) {
                 // Validações de cada campo
@@ -868,6 +870,7 @@ naturezareceitaData['{{ naturezareceita.code }}'] = {
                 }
             });
         }
+        */
 
         function validateCode(code, client) {
             return new Promise(function(resolve, reject) {

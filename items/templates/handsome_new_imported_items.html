@@ -236,7 +236,9 @@
     <!-- Handson table js -->
     <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
     <!-- notification js -->
-    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>     
+    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script> 
+    <!-- Validações -->
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/validate.js' %}"></script>          
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Pega os parâmetros da URL e preenche os campos do formulário
@@ -594,7 +596,7 @@
                     piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
                     naturezareceita: rowData[14],
                     type_product: rowData[15] // Ajuste conforme a estrutura real dos dados na tabela
-                }, rowIndex); // Passa o índice da linha para validar
+                }, client_id, rowIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
@@ -783,7 +785,8 @@
             }
             return -1; // Retorna -1 se o campo não for encontrado
         }        
-                
+        
+        /*
         function validateData(data, rowIndex) {
             return new Promise(function(resolve, reject) {
                 // Validações de cada campo
@@ -870,6 +873,7 @@
                 }
             });
         }
+        */
 
         function validateCode(code, client) {
             return new Promise(function(resolve, reject) {

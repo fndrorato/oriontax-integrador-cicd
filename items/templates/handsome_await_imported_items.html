@@ -264,7 +264,9 @@
     <!-- Handson table js -->
     <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
     <!-- notification js -->
-    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>     
+    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>  
+    <!-- Validações -->
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/validate.js' %}"></script>  
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Pega os parâmetros da URL e preenche os campos do formulário
@@ -674,10 +676,10 @@
         function validateTable() {
             $('#loader').show();
             var data = hot.getData();
-            data = data.filter(row => row[30] === true || row[30] === 1); // Filter based on boolean or 1
+            data = data.filter(row => row[18] === true || row[18] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
-        
+            validate_type_product = false;
             data.forEach(function(rowData, rowIndex) {
                 var validationPromise = validateData({
                     id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
@@ -691,27 +693,25 @@
                     icms_aliquota_reduzida: rowData[8],
                     cbenef: rowData[9],
                     piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
-                    naturezareceita: rowData[12]
-                }, rowIndex); // Passa o índice da linha para validar
+                    naturezareceita: rowData[14]
+                }, client_id, rowIndex, validate_type_product); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
+                    var originalRowIndex = hot.toPhysicalRow(rowIndex);
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
-                    for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
-                        if (result.isValid) {
-                            //if (colIndex != 30)
-                                hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
-                        } else {
-                            //if (colIndex != 30)
-                            //{
-                                hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
-                                // Exibe mensagem de erro usando setDataAtRowProp
+                    if (rowData[18] === true || rowData[18] === 1) { 
+                        // Percorre apenas as colunas das linhas com a última coluna marcada
+                        for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
+                            if (result.isValid) {
+                                hot.getCellMeta(originalRowIndex, colIndex).className = '';
+                            } else {
+                                hot.getCellMeta(originalRowIndex, colIndex).className = 'error-row';
                                 result.errors.forEach(function(error) {
                                     var field = error.field;
                                     var message = error.message;
-                                    hot.setDataAtRowProp(rowIndex, field, message); 
-                                }); 
-                            //}
-                           
+                                    hot.setDataAtRowProp(originalRowIndex, field, message);
+                                });
+                            }
                         }
                     }
                 });
@@ -853,93 +853,6 @@
             }
             return null; // Retorna null se não encontrar a combinação
         }        
-                
-        function validateData(data, rowIndex) {
-            return new Promise(function(resolve, reject) {
-                // Validações de cada campo
-                var errors = [];
-        
-                var codeItem = data['id'];
-                var clientId = client_id;
-                var ncm = data['ncm'];
-                var cest = data['cest'];
-                var description = data['description'];
-                var selectedCfop = data['cfop'];
-                var selectedIcmsCst = data['icms_cst'];
-                var selectedIcmsAliquota = data['icms_aliquota'];
-                var selectedIcmsAliquotaReduzida = data['icms_aliquota_reduzida'];
-                var selectedCbenef = data['cbenef']
-                var selectedPisCofinsCst = data['piscofins_cst'];
-                var selectedNaturezareceita = data['naturezareceita'];
-                var tipoProduto = data['type_product'];
-        
-                // Trim description and check if it's empty after trimming
-                description = description.trim();
-                if (description === '') {
-                    errors.push({ field: 'description', message: "A descrição é obrigatória." });
-                }
-        
-                // Check if tipoProduto is selected
-                if (tipoProduto === '' || tipoProduto === null || tipoProduto === undefined) {
-                    errors.push({ field: 'type_product', message: "O tipo de produto é obrigatório." });
-                }
-        
-                // Validação do NCM
-                if (!/^\d{8}$/.test(ncm)) {
-                    errors.push({ field: 'ncm', message: 'NCM deve ter 8 dígitos.' });
-                }
-        
-                // Validação do CEST
-                if (cest && !/^\d{7}$/.test(cest)) {
-                    errors.push({ field: 'cest', message: 'CEST deve ter 7 dígitos.' });
-                }
-        
-                // Validação de CFOP e ICMS CST
-                if (selectedCfop == '5405' && selectedIcmsCst != '60') {
-                    errors.push({ field: 'icms_cst', message: 'Quando o CFOP é 5405, o ICMS CST deve ser 60.' });
-                }
-        
-                // Revalidar condições
-                if (selectedIcmsCst != '20' && selectedIcmsAliquota != selectedIcmsAliquotaReduzida) {
-                    errors.push({ field: 'icms_aliquota_reduzida', message: 'ICMS Alíquota Reduzida deve ser igual a ICMS Alíquota quando ICMS CST não for 20.' });
-                }
-        
-                if (selectedIcmsCst == '40' || selectedIcmsCst == '60') {
-                    if (selectedIcmsAliquota != '0' || selectedIcmsAliquotaReduzida != '0') {
-                        errors.push({ field: 'icms_aliquota', message: 'Para ICMS ' + selectedIcmsCst + ', as alíquotas de ICMS precisam ser 0.' });
-                    }
-                }
-        
-                if (selectedIcmsCst == '20') {
-                    if (icmsAliquotaData.hasOwnProperty(selectedIcmsAliquotaReduzida) && icmsAliquotaData[selectedIcmsAliquotaReduzida].dataCode != 1) {
-                        errors.push({ field: 'icms_aliquota_reduzida_code', message: 'O valor do ICMS alíquota reduzida não é válido.' });
-                    }
-                }
-        
-                if (selectedCbenef) {
-                    if (cbenefData.hasOwnProperty(selectedCbenef) && cbenefData[selectedCbenef].icmsCst != selectedIcmsCst) {
-                        errors.push({ field: 'cbenef_cst', message: 'Esta não é uma combinação válida do CBENEF com o ICMS/CST selecionado.' });
-                    }                    
-                }
-                
-                if (selectedNaturezareceita) {
-                    console.log('selectedNaturezareceita:', selectedNaturezareceita)
-                    if (naturezareceitaData.hasOwnProperty(selectedNaturezareceita)) {
-                        console.log('selectedNaturezareceita 2 :', selectedNaturezareceita)
-                        if (naturezareceitaData[selectedNaturezareceita].piscofinsCst != selectedPisCofinsCst) {
-                            errors.push({ field: 'naturezareceita_cst', message: 'A combinação Natureza Receita: ' + selectedNaturezareceita + ' com o PIS/COFINS ' + selectedPisCofinsCst + ' não é uma combinação válida!' });
-                        }
-                    }
-                }
-        
-                // Se houver erros, rejeita a promessa com as mensagens de erro
-                if (errors.length > 0) {
-                    resolve({ isValid: false, errors: errors });
-                } else {
-                    resolve({ isValid: true });
-                }
-            });
-        }
 
         function validateCode(code, client) {
             return new Promise(function(resolve, reject) {
