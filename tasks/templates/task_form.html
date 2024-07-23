@@ -36,6 +36,24 @@
                                 </div>                                    
                             </div>
                             <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Frequência:</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.frequency.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.frequency|add_class:"form-control"|attr:"id:id_frequency" }}
+                                    </div>
+                                </div>                                    
+                            </div>   
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Dias da Semana:</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.days_of_week.errors }}</span>
+                                    <div class="input-group" id="days_of_week_group">
+                                        {{ form.days_of_week }}
+                                    </div>
+                                </div>                                    
+                            </div>                                                                            
+                            <div class="row">
                                 <label class="col-sm-4 col-lg-2 col-form-label">Descrição</label>
                                 <div class="col-sm-8 col-lg-10">
                                     <div class="input-group">
@@ -80,6 +98,27 @@
         <!-- Product edit card end -->
     </div>
 </div>
+{% block anotherjs %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const frequencyField = document.getElementById('id_frequency');
+        const daysOfWeekGroup = document.getElementById('days_of_week_group');
+
+        function toggleDaysOfWeek() {
+            if (frequencyField.value === 'W') {
+                daysOfWeekGroup.style.display = 'block';
+            } else {
+                daysOfWeekGroup.style.display = 'none';
+            }
+        }
+
+        frequencyField.addEventListener('change', toggleDaysOfWeek);
+        toggleDaysOfWeek();  // Initial call to set the correct state on page load
+    });
+</script>
+{% endblock anotherjs %}
+
+
 {% endblock %}
 
 
