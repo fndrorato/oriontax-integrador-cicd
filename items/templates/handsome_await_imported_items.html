@@ -26,6 +26,10 @@
             background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
         }
 
+        .error-cell {
+            background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
+        }        
+
         .info-button {
             background-color: #4CAF50; /* Cor de fundo verde */
             border: none;
@@ -78,6 +82,16 @@
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
                     <i class="icofont icofont-filter"></i>
                 </button>  
+
+                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" id="checkAllValidate"> 
+                    <i class="icofont icofont-verification-check"></i>
+                    Validar Todos
+                </button>  
+                
+                <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
+                    <i class="icofont icofont-save"></i>
+                    Salvar Dados
+                </button>                 
                              
                                                                    
                 <span class="text-danger">Total de produtos aguardando envio/validação: {{ total_items }}</span>
@@ -406,6 +420,11 @@
         piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %},
     };
 {% endfor %}
+
+    var urlValidateCode = '{% url "validate_code_item" %}';
+    var urlFixItem = '{% url "save_imported_item" %}';
+    var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
+    var client_id = {{ client_id }};
     
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('new-items-table');
@@ -435,10 +454,34 @@
                     "{{ item.await_sync_at|date:"d/m/y H:i" }}",
                     "{{ item.sync_at|date:"d/m/y H:i" }}",
                     "{{ item.info }}",
-                    "{{ item.divergent_columns }}"
+                    "{{ item.divergent_columns }}",
+                    false // valor inicial do checkbox
                 ],
             {% endfor %}
         ];
+
+        var dataDivergent = [
+        {% for item in additional_imported_items %}
+            {
+                "code": "{{ item.code }}",
+                "barcode": "{{ item.barcode|zero_to_empty|default_if_none:'' }}",
+                "description": "{{ item.description }}",
+                "ncm": "{{ item.ncm }}",
+                "cest": "{{ item.cest|zero_to_empty|default_if_none:'' }}",
+                "cfop": "{{ item.cfop }}",
+                "icms_cst": "{{ item.icms_cst }}",
+                "icms_aliquota": "{{ item.icms_aliquota }}",
+                "icms_aliquota_reduzida": "{{ item.icms_aliquota_reduzida }}",
+                "cbenef": "{{ item.cbenef|default_if_none:'' }}",
+                "protege": "{{ item.protege }}",
+                "piscofins_cst": "{{ item.piscofins_cst }}".padStart(2, '0'),
+                "pis_aliquota": "{{ item.pis_aliquota }}",
+                "cofins_aliquota": "{{ item.cofins_aliquota }}",
+                "naturezareceita": "{{ item.naturezareceita|default_if_none:'' }}",
+                "divergent_columns": "{{ item.divergent_columns }}"
+            },
+        {% endfor %}
+        ];        
     
         var typeProductOptions = [
             {% for value, label in form.type_product.field.choices %}
@@ -449,55 +492,28 @@
             data: dataOrigin,
             rowHeaders: true,
             colHeaders: [
-                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'T.Prod.', 'A Enviar', 'Enviado em', 'Col.Div.'
+                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'A Enviar', 'Enviado em', 'Col.Div.', ' '
             ],
             columns: [
-                { data: 0, readOnly: true },
-                { data: 1, readOnly: true },
-                { data: 2, readOnly: true },
-                { data: 3, readOnly: true },
-                { data: 4 , readOnly: true },
-                { 
-                    data: 5, 
-                    readOnly: true
-                },
-                { 
-                    data: 6, 
-                    readOnly: true
-                },
-                { 
-                    data: 7, 
-                    readOnly: true
-                },
-                { 
-                    data: 8, 
-                    readOnly: true
-                },
-                { 
-                    data: 9, 
-                    readOnly: true
-                },
-                { 
-                    data: 10, 
-                    readOnly: true
-                },
-                { 
-                    data: 11, 
-                    readOnly: true
-                },
-                { data: 12, readOnly: true },
-                { data: 13, readOnly: true },
-                { 
-                    data: 14, 
-                    readOnly: true
-                },
-                {
-                    data: 15,
-                    readOnly: true
-                },
-                { data: 19, readOnly: true },
-                { data: 20, readOnly: true },
-                { data: 21, readOnly: true }                                                                      
+                { data: 0, readOnly: true , id:'code'},
+                { data: 1,  id:'barcode' },
+                { data: 2,  id:'description' },
+                { data: 3,  id:'ncm' },
+                { data: 4 ,  id:'cest' },
+                { data: 5,  id:'cfop'},
+                { data: 6,  id:'icms_cst'},
+                { data: 7,  id:'icms_aliquota'},
+                { data: 8,  id:'icms_aliquota_reduzida'},
+                { data: 9,  id:'cbenef'},
+                { data: 10,  id:'protege'},
+                { data: 11,  id:'piscofins_cst'},
+                { data: 12,  id:'pis_aliquota'},
+                { data: 13,  id:'cofins_aliquota' },
+                { data: 14,  id:'naturezareceita'},
+                { data: 19, readOnly: true, id:'a_enviar' },
+                { data: 20, readOnly: true, id:'enviado_em' },
+                { data: 21, readOnly: true, id:'info' },
+                { data: 23, type: 'checkbox' }                                                                     
             ],     
             stretchH: 'all',
             autoWrapRow: true,
@@ -515,28 +531,64 @@
             allowInsertColumn: false,
             allowRemoveColumn: false,  
             selectionMode: 'single',            
-            cells: function(row, col) {
-                var cellProperties = {};
-                if (row % 2 === 0) {
-                    cellProperties.renderer = evenRowRenderer;
-                } else {
-                    cellProperties.renderer = oddRowRenderer;
+  
+            afterInit: function() {
+                var hotInstance = this;
+                var rowCount = hotInstance.countRows();
+                var colCount = hotInstance.countCols();
+        
+                for (var rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+                    var code = hotInstance.getDataAtCell(rowIndex, 0);
+                    
+                    for (var i = 0; i < dataOrigin.length; i++) {
+                        if (dataOrigin[i][0] === code) {
+                            var divergentColumns = dataOrigin[i][22];
+        
+                            // Itera pelos índices das colunas
+                            for (var colIndex = 0; colIndex < colCount; colIndex++) {
+                                var header = hotInstance.getColHeader(colIndex); // Obtém o cabeçalho da coluna
+                                var column = hotInstance.getSettings().columns[colIndex]; // Obtém a coluna
+                                var columnId = column.id; // Obtém o ID da coluna
+                                
+                                // Checa se o header está na lista de colunas divergentes e se há um ID de coluna
+                                if (divergentColumns.includes(columnId)) {
+                                    hotInstance.setCellMeta(rowIndex, colIndex, 'className', 'error-cell');
+                                }
+                            }
+                            
+                            break;
+                        }
+                    }
                 }
-                return cellProperties;
-            },   
+        
+                hotInstance.render();
+            },                       
             beforeOnCellMouseDown: function(event, coords, TD) {
-                if (event.button === 0 && coords.col >= 18 && coords.col <= 21) {
+                if (event.button === 0 && coords.col >= 17 && coords.col <= 17) {
                     event.stopImmediatePropagation(); // Impede a propagação do evento
                     var code = this.getDataAtCell(coords.row, 0);
-                    //alert('Código: ' + code);
                     fetchInfo(code)
                     return false; // Impede a seleção de células
                 }
             },            
             afterCreateRow: function(index, amount) {
-                // Adiciona o listener de change ao select da coluna 11 nas novas linhas criadas
-                this.addChangeEventListenerToColumnSelects(11);
-            },
+                this.addChangeEventListenerToColumnSelects(11); 
+              
+                var code = this.getDataAtCell(index, 0); // Pega o código da nova linha (coluna 0)
+                for (var i = 0; i < dataOrigin.length; i++) {
+                  if (dataOrigin[i][0] === code) { // Encontrou o código em dataOrigin
+                    var divergentColumns = dataOrigin[i][22]; // Valor da última coluna (divergentColumns)
+                    this.colHeaders.forEach(function(header, colIndex) { // Itera sobre os cabeçalhos
+                      var columnId = hot.getPlugin('columns').getColumn(colIndex).id; // Pega o ID da coluna
+                      if (divergentColumns.includes(header) && columnId) { // Verifica se o cabeçalho está em divergentColumns e se existe um ID
+                        hot.setCellMeta(index, colIndex, 'className', 'error-cell'); // Adiciona a classe à célula
+                        hot.render(); // Atualiza a renderização para mostrar a classe
+                      }
+                    });
+                    break; // Sai do loop após encontrar o código
+                  }
+                }
+              },
             afterCreateCol: function(index, amount) {
                 // Adiciona o listener de change ao select da coluna 11 nas novas colunas criadas
                 this.addChangeEventListenerToColumnSelects(11);
@@ -560,10 +612,23 @@
             var item = dataOrigin.find(function(row) {
                 return row[0] === code;
             });
+
+            var itemDivergent = dataDivergent.find(function(row){
+                return row['code'] === code;
+            })
         
-            if (item) {
+            if (item && itemDivergent) {
                 var info = item[22]; // Obtém a informação da coluna 22
-                alert('Informação para o código ' + code + ': ' + info); // Exemplo de exibição da informação
+                var problemColumns = info.split(', ');
+                var alertMessage = 'Colunas com problemas para o código ' + code + ': \n\n';
+
+                problemColumns.forEach(columnName => {
+                    if (itemDivergent.hasOwnProperty(columnName)) {
+                        alertMessage += columnName + ': ' + itemDivergent[columnName] + '\n';
+                    }
+                });
+        
+                alert(alertMessage);
             } else {
                 alert('Código ' + code + ' não encontrado.');
             }
@@ -586,7 +651,19 @@
                 return null; // ou qualquer outro valor padrão
             }
         } 
-              
+
+        $('#checkAllValidate').click(function() {
+            const rowCount = hot.countRows();
+            for (let row = 0; row < rowCount; row++) {
+                hot.setDataAtCell(row, 18, true);
+            }
+        });         
+
+        // Adiciona evento de clique ao botão "Validar"
+        var btnValidate = document.getElementById('btn-validate');
+        btnValidate.addEventListener('click', function() {
+            validateTable();
+        });           
         
         var tableContainer = document.getElementById('new-items-table'); // Obtém a referência da div da tabela
         var errorContainer = document.createElement('div');
@@ -594,10 +671,10 @@
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
         tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);
     
-
         function validateTable() {
             $('#loader').show();
             var data = hot.getData();
+            data = data.filter(row => row[30] === true || row[30] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
         
@@ -605,52 +682,42 @@
                 var validationPromise = validateData({
                     id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
                     client_id: client_id, // Certifique-se de ter accesso ao client_id aqui
+                    description: rowData[2],
                     ncm: rowData[3],
                     cest: rowData[4],
-                    description: rowData[2],
                     cfop: rowData[5],
                     icms_cst: rowData[6],
                     icms_aliquota: rowData[7],
                     icms_aliquota_reduzida: rowData[8],
                     cbenef: rowData[9],
                     piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
-                    naturezareceita: rowData[14],
-                    type_product: rowData[15] // Ajuste conforme a estrutura real dos dados na tabela
+                    naturezareceita: rowData[12]
                 }, rowIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
                     for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
                         if (result.isValid) {
-                            hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
+                            //if (colIndex != 30)
+                                hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
                         } else {
-                            hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
-                            // Exibe mensagem de erro usando setDataAtRowProp
-                            result.errors.forEach(function(error) {
-                                var field = error.field;
-                                var message = error.message;
-                                hot.setDataAtRowProp(rowIndex, field, message); 
-                            });                            
+                            //if (colIndex != 30)
+                            //{
+                                hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
+                                // Exibe mensagem de erro usando setDataAtRowProp
+                                result.errors.forEach(function(error) {
+                                    var field = error.field;
+                                    var message = error.message;
+                                    hot.setDataAtRowProp(rowIndex, field, message); 
+                                }); 
+                            //}
+                           
                         }
                     }
                 });
 
                 promises.push(validationPromise);
-            });      
-            
-            // Remova as células vermelhas antes de cada validação
-            hot.updateSettings({
-                cells: function(row, col) {
-                    var cellProperties = {};
-                    if (row % 2 === 0) {
-                        cellProperties.renderer = evenRowRenderer;
-                    } else {
-                        cellProperties.renderer = oddRowRenderer;
-                    }
-                    delete cellProperties.className;  // Remove className se existir
-                    return cellProperties;
-                }
-            });            
+            });                
         
             Promise.all(promises)
                 .then(function(results) {
@@ -680,111 +747,81 @@
                         errorContainer.classList.add('alert-danger');  
                         $('#loader').hide();                      
                     } else { // If all fields are valid, proceed with code validation
-                        var codes = data.map(rowData => rowData[0]);
-                        console.log(codes)
-                    
-                        Promise.all(codes.map(code => validateCodes(code, client_id)))
-                            .then(function(codeValidationResults) {
-                                // Check if any code validation failed
-                                if (codeValidationResults.some(isValid => !isValid)) {
-                                    // Handle code validation errors (e.g., display in errorContainer)
-                                    errorContainer.innerHTML = '';
-                                    var errorList = document.createElement('ul');
-                                    codeValidationResults.forEach((isValid, index) => {
-                                        if (!isValid) {
-                                            var listItem = document.createElement('li');
-                                            listItem.classList.add('error'); 
-                                            listItem.textContent = `Linha ${index + 1}: Código inválido`;
-                                            errorList.appendChild(listItem);
-                    
-                                            // Apply error styling to invalid code row
-                                            for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
-                                                hot.getCellMeta(index, colIndex).className = 'error-row';
+                        var dataToSend = hot.getData();
+                        // Filter rows where checkbox is checked
+                        var filteredDataToSend = dataToSend.filter(row => row[18] === true || row[18] === 1); // Filter based on boolean or 1
+                        // Remove specific columns from each row
+                        const columnsToRemove = [15,16,17,18];
+                        filteredDataToSend = filteredDataToSend.map(row => {
+                            return row.filter((_, index) => !columnsToRemove.includes(index));
+                        });                        
+
+                        // Find the ID for each row based on piscofinsCst and code
+                        filteredDataToSend = filteredDataToSend.map(row => {
+                            var piscofinsCst = row[11];
+                            var code = row[14];
+                            var cod_produto = row[0];
+
+                            var matchingId = findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst);
+                            var item = dataOrigin.find(function(rowDataOrigin) {
+                                return rowDataOrigin[0] === cod_produto;
+                            });
+                            var product_type = item[15]
+
+                            row.push(product_type)
+                            row.push('1'); // Add 'fix_item'
+                            row.push(matchingId || ''); // Add the found ID (or empty string if not found)
+                            row.push(client_id)
+                            return row;
+                        });  
+
+                        $.ajax({
+                            url: urlFixItem,
+                            type: 'POST',
+                            data: {
+                                items: JSON.stringify(filteredDataToSend), // Send entire table data as JSON
+                                csrfmiddlewaretoken: '{{ csrf_token }}' // Include CSRF token
+                            },
+                            success: function(response) {
+                                if (response.status === 'success') {
+                                    errorContainer.textContent = response.message;
+                                    errorContainer.classList.add('alert-success');
+                                    errorContainer.classList.remove('alert-danger');
+                                    $('#loader').hide();
+                                    // Apply success class to all rows
+
+                                    var currentDateTime = new Date();
+                                    var formattedDateTime = formatDate(currentDateTime);
+
+                                    for (var i = 0; i < hot.countRows(); i++) {
+                                        if (dataToSend[i][18]) { // Check if the checkbox value is true
+                                            for (var j = 0; j < hot.countCols(); j++) {
+                                                hot.getCellMeta(i, j).className = 'success-row'; 
+                                                hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell
                                             }
+                                            // Set the content of column 15 to the formatted date and time
+                                            hot.setDataAtCell(i, 15, formattedDateTime);
+                                            // Set the content of column 16 to be empty
+                                            hot.setDataAtCell(i, 16, '');                                            
                                         }
-                                    });
-                                    errorContainer.appendChild(errorList);
+                                    }                                              
+                                } else {
+                                    // Handle errors from the Django view
+                                    errorContainer.textContent = response.message;
                                     errorContainer.classList.remove('alert-success');
                                     errorContainer.classList.add('alert-danger');
                                     $('#loader').hide();
-                                } else {
-                                    // If all codes are valid, display success message
-                                    var dataToSend = hot.getData();
-
-                                    // Find the ID for each row based on piscofinsCst and code
-                                    dataToSend = dataToSend.map(row => {
-                                        var piscofinsCst = row[11];
-                                        var code = row[14];
-                                        var codeItem = row[0];
-
-                                        // Find the ID from naturezareceitaData
-                                        var matchingId = null;
-                                        for (var id in naturezareceitaData) {
-                                            if (naturezareceitaData[id].piscofinsCst === piscofinsCst && naturezareceitaData[id].code === code) {
-                                                matchingId = id;
-                                                break; // Stop searching once found
-                                            }
-                                        }
-
-                                        // Find matching row in 'data' based on code
-                                        var matchingRow = dataOrigin.find(dataRow => dataRow[0] === codeItem);                                        
-
-                                        row.push('0'); // Add 'fix_item'
-                                        row.push(matchingId || ''); // Add the found ID (or empty string if not found)
-                                        row.push(client_id)
-                                        row.push(matchingRow[16]); // Push column 16 from 'data' (index adjusted)
-                                        row.push(matchingRow[17]); // Push column 17 from 'data' (index adjusted)
-                                        row.push(matchingRow[18]);                                        
-
-                                        return row;
-                                    });                                     
-
-                                    $.ajax({
-                                        url: urlNewItem,
-                                        type: 'POST',
-                                        data: {
-                                            items: JSON.stringify(dataToSend), // Send entire table data as JSON
-                                            csrfmiddlewaretoken: '{{ csrf_token }}' // Include CSRF token
-                                        },
-                                        success: function(response) {
-                                            if (response.status === 'success') {
-                                                errorContainer.textContent = response.message;
-                                                errorContainer.classList.add('alert-success');
-                                                errorContainer.classList.remove('alert-danger');
-                                                $('#loader').hide();
-                                                // Apply success class to all rows
-                                                for (var i = 0; i < hot.countRows(); i++) {
-                                                    for (var j = 0; j < hot.countCols(); j++) {
-                                                        hot.getCellMeta(i, j).className = 'success-row';
-                                                    }
-                                                }
-
-                                                // Disable editing in the table
-                                                hot.updateSettings({
-                                                    readOnly: true
-                                                });                                                
-                                            } else {
-                                                // Handle errors from the Django view
-                                                errorContainer.textContent = response.message;
-                                                errorContainer.classList.remove('alert-success');
-                                                errorContainer.classList.add('alert-danger');
-                                                $('#loader').hide();
-                                            }
-                                        },
-                                        error: function(jqXHR, textStatus, errorThrown) {
-                                            // Handle AJAX errors (display message to the user)
-                                            errorContainer.textContent = 'Erro ao salvar os itens. Tente novamente.';
-                                            errorContainer.classList.remove('alert-success');
-                                            errorContainer.classList.add('alert-danger');
-                                            $('#loader').hide();
-                                        }
-                                    });                                    
                                 }
-                            })
-                            .catch(function(error) {
-                                console.error('Erro ao validar códigos:', error);
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                // Handle AJAX errors (display message to the user)
+                                errorContainer.textContent = 'Erro ao salvar os itens. Tente novamente.';
+                                errorContainer.classList.remove('alert-success');
+                                errorContainer.classList.add('alert-danger');
                                 $('#loader').hide();
-                            });
+                            }
+                        });                        
+                    
                     }                 
                     
                 })
@@ -793,7 +830,6 @@
                     $('#loader').hide();
                 });
         }        
-        
         
 
         function getColumnIndexByFieldName(field) {
@@ -804,6 +840,18 @@
                 }
             }
             return -1; // Retorna -1 se o campo não for encontrado
+        }        
+
+        function findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst) {
+            for (const key in naturezareceitaData) {
+                if (naturezareceitaData.hasOwnProperty(key)) {
+                    const entry = naturezareceitaData[key];
+                    if (entry.code === code && entry.piscofinsCst === piscofinsCst) {
+                        return entry.id;
+                    }
+                }
+            }
+            return null; // Retorna null se não encontrar a combinação
         }        
                 
         function validateData(data, rowIndex) {
@@ -938,7 +986,17 @@
                     }
                 });
             });
-        } 
+        }   
+        
+        function formatDate(date) {
+            var day = ("0" + date.getDate()).slice(-2);
+            var month = ("0" + (date.getMonth() + 1)).slice(-2);
+            var year = date.getFullYear().toString().slice(-2);
+            var hours = ("0" + date.getHours()).slice(-2);
+            var minutes = ("0" + date.getMinutes()).slice(-2);
+        
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }        
 
 
 

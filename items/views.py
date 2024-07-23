@@ -540,7 +540,7 @@ class ImportedItemListViewAwaitSyncItem(ListView):
     template_name = 'handsome_await_imported_items.html'
     # template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
-    paginate_by = 100  # Defina quantos itens você quer por página
+    paginate_by = 10  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
@@ -576,6 +576,9 @@ class ImportedItemListViewAwaitSyncItem(ListView):
                 
         # Salva o total de itens no queryset combinado
         self.total_items = queryset.count()
+        
+        # Salva o queryset principal para uso no contexto
+        self.primary_queryset = queryset        
 
         return queryset
 
@@ -617,6 +620,15 @@ class ImportedItemListViewAwaitSyncItem(ListView):
                 page_range = [1, 2, '...'] + list(range(current_page - 2, current_page + 3)) + ['...'] + [total_pages - 1, total_pages]
 
         context['page_range'] = page_range
+        
+        # Obter o segundo queryset (imported_items)
+        codes_in_primary_queryset = self.primary_queryset.values_list('code', flat=True)
+        imported_items_queryset = ImportedItem.objects.filter(
+            client=client, code__in=codes_in_primary_queryset
+        )
+
+        context['additional_imported_items'] = imported_items_queryset
+        
         return context
 
 
@@ -955,7 +967,11 @@ def save_bulk_imported_item(request):
                         item.status_item = var_status_item  # Verifique se precisa atualizar o status do item
                         item.updated_at= current_time
                         item.await_sync_at = current_time
-                        item.user_updated = user                        
+                        item.user_updated = user   
+                        
+                        # Define o campo sync_at como None para deixá-lo vazio
+                        item.sync_at = None
+                                                                     
                         item.save()
 
                         # Update the ImportedItem model
