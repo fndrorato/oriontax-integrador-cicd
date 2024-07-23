@@ -59,7 +59,6 @@ def connect_and_query(host, user, password, port, database, client_name, initial
                 vl_aliquota_final_icms, vl_aliquota_fcp, tx_cbenef, nr_cst_pis, vl_aliquota_pis, nr_cst_cofins, vl_aliquota_cofins, nr_naturezareceita,
                 tx_estadoorigem, tx_estadodestino 
                 FROM tb_sysmointegradorenvio
-                WHERE cd_produto = 63059
                 ORDER BY cd_sequencial ASC
             """)          
             
