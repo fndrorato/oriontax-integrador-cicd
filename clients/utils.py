@@ -154,7 +154,6 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     print('3-Rename colunas')
     df['protege'] = df['protege'].apply(lambda x: int(x))
     unique_values = df['protege'].unique()
-    print(unique_values)
 
     
     # Verificar se as colunas existem
@@ -196,6 +195,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     ## TRATANDO OS DADOS DA BASE
     # Preencher valores nulos na coluna 'naturezareceita' com 0
     items_df['naturezareceita'] = items_df['naturezareceita'].fillna(0)
+    items_df['naturezareceita'] = items_df['naturezareceita'].astype(int)
     df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
     df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
     df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
