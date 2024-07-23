@@ -3,6 +3,7 @@ import sys
 import django
 import mysql.connector
 import pandas as pd
+import json
 from mysql.connector import Error
 from datetime import datetime
 
@@ -26,6 +27,7 @@ from clients.models import Client  # Importe o modelo Client
 from clients.utils import save_imported_logs
 from items.models import Item
 
+
 def get_clients():
     return Client.objects.filter(
         connection_route__isnull=False,
@@ -37,7 +39,73 @@ def get_clients():
         password_route=''
     )
 
-def connect_and_update(host, user, password, port, database, client_name, items_df, initial_log):
+def convert_df_otx_version_to_df_client(df_client):
+    # Caminhos dos arquivos CSV
+    path_icms = os.path.join(current_dir, 'relations', 'mac_sistemas_icms.csv')
+    path_piscofins = os.path.join(current_dir, 'relations', 'mac_sistemas_piscofins.csv')
+
+    # Leitura dos arquivos CSV em DataFrames
+    df_icms = pd.read_csv(path_icms, delimiter=';', dtype={'cst': str})
+    df_piscofins = pd.read_csv(path_piscofins, delimiter=';', dtype={'cstpis': str, 'cstcofins': str}) 
+
+    # Converter colunas para os tipos corretos
+    df_client['icms_cst_id'] = pd.to_numeric(df_client['icms_cst_id'], errors='coerce').astype('Int64') 
+    df_client['icms_aliquota_reduzida'] = pd.to_numeric(df_client['icms_aliquota_reduzida'], errors='coerce').astype('Int64')
+    
+    df_client['piscofins_cst_id'] = pd.to_numeric(df_client['piscofins_cst_id'], errors='coerce').astype('Int64')
+
+    df_client = df_client.rename(columns={
+        'cfop_id': 'cfop',
+        'icms_cst_id': 'icms_cst',
+        'icms_aliquota_id': 'icms_aliquota',
+        'protege_id': 'protege',
+        'cbenef_id': 'cbenef',
+        'piscofins_cst_id': 'piscofins_cst'
+    })
+
+    df_icms = df_icms.rename(columns={
+        'tributacao': 'tributacao_id',
+        'icms': 'icms_id',
+        'cst': 'cst_id',
+        'redbcicms': 'redbcicms_id'
+    })
+        
+    # Realizar o merge entre df_client e df_icms com base nas colunas de interesse
+    df_merged = pd.merge(df_client, df_icms[['tributacao_id', 'icms_id', 'cst_id', 'redbcicms_id', 
+                                             'cfop', 'icms_cst', 'icms_aliquota', 
+                                             'icms_aliquota_reduzida', 'protege']], 
+                         on=['cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege'], how='left')
+    # Renomear as colunas do df_piscofins para evitar conflitos
+    df_piscofins = df_piscofins.rename(columns={
+        'cstpis': 'cstpis_id',
+        'pis': 'pis_id',
+        'cstcofins': 'cstcofins_id',
+        'cofins': 'cofins_id'
+    })
+
+    # Realizar o merge entre df_merged e df_piscofins
+    df_final = pd.merge(df_merged, df_piscofins[['cstpis_id', 'pis_id', 'cstcofins_id', 'cofins_id',
+                                                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota']],
+                         on=['piscofins_cst', 'pis_aliquota', 'cofins_aliquota'], how='left')
+    
+    # Drop redundant columns from the final DataFrame
+    df_final.drop(columns=['piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege'], inplace=True)
+
+    df_final = df_final.rename(columns=lambda x: x.rstrip('_id') if x.endswith('_id') else x)
+    
+    # Substitui os valores None por strings vazias na coluna 'cbenef'
+    df_final['cbenef'] = df_final['cbenef'].fillna('')
+
+    # Ajuste as configurações de exibição para mostrar todas as colunas
+    pd.set_option('display.max_columns', None)
+
+    # Imprime as primeiras 5 linhas do DataFrame
+    # print(df_final.head())
+    # print(df_final.info())
+
+    return df_final       
+
+def connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log):
     try:
         connection = mysql.connector.connect(
             user=user,
@@ -52,28 +120,40 @@ def connect_and_update(host, user, password, port, database, client_name, items_
         try:
             cursor = connection.cursor()
 
-            # Prepara os dados para inserção em massa
+            # Prepara os dados para atualização em massa
+            current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             values = [
                 (
-                    row['sequencial'], row['code'], row['barcode'], row['description'], row['ncm'],
-                    row['cest'], row['cfop_id'], row['icms_cst_id'], row['icms_aliquota_id'],
-                    row['icms_aliquota_reduzida'], row['protege_id'], row['cbenef_id'], row['piscofins_cst_id'],
-                    row['pis_aliquota'], row['piscofins_cst_id'], row['cofins_aliquota'], 
-                    row['naturezareceita_code'], row['estado_origem'], row['estado_destino']
+                    row['description'], row['ncm'], row['cest'], row['tributacao'], row['icms'], row['cst'],
+                    row['cstpis'], row['pis'], row['cstcofins'], row['cofins'], row['redbcicms'], row['cbenef'],
+                    current_datetime, 'S', client_cnpj, row['code']
                 )
                 for _, row in items_df.iterrows()
             ]
 
-            # Executa a inserção em massa
-            insert_query = """
-                INSERT INTO tb_sysmointegradorrecebimento (
-                    cd_sequencial, cd_produto, tx_codigobarras, tx_descricaoproduto, tx_ncm, 
-                    tx_cest, nr_cfop, nr_cst_icms, vl_aliquota_integral_icms, vl_aliquota_final_icms, 
-                    vl_aliquota_fcp, tx_cbenef, nr_cst_pis, vl_aliquota_pis, nr_cst_cofins, 
-                    vl_aliquota_cofins, nr_naturezareceita, tx_estadoorigem, tx_estadodestino
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            # Define a query de atualização
+            update_query = """
+                UPDATE oriontax.PRODUTO
+                SET 
+                    descricao = %s,
+                    ncm = %s,
+                    cest = %s,
+                    tributacao = %s,
+                    icms = %s,
+                    cst = %s,
+                    cstpis = %s,
+                    pis = %s,
+                    cstcofins = %s,
+                    cofins = %s,
+                    redbcicms = %s,
+                    codbenef = %s,
+                    dt_atualizacao = %s,
+                    alterado_orion = %s
+                WHERE 
+                    cnpj = %s AND codigo = %s
             """
-            cursor.executemany(insert_query, values)
+            # Executa a atualização em massa
+            cursor.executemany(update_query, values)
 
             connection.commit()  # Confirma a transação
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
@@ -82,23 +162,24 @@ def connect_and_update(host, user, password, port, database, client_name, items_
 
         except Exception as query_error:
             connection.rollback()  # Desfaz a transação em caso de erro
-            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao executar a inserção em massa: {query_error}\n"
-            print(f"Erro ao executar a inserção em massa: {query_error}")
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao executar a atualização em massa: {query_error}\n"
+            print(f"Erro ao executar a atualização em massa: {query_error}")
             return False, initial_log
 
         finally:
             cursor.close()
 
-    except Error as connection_error:
-        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao banco de dados do cliente {client_name}: {connection_error}\n"
-        print(f"Erro ao conectar ao banco de dados do cliente {client_name}: {connection_error}")
+    except Exception as conn_error:
+        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao estabelecer conexão: {conn_error}\n"
+        print(f"Erro ao estabelecer conexão: {conn_error}")
         return False, initial_log
 
     finally:
-        if connection.is_connected():
+        if connection:
             connection.close()
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão com o banco de dados fechada para o cliente {client_name}\n"
             print("Conexão com o banco de dados fechada")
+
 
 if __name__ == "__main__":
     import argparse  # Import argparse for command-line arguments
@@ -112,6 +193,7 @@ if __name__ == "__main__":
     else:
         clients = get_clients()
        
+    # clients = get_clients()
     initial_log = ''
     for client in clients:
         host = client.connection_route
@@ -121,28 +203,58 @@ if __name__ == "__main__":
         database = client.database_route
         client_id = client.id
         client_name = client.name
+        client_cnpj = client.cnpj        
 
         timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         initial_log += f'[{timestamp}] - Verificando se há atualizações para o cliente: {client.name}... \n'        
 
         print(f"Verificando se há atualizações para o cliente: {client.name}")
         
-        items_queryset = Item.objects.filter(client=client, status_item=2).values(
+        # Lista de colunas a serem removidas
+        columns_to_remove = [
+            'naturezareceita_id', 
+            'type_product', 
+            'other_information', 
+            'history', 
+            'estado_origem', 
+            'estado_destino', 
+            'is_active', 
+            'is_pending_sync', 
+            'created_at', 
+            'updated_at', 
+            'sync_at', 
+            'await_sync_at', 
+            'sync_validate_at', 
+            'user_created_id', 
+            'user_updated_id', 
+            'naturezareceita_code',
+            'sequencial'
+        ]        
+        
+        # Pega todos os itens relacionados a esse cliente
+        items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).values(
             'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
             'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
             'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'sequencial', 
-            'estado_origem', 'estado_destino',
+            'estado_origem', 'estado_destino', 'sync_at', 'status_item',
             naturezareceita_code=F('naturezareceita__code')
         )        
-
+        # Converte o queryset em uma lista de dicionários
         items_list = list(items_queryset.values())
+
+        # Cria um DataFrame a partir da lista de dicionários
         items_df = pd.DataFrame(items_list) 
-        items_df['cbenef_id'] = items_df['cbenef_id'].fillna('') 
-        items_df['piscofins_cst_id'] = items_df['piscofins_cst_id'].astype(int)        
-        items_df['naturezareceita_code'] = items_df['naturezareceita_code'].fillna(0)
-        items_df['naturezareceita_code'] = items_df['naturezareceita_code'].astype(int)
+        # Removendo as colunas do DataFrame
+        items_df = items_df.drop(columns=columns_to_remove)  
+        print('Convertendo o DF para a versao do clinte')
+        items_df = convert_df_otx_version_to_df_client(items_df)    
+        print('DF convertido')
+        # sys.exit(1)  
         
+        print('Total de itens em DF:', len(items_df))
+        # Verifica se a quantidade de itens é maior que 1
         if len(items_df) == 0:
+            # Faça o que for necessário se houver mais de um item
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             initial_log += f'[{timestamp}] - Não há atualizações para o cliente: {client.name} \n'        
             print(f"Não há atualizações para o cliente: {client.name}")
@@ -151,28 +263,43 @@ if __name__ == "__main__":
                 sys.exit(1)  # Sair com código de erro 1 
         else:              
             try:
-                result, initial_log = connect_and_update(host, user, password, port, database, client_name, items_df, initial_log)
-            except Exception as e:  
+                result, initial_log = connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log)
+            except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
                 print(f"Erro ao conectar ao cliente {client_name}: {e}") 
                 save_imported_logs(client_id, initial_log) 
                 if args.client_id:
                     sys.exit(1)  # Sair com código de erro 1 
-                    
+            print('Resultado do UPDATE:', result)
             if result == True:
                 try:
-                    num_updated = Item.objects.filter(client=client, status_item=2).update(status_item=3)
+                    # Realiza o bulk update
+                    # Vamos atualizar apenas os itens que estao com staus = 1, ou seja Aguardando Sincronização
+                    # os com status 2, apesar de ter sido enviado, não será atualizado novamente para manter
+                    # a mesma data de envio original
+                    print('Ira gerar o codes to update')
+                    codes_to_update = items_df[items_df['status_item'] == 1]['code'].tolist()
+                    print('Codes:',codes_to_update)
+                    num_updated = Item.objects.filter(
+                        code__in=codes_to_update, 
+                        status_item=1, 
+                        client=client
+                    ).update(
+                        status_item=2,
+                        sync_at=F('sync_at')
+                    )          
 
                     if num_updated > 0:
-                        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens validados com sucesso\n"
+                        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens aguardando validação.\n"
                         print(f"{num_updated} itens atualizados com sucesso!")
                     else:
-                        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item validado\n"
+                        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"
                         print("Nenhum item foi atualizado.")
 
                     save_imported_logs(client_id, initial_log)
                     if args.client_id:
                         sys.exit(0)  # Sair com código de sucesso
+                        
                 except Exception as e:
                     initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Ocorreu um erro durante a atualização dos itens: {e}\n"
                     print(f"Ocorreu um erro durante a atualização dos itens: {e}")                
@@ -184,4 +311,5 @@ if __name__ == "__main__":
                 save_imported_logs(client_id, initial_log)
                 print(f"Ocorreu um erro ao inserir as validações")  
                 if args.client_id:
-                    sys.exit(1)  # Sair com código de erro 1 
+                    sys.exit(1)  # Sair com código de erro 1                       
+                       

@@ -469,13 +469,18 @@ class ImportedItemListViewNewItem(ListView):
     template_name = 'handsome_new_imported_items.html'
     # template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
-    paginate_by = 50  # Defina quantos itens você quer por página
+    paginate_by = 5  # Defina quantos itens você quer por página
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
         client = get_object_or_404(Client, id=client_id)
 
-        queryset = ImportedItem.objects.filter(client=client, status_item=0, is_pending=True).order_by('description')  
+        queryset = ImportedItem.objects.filter(
+            client=client, 
+            status_item=0, 
+            is_pending=True
+        ).order_by('description')
+
         
         # Adicionar filtros baseados nos parâmetros GET, exceto 'page'
         filters = self.request.GET.dict()
