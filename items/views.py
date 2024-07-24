@@ -788,8 +788,8 @@ def save_bulk_imported_item(request):
         try:
             data = json.loads(request.POST.get('items', '[]'))
             
-            print(data)
-            return JsonResponse({'status': 'error', 'message': 'rrro'})
+            # print(data)
+            # return JsonResponse({'status': 'error', 'message': 'rrro'})
             
             # Validate each item and collect errors if any
             # Lista para armazenar todos os itens
