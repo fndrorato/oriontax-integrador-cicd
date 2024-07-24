@@ -644,15 +644,7 @@
         function oddRowRenderer(instance, td, row, col, prop, value, cellProperties) {
             Handsontable.renderers.TextRenderer.apply(this, arguments);
             td.style.backgroundColor = '#ffffff'; // Cor da linha ímpar
-        }           
-
-        function getAliquotas(code) {
-            if (piscofinsData.hasOwnProperty(code)) {
-                return piscofinsData[code];
-            } else {
-                return null; // ou qualquer outro valor padrão
-            }
-        } 
+        }
 
         $('#checkAllValidate').click(function() {
             const rowCount = hot.countRows();
@@ -671,10 +663,24 @@
         var errorContainer = document.createElement('div');
         errorContainer.id = 'error-container';
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
-        tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);
-    
+        tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);        
+
+        function updateAliquotasPisCofins() {
+            const rowCount = hot.countRows();
+            for (let row = 0; row < rowCount; row++) {
+                var isChecked = hot.getDataAtCell(row, 18)
+                var piscofins_cst = hot.getDataAtCell(row, 11)
+                if (isChecked === true || isChecked === 1) {
+                    var aliquotas = getAliquotas(piscofins_cst); // Obtém as aliquotas baseado no novo valor
+                    hot.setDataAtCell(row, 12, aliquotas ? aliquotas.pis_aliquota : ''); 
+                    hot.setDataAtCell(row, 13, aliquotas ? aliquotas.cofins_aliquota : ''); 
+                }
+            }
+        }
+
         function validateTable() {
             $('#loader').show();
+            updateAliquotasPisCofins();
             var data = hot.getData();
             data = data.filter(row => row[18] === true || row[18] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0

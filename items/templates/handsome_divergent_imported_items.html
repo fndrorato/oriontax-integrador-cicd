@@ -662,10 +662,10 @@ naturezareceitaData.push({
             afterChange: function(changes, source) {
                 if (source === 'edit' || source === 'CopyPaste.paste') {
                     changes.forEach(([row, prop, oldValue, newValue]) => {
-                        if (prop === 21) { // Verifica se a mudança ocorreu na coluna 21 (piscofins_cst)
+                        if (prop === 20) { // Verifica se a mudança ocorreu na coluna 20 (piscofins_cst)
                             var aliquotas = getAliquotas(newValue); // Obtém as aliquotas baseado no novo valor
-                            this.setDataAtCell(row, 23, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
-                            this.setDataAtCell(row, 25, aliquotas ? aliquotas.cofins_aliquota : ''); // Define cofins_aliquota na coluna 13
+                            this.setDataAtCell(row, 22, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
+                            this.setDataAtCell(row, 24, aliquotas ? aliquotas.cofins_aliquota : ''); // Define cofins_aliquota na coluna 13
                         } 
                     });
                 }
@@ -729,9 +729,22 @@ naturezareceitaData.push({
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
         tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);
     
+        function updateAliquotasPisCofins() {
+            const rowCount = hot.countRows();
+            for (let row = 0; row < rowCount; row++) {
+                var isChecked = hot.getDataAtCell(row, 29)
+                var piscofins_cst = hot.getDataAtCell(row, 20)
+                if (isChecked === true || isChecked === 1) {
+                    var aliquotas = getAliquotas(piscofins_cst); // Obtém as aliquotas baseado no novo valor
+                    hot.setDataAtCell(row, 22, aliquotas ? aliquotas.pis_aliquota : ''); 
+                    hot.setDataAtCell(row, 24, aliquotas ? aliquotas.cofins_aliquota : ''); 
+                }
+            }
+        }
 
         function validateTable() {
             $('#loader').show();
+            updateAliquotasPisCofins();
             var data = hot.getData();
             data = data.filter(row => row[29] === true || row[29] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0

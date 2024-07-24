@@ -593,9 +593,22 @@
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
         tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);
     
+        function updateAliquotasPisCofins() {
+            const rowCount = hot.countRows();
+            for (let row = 0; row < rowCount; row++) {
+                var isChecked = hot.getDataAtCell(row, 30)
+                var piscofins_cst = hot.getDataAtCell(row, 21)
+                if (isChecked === true || isChecked === 1) {
+                    var aliquotas = getAliquotas(piscofins_cst); // Obtém as aliquotas baseado no novo valor
+                    hot.setDataAtCell(row, 23, aliquotas ? aliquotas.pis_aliquota : ''); 
+                    hot.setDataAtCell(row, 25, aliquotas ? aliquotas.cofins_aliquota : ''); 
+                }
+            }
+        }        
 
         function validateTable() {
             $('#loader').show();
+            updateAliquotasPisCofins();
             var data = hot.getData();
             data = data.filter(row => row[30] === true || row[30] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
