@@ -413,15 +413,15 @@
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
 
-    var naturezareceitaData = {};
-    // Populate the naturezareceitaData object
-{% for naturezareceita in naturezareceita_choices %}
-    naturezareceitaData['{{ naturezareceita.code }}'] = {
+    var naturezareceitaData = [];
+    // Populate the naturezareceitaData array
+    {% for naturezareceita in naturezareceita_choices %}
+    naturezareceitaData.push({
         id: '{{ naturezareceita.id }}',
         code: '{{ naturezareceita.code }}',
-        piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %},
-    };
-{% endfor %}
+        piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %}
+    });
+    {% endfor %}
 
     var urlValidateCode = '{% url "validate_code_item" %}';
     var urlFixItem = '{% url "save_imported_item" %}';
@@ -840,66 +840,7 @@
                 }
             }
             return -1; // Retorna -1 se o campo não for encontrado
-        }        
-
-        function findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst) {
-            for (const key in naturezareceitaData) {
-                if (naturezareceitaData.hasOwnProperty(key)) {
-                    const entry = naturezareceitaData[key];
-                    if (entry.code === code && entry.piscofinsCst === piscofinsCst) {
-                        return entry.id;
-                    }
-                }
-            }
-            return null; // Retorna null se não encontrar a combinação
-        }        
-
-        function validateCode(code, client) {
-            return new Promise(function(resolve, reject) {
-                $.ajax({
-                    url: urlValidateCode,
-                    data: {
-                        'code': code,
-                        'client': client
-                    },
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.success === false) {
-                            resolve(false);
-                        } else {
-                            resolve(true);
-                        }
-                    },
-                    error: function() {
-                        reject('Erro ao validar o código. Tente novamente.');
-                    }
-                });
-            });
-        }   
-        
-        function validateCodes(codes, client) {
-            return new Promise(function(resolve, reject) {
-                $.ajax({
-                    url: urlValidateCode, // Your server-side validation endpoint
-                    data: {
-                        'codes': JSON.stringify(codes), // Send codes as a JSON string
-                        'client': client
-                    },
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.success === false) {
-                            // Handle error response from server (e.g., some codes invalid)
-                            resolve(data.invalidCodes || []); // Resolve with an array of invalid codes
-                        } else {
-                            resolve([]); // All codes are valid
-                        }
-                    },
-                    error: function() {
-                        reject('Erro ao validar os códigos. Tente novamente.');
-                    }
-                });
-            });
-        }   
+        }         
         
         function formatDate(date) {
             var day = ("0" + date.getDate()).slice(-2);

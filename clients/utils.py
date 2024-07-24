@@ -474,6 +474,9 @@ def validateSelect(client_id, items_df, df, initial_log=None):
 
     Returns:
         dict: Um dicionário com os resultados da validação.
+        Column: piscofins_cst, DF Value: 1.0, Items DF Value: 01, Divergence: True
+        Column: cfop, DF Value: 5102.0, Items DF Value: 5102, Divergence: True
+        Column: icms_cst, DF Value: 20.0, Items DF Value: 20, Divergence: True        
     """
     print('1-Entrou no validate')
     if initial_log is None:
@@ -603,6 +606,7 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Criar uma nova coluna vazia para armazenar as colunas divergentes
     merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]        
 
+    print(merged_df.info())
     # Itera sobre as linhas do DataFrame
     for idx, row in merged_df.iterrows():
         try:

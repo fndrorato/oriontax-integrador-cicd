@@ -75,13 +75,10 @@ function validateData(data, client_id, rowIndex, validar_type_product = true) {
             if (selectedNaturezareceita === '' || selectedNaturezareceita === null || selectedNaturezareceita === undefined) {
                 errors.push({ field: 'naturezareceita', message: "Para o PIS/COFINS selecionado, a  Natureza Receita é obrigatória." });
             } else {
-                if (naturezareceitaData.hasOwnProperty(selectedNaturezareceita)) {
-                    if (naturezareceitaData[selectedNaturezareceita].piscofinsCst != selectedPisCofinsCst) {
-                        errors.push({ field: 'naturezareceita_cst', message: 'A combinação Natureza Receita: ' + selectedNaturezareceita + ' com o PIS/COFINS ' + selectedPisCofinsCst + ' não é uma combinação válida!' });
-                    }
-                } else {
-                    errors.push({ field: 'naturezareceita', message: "Para o PIS/COFINS selecionado, a  Natureza Receita informada não coincide." });
-                }                
+                var nr_id = findIdByCodeAndPiscofinsCst(naturezareceitaData, selectedNaturezareceita, selectedPisCofinsCst);
+                if (nr_id === null) {
+                    errors.push({ field: 'naturezareceita_cst', message: 'A combinação Natureza Receita: ' + selectedNaturezareceita + ' com o PIS/COFINS ' + selectedPisCofinsCst + ' não é uma combinação válida!' });
+                } 
             }          
         } else {
             if (selectedNaturezareceita) {
@@ -154,13 +151,10 @@ function validateCodes(codes, client) {
 } 
 
 function findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst) {
-    for (const key in naturezareceitaData) {
-        if (naturezareceitaData.hasOwnProperty(key)) {
-            const entry = naturezareceitaData[key];
-            if (entry.code === code && entry.piscofinsCst === piscofinsCst) {
-                return entry.id;
-            }
+    for (const entry of naturezareceitaData) {
+        if (entry.code === code && entry.piscofinsCst === piscofinsCst) {
+            return entry.id;
         }
     }
     return null; // Retorna null se não encontrar a combinação
-} 
+}

@@ -103,12 +103,24 @@ def convert_df_client_to_df_otx_version(df_client):
     df_final['sequencial'] = 0
     df_final['estado_origem'] = ''
     df_final['estado_destino'] = ''
+
+    # Converte 'cfop' e 'icms_cst' para inteiros
+    df_final['cfop'] = df_final['cfop'].astype('Int64')
+    df_final['icms_cst'] = df_final['icms_cst'].astype('Int64')
+
+    # Converte 'piscofins_cst' para string e adiciona zero à frente se necessário
+    df_final['piscofins_cst'] = df_final['piscofins_cst'].astype(int).astype(str)
+    df_final['piscofins_cst'] = df_final['piscofins_cst'].apply(lambda x: x.zfill(2))
+    
     
     # PARA TESTE
     df_final = df_final.dropna(subset=['cfop'], how='all')
     df_final = df_final.dropna(subset=['piscofins_cst'], how='all')
     df_final = df_final.dropna(subset=['ncm'], how='all')
-
+    
+    pd.set_option('display.max_columns', None)
+    print(df_final.head())
+    print(df_final.info())
     return df_final    
 
 def connect_and_query(host, user, password, port, database, client_name, client_cnpj, initial_log):

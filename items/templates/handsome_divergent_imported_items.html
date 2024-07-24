@@ -484,15 +484,16 @@
     };
 {% endfor %}
 
-var naturezareceitaData = {};
-// Populate the naturezareceitaData object
+var naturezareceitaData = [];
+// Populate the naturezareceitaData array
 {% for naturezareceita in naturezareceita_choices %}
-naturezareceitaData['{{ naturezareceita.code }}'] = {
+naturezareceitaData.push({
     id: '{{ naturezareceita.id }}',
     code: '{{ naturezareceita.code }}',
-    piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %},
-};
+    piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %}
+});
 {% endfor %}
+
 
     var urlValidateCode = '{% url "validate_code_item" %}';
     var urlFixItem = '{% url "save_imported_item" %}';

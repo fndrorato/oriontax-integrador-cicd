@@ -385,15 +385,15 @@
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
 
-    var naturezareceitaData = {};
-    // Populate the naturezareceitaData object
-{% for naturezareceita in naturezareceita_choices %}
-    naturezareceitaData['{{ naturezareceita.code }}'] = {
+    var naturezareceitaData = [];
+    // Populate the naturezareceitaData array
+    {% for naturezareceita in naturezareceita_choices %}
+    naturezareceitaData.push({
         id: '{{ naturezareceita.id }}',
         code: '{{ naturezareceita.code }}',
-        piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %},
-    };
-{% endfor %}
+        piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %}
+    });
+    {% endfor %}
     
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('new-items-table');
@@ -690,13 +690,16 @@
                                         var codeItem = row[0];
 
                                         // Find the ID from naturezareceitaData
-                                        var matchingId = null;
+                                        // var matchingId = null;
+                                        var matchingId = findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst);
+                                        /*
                                         for (var id in naturezareceitaData) {
                                             if (naturezareceitaData[id].piscofinsCst === piscofinsCst && naturezareceitaData[id].code === code) {
                                                 matchingId = id;
                                                 break; // Stop searching once found
                                             }
                                         }
+                                        */
 
                                         // Find matching row in 'data' based on code
                                         var matchingRow = dataOrigin.find(dataRow => dataRow[0] === codeItem);                                        
