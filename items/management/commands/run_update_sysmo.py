@@ -155,7 +155,7 @@ if __name__ == "__main__":
         print(f"Verificando se há atualizações para o cliente: {client.name}")
         
         # Pega todos os itens relacionados a esse cliente
-        items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2], code='1828').values(
+        items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).values(
             'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
             'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
             'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'sequencial', 
@@ -213,8 +213,7 @@ if __name__ == "__main__":
                 sys.exit(1)  # Sair com código de erro 1 
         else:              
             try:
-                # result, initial_log = connect_and_update(host, user, password, port, database, client_name, items_df, initial_log)
-                result = True
+                result, initial_log = connect_and_update(host, user, password, port, database, client_name, items_df, initial_log)
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
                 print(f"Erro ao conectar ao cliente {client_name}: {e}") 

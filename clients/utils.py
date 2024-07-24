@@ -606,7 +606,6 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Criar uma nova coluna vazia para armazenar as colunas divergentes
     merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]        
 
-    print(merged_df.info())
     # Itera sobre as linhas do DataFrame
     for idx, row in merged_df.iterrows():
         try:
