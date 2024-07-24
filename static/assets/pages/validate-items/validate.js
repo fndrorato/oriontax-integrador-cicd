@@ -97,3 +97,70 @@ function validateData(data, client_id, rowIndex, validar_type_product = true) {
         }
     });
 }
+
+function getAliquotas(code) {
+    if (piscofinsData.hasOwnProperty(code)) {
+        return piscofinsData[code];
+    } else {
+        return null; // ou qualquer outro valor padrão
+    }
+}  
+
+function validateCode(code, client) {
+    return new Promise(function(resolve, reject) {
+        $.ajax({
+            url: urlValidateCode,
+            data: {
+                'code': code,
+                'client': client
+            },
+            dataType: 'json',
+            success: function(data) {
+                if (data.success === false) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            },
+            error: function() {
+                reject('Erro ao validar o código. Tente novamente.');
+            }
+        });
+    });
+}   
+
+function validateCodes(codes, client) {
+    return new Promise(function(resolve, reject) {
+        $.ajax({
+            url: urlValidateCode, // Your server-side validation endpoint
+            data: {
+                'codes': JSON.stringify(codes), // Send codes as a JSON string
+                'client': client
+            },
+            dataType: 'json',
+            success: function(data) {
+                if (data.success === false) {
+                    // Handle error response from server (e.g., some codes invalid)
+                    resolve(data.invalidCodes || []); // Resolve with an array of invalid codes
+                } else {
+                    resolve([]); // All codes are valid
+                }
+            },
+            error: function() {
+                reject('Erro ao validar os códigos. Tente novamente.');
+            }
+        });
+    });
+} 
+
+function findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst) {
+    for (const key in naturezareceitaData) {
+        if (naturezareceitaData.hasOwnProperty(key)) {
+            const entry = naturezareceitaData[key];
+            if (entry.code === code && entry.piscofinsCst === piscofinsCst) {
+                return entry.id;
+            }
+        }
+    }
+    return null; // Retorna null se não encontrar a combinação
+} 

@@ -231,8 +231,6 @@ if __name__ == "__main__":
                     current_time = timezone.now()
                     
                     codes_to_update = items_df[items_df['status_item'] == 1]['code'].tolist()
-                    print(current_time)
-                    print(codes_to_update)
                     num_updated = Item.objects.filter(
                         code__in=codes_to_update, 
                         status_item=1, 
