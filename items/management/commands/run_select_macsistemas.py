@@ -102,13 +102,7 @@ def convert_df_client_to_df_otx_version(df_client):
     df_final['naturezareceita'] = 0
     df_final['sequencial'] = 0
     df_final['estado_origem'] = ''
-    df_final['estado_destino'] = ''
-    
-    # Filtrar as linhas que serão excluídas
-    excluded_rows = df_final[df_final['cfop'].isna()]
-
-    # Exibir as linhas que serão excluídas
-    print(excluded_rows)    
+    df_final['estado_destino'] = ''   
     
     # PARA TESTE
     df_final = df_final.dropna(subset=['cfop'], how='all')
@@ -123,7 +117,7 @@ def convert_df_client_to_df_otx_version(df_client):
     df_final['piscofins_cst'] = df_final['piscofins_cst'].astype(int).astype(str)
     df_final['piscofins_cst'] = df_final['piscofins_cst'].apply(lambda x: x.zfill(2))    
     
-    # pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_columns', None)
     # print(df_final.head())
     # print(df_final.info())
     return df_final    
