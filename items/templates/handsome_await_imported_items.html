@@ -427,6 +427,7 @@
     var urlFixItem = '{% url "save_imported_item" %}';
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
+    var unnecessary_fields = {{ client_erp_unnecessary_fields|safe }};
     
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('new-items-table');
@@ -700,7 +701,7 @@
                     cbenef: rowData[9],
                     piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
                     naturezareceita: rowData[14]
-                }, client_id, rowIndex, validate_type_product); // Passa o índice da linha para validar
+                }, client_id, unnecessary_fields, rowIndex, validate_type_product); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     var originalRowIndex = hot.toPhysicalRow(rowIndex);

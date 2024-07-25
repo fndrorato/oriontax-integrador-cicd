@@ -502,6 +502,7 @@ class ImportedItemListViewNewItem(ListView):
         context['client_id'] = client.id
         context['filter_params'] = self.request.GET
         context['total_items'] = self.total_items
+        context['client_erp_unnecessary_fields'] = client.erp.unnecessary_fields
         icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
         cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
         # Adicionando cbenef ao contexto
@@ -590,6 +591,7 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         context['client_id'] = client.id
         context['filter_params'] = self.request.GET
         context['total_items'] = self.total_items
+        context['client_erp_unnecessary_fields'] = client.erp.unnecessary_fields
         icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
         cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
         # Adicionando cbenef ao contexto
@@ -1475,6 +1477,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         context['client_id'] = client.id
         context['filter_params'] = self.request.GET
         context['total_items'] = self.total_items
+        context['client_erp_unnecessary_fields'] = client.erp.unnecessary_fields
         icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
         cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
         # Adicionando cbenef ao contexto
@@ -1639,6 +1642,7 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
         context['client_id'] = client.id
         context['filter_params'] = self.request.GET
         context['total_items'] = self.total_items
+        context['client_erp_unnecessary_fields'] = client.erp.unnecessary_fields
         icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
         cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
         # Adicionando cbenef ao contexto

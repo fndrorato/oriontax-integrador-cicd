@@ -384,6 +384,7 @@
     var urlFixItem = '{% url "save_imported_item" %}';
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
+    var unnecessary_fields = {{ client_erp_unnecessary_fields|safe }};
 
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('divergent-items-table');
@@ -629,7 +630,7 @@
                     piscofins_cst: rowData[21], // Ajuste conforme a estrutura real dos dados na tabela
                     naturezareceita: rowData[27],
                     type_product: rowData[29] // Ajuste conforme a estrutura real dos dados na tabela
-                }, rowIndex); // Passa o índice da linha para validar
+                }, client_id, unnecessary_fields, rowIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação

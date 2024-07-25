@@ -384,6 +384,7 @@
     var urlNewItem = '{% url "save_imported_item" %}';
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
+    var unnecessary_fields = {{ client_erp_unnecessary_fields|safe }};
 
     var naturezareceitaData = [];
     // Populate the naturezareceitaData array
@@ -525,7 +526,6 @@
                 console.log('Source:', source)
                 if (source === 'edit' || source === 'CopyPaste.paste') {
                     changes.forEach(([row, prop, oldValue, newValue]) => {
-                        console.log('Change:', row, prop, oldValue, newValue);
                         if (prop === 11) { // Verifica se a mudança ocorreu na coluna 11 (piscofins_cst)
                             var aliquotas = getAliquotas(newValue); // Obtém as aliquotas baseado no novo valor
                             this.setDataAtCell(row, 12, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
@@ -598,7 +598,7 @@
                     piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
                     naturezareceita: rowData[14],
                     type_product: rowData[15] // Ajuste conforme a estrutura real dos dados na tabela
-                }, client_id, rowIndex); // Passa o índice da linha para validar
+                }, client_id, unnecessary_fields, rowIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação

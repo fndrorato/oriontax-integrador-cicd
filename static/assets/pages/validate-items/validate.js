@@ -1,4 +1,4 @@
-function validateData(data, client_id, rowIndex, validar_type_product = true) {
+function validateData(data, client_id, unnecessary_fields, rowIndex, validar_type_product = true) {
     return new Promise(function(resolve, reject) {
         // Validações de cada campo
         var errors = [];
@@ -71,18 +71,21 @@ function validateData(data, client_id, rowIndex, validar_type_product = true) {
             }
         }        
 
-        if (selectedPisCofinsCst == '04' || selectedPisCofinsCst == '05' || selectedPisCofinsCst == '06'){
-            if (selectedNaturezareceita === '' || selectedNaturezareceita === null || selectedNaturezareceita === undefined) {
-                errors.push({ field: 'naturezareceita', message: "Para o PIS/COFINS selecionado, a  Natureza Receita é obrigatória." });
+        if (!unnecessary_fields.includes('naturezareceita')) {
+            // Execute o restante do código se minhaVar não estiver no array
+            if (selectedPisCofinsCst == '04' || selectedPisCofinsCst == '05' || selectedPisCofinsCst == '06'){
+                if (selectedNaturezareceita === '' || selectedNaturezareceita === null || selectedNaturezareceita === undefined) {
+                    errors.push({ field: 'naturezareceita', message: "Para o PIS/COFINS selecionado, a  Natureza Receita é obrigatória." });
+                } else {
+                    var nr_id = findIdByCodeAndPiscofinsCst(naturezareceitaData, selectedNaturezareceita, selectedPisCofinsCst);
+                    if (nr_id === null) {
+                        errors.push({ field: 'naturezareceita_cst', message: 'A combinação Natureza Receita: ' + selectedNaturezareceita + ' com o PIS/COFINS ' + selectedPisCofinsCst + ' não é uma combinação válida!' });
+                    } 
+                }          
             } else {
-                var nr_id = findIdByCodeAndPiscofinsCst(naturezareceitaData, selectedNaturezareceita, selectedPisCofinsCst);
-                if (nr_id === null) {
-                    errors.push({ field: 'naturezareceita_cst', message: 'A combinação Natureza Receita: ' + selectedNaturezareceita + ' com o PIS/COFINS ' + selectedPisCofinsCst + ' não é uma combinação válida!' });
-                } 
-            }          
-        } else {
-            if (selectedNaturezareceita) {
-                errors.push({ field: 'naturezareceita', message: "Para o PIS/COFINS selecionado, a  Natureza Receita não deve ser preenchida." });                
+                if (selectedNaturezareceita) {
+                    errors.push({ field: 'naturezareceita', message: "Para o PIS/COFINS selecionado, a  Natureza Receita não deve ser preenchida." });                
+                }
             }
         }
 
