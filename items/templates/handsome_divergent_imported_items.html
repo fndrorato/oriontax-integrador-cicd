@@ -67,7 +67,7 @@
         <!-- Zero config.table start -->
         <div class="card">
             <div class="card-header">
-                <h5>Lista de Produtos Novos ou com Divergências: {{ client_name }} </h5>
+                <h5>Lista de Produtos Novos ou com Divergências:  <a href="{% url 'client_update' client.id %}">{{ client_name }}</a>  </h5>
 
                 <a href="{% url 'export_items_to_excel' client_id=client.id table='divergent' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
@@ -178,8 +178,8 @@
                                                             <li class="page-item">
                                                                 <a class="page-link" href="#">{{ page_num }}</a>
                                                             </li>
-                                                        {% elif items.number == page_num %}
-                                                            <li class="page-item">
+                                                        {% elif page_obj.number == page_num %}
+                                                            <li class="page-item active">
                                                                 <a class="page-link" href="#">{{ page_num }}</a>
                                                             </li>
                                                         {% else %}
@@ -355,106 +355,11 @@
 
     <!-- Validações -->
     <script type="text/javascript" src="{% static 'assets/pages/validate-items/validate.js' %}?{% now "U" %}"></script>      
+    <!-- Filtros -->
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/filter-divergent.js' %}?{% now "U" %}"></script>      
     
 <script>
-    document.getElementById('clearSearch').addEventListener('click', function() {
-        // Obtém a URL sem os parâmetros da query string
-        const baseUrl = window.location.origin + window.location.pathname;
-
-        // Redefine a URL sem os parâmetros da query string
-        window.history.replaceState(null, null, baseUrl);
-
-        // Recarrega a página sem os parâmetros da query string
-        window.location.reload();
-    });      
-
-    function addRow(button) {
-        // Clone the form row
-        const formRow = button.parentNode.parentNode;
-        const newFormRow = formRow.cloneNode(true);
-    
-        // Clear the input value in the cloned row
-        newFormRow.querySelector('input').value = '';
-    
-        // Update the button to be a remove button
-        const newButton = newFormRow.querySelector('button');
-        newButton.textContent = '-';
-        newButton.classList.remove('btn-primary');
-        newButton.classList.add('btn-danger');
-        newButton.setAttribute('onclick', 'removeRow(this)');
-    
-        // Append the new row to the form container
-        document.getElementById('form-container').appendChild(newFormRow);
-    }
-    
-    function removeRow(button) {
-        // Remove the form row
-        const formRow = button.parentNode.parentNode;
-        formRow.parentNode.removeChild(formRow);
-    }
-    
-    document.getElementById('applySearch').addEventListener('click', function() {
-        const rows = document.querySelectorAll('#form-container .form-row');
-        const params = new URLSearchParams();
-    
-        rows.forEach(row => {
-            const selectFiltro = row.querySelector('#select_filtros').value;
-            const selectOrigem = row.querySelector('#select_origem').value;
-            const input = row.querySelector('input').value;
-            if (selectFiltro && input) {
-                params.append(`${selectOrigem}-${selectFiltro}`, input);
-            }
-        });
-    
-        window.location.search = params.toString();
-    });
-    
-    function getQueryParams() {
-        const params = {};
-        const queryString = window.location.search.slice(1);
-        const queries = queryString.split('&');
-    
-        queries.forEach(query => {
-            const [key, value] = query.split('=');
-            if (key && value) {
-                if (!params[key]) {
-                    params[key] = [];
-                }
-                params[key].push(decodeURIComponent(value));
-            }
-        });
-    
-        return params;
-    }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        const queryParams = getQueryParams();
-    
-        Object.keys(queryParams).forEach(key => {
-            queryParams[key].forEach(value => {
-                const [selectOrigem, selectFiltro] = key.split('-');
-                const formRow = document.querySelector('#form-container .form-row');
-                const newFormRow = formRow.cloneNode(true);
-                newFormRow.querySelector('#select_origem').value = selectOrigem;
-                newFormRow.querySelector('#select_filtros').value = selectFiltro;
-                newFormRow.querySelector('input').value = value;
-    
-                const newButton = newFormRow.querySelector('button');
-                newButton.textContent = '-';
-                newButton.classList.remove('btn-primary');
-                newButton.classList.add('btn-danger');
-                newButton.setAttribute('onclick', 'removeRow(this)');
-    
-                document.getElementById('form-container').appendChild(newFormRow);
-            });
-        });
-    
-        // Remove the initial form row if queryParams are present
-        if (Object.keys(queryParams).length > 0) {
-            const initialFormRow = document.querySelector('#form-container .form-row');
-            initialFormRow.parentNode.removeChild(initialFormRow);
-        }
-    });        
+     
     
     var piscofinsData = {};
 
@@ -747,12 +652,19 @@ naturezareceitaData.push({
             $('#loader').show();
             updateAliquotasPisCofins();
             var data = hot.getData();
+            var filteredRowIndices = [];
+            data.forEach((row, index) => {
+                if (row[29] === true || row[29] === 1) {
+                    filteredRowIndices.push(index);
+                }
+            });            
             data = data.filter(row => row[29] === true || row[29] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
         
-            data.forEach(function(rowData, rowIndex) {
-                console.log(rowData);
+            data.forEach(function(rowData, filteredIndex) {
+                var originalIndex = filteredRowIndices[filteredIndex]; // Get the original index of the filtered row
+
                 var validationPromise = validateData({
                     id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
                     client_id: client_id, // Certifique-se de ter accesso ao client_id aqui
@@ -767,23 +679,23 @@ naturezareceitaData.push({
                     piscofins_cst: rowData[20], // Ajuste conforme a estrutura real dos dados na tabela
                     naturezareceita: rowData[26],
                     type_product: rowData[28] // Ajuste conforme a estrutura real dos dados na tabela
-                }, client_id, unnecessary_fields, rowIndex); // Passa o índice da linha para validar
+                }, client_id, unnecessary_fields, originalIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
                     for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
                         if (result.isValid) {
                             //if (colIndex != 30)
-                                hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
+                                hot.getCellMeta(originalIndex, colIndex).className = ''; // Remove a classe de erro
                         } else {
                             //if (colIndex != 30)
                             //{
-                                hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
+                                hot.getCellMeta(originalIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
                                 // Exibe mensagem de erro usando setDataAtRowProp
                                 result.errors.forEach(function(error) {
                                     var field = error.field;
                                     var message = error.message;
-                                    hot.setDataAtRowProp(rowIndex, field, message); 
+                                    hot.setDataAtRowProp(originalIndex, field, message); 
                                 }); 
                             //}
                            

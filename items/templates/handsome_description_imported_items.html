@@ -30,6 +30,10 @@
             background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
         }
     </style>
+    <!-- jpro forms css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/demo.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/font-awesome.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/j-pro-modern.css' %}">        
 {% endblock customcss %}
 
 
@@ -47,16 +51,21 @@
         <!-- Zero config.table start -->
         <div class="card">
             <div class="card-header">
-                <h5>Lista de Produtos Novos ou com Divergências: {{ client_name }} </h5>
+                <h5>Lista de Produtos Novos ou com Divergências: <a href="{% url 'client_update' client.id %}">{{ client_name }}</a>  </h5>
 
-                <a href="{% url 'export_items_to_excel' client_id=client.id table='divergent' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                <a href="{% url 'export_items_to_excel' client_id=client.id table='desc_divergent' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
                     Exportar Cadastros de Itens Divergentes
                 </a>    
                 
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
                     <i class="icofont icofont-filter"></i>
-                </button>    
+                </button>  
+                
+                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#uploadModal"> 
+                    <i class="feather icon-upload-cloud"></i>
+                    Fazer Upload em Excel
+                </button>                   
                 
                 <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
                     <i class="icofont icofont-save"></i>
@@ -148,8 +157,8 @@
                                                             <li class="page-item">
                                                                 <a class="page-link" href="#">{{ page_num }}</a>
                                                             </li>
-                                                        {% elif items.number == page_num %}
-                                                            <li class="page-item">
+                                                        {% elif page_obj.number == page_num %}
+                                                            <li class="page-item active">
                                                                 <a class="page-link" href="#">{{ page_num }}</a>
                                                             </li>
                                                         {% else %}
@@ -232,6 +241,78 @@
     </div>
 </div>
 
+<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header p-t-5 p-b-5 color-inverse text-white">
+                <h5 class="modal-title" id="uploadModalLabel">Upload de Arquivo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" class="text-white">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="j-wrapper j-wrapper-640">                  
+                    <form method="post"
+                        class="j-pro" id="j-pro" enctype="multipart/form-data"
+                        novalidate="">
+                        {% csrf_token %}
+                        <div id="loaderUpload" class="preloader5 loader-block" style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            z-index: 9900;
+                            width: 100%;
+                            height: 100%;
+                            justify-content: center;
+                            background-color: rgba(255, 255, 255, 0.8);
+                            margin: 0 !important;
+                            display: none;
+                        ">
+                            <div class="circle-5 l"></div>
+                            <div class="circle-5 m"></div>
+                            <div class="circle-5 r"></div>
+                            
+                        </div>                         
+                        <!-- end /.header-->
+                        <div class="j-content">
+                            <!-- start file -->
+                            <div class="j-unit">
+                                <div class="j-input j-append-big-btn">
+                                    <label class="j-icon-left" for="file_input">
+                                        <i class="icofont icofont-download"></i>
+                                    </label>
+                                    <div class="j-file-button">
+                                        Procurar
+                                        <input type="file" name="csv_file" id="csv_file"
+                                            onchange="document.getElementById('file_input').value = this.value;">
+                                    </div>
+                                    <input type="text" id="file_input"
+                                        readonly=""
+                                        placeholder="nenhum arquivo selecionado">
+                                    <span class="j-hint">Somente XLSX</span>
+                                </div>
+                            </div>
+                            <!-- end file -->
+                            <!-- start response from server -->
+                            <div class="j-response" id="messages">
+                            </div>
+                            <!-- end response from server -->
+                        </div>
+                        <!-- end /.content -->    
+                        <div class="j-footer modal-footer p-t-5 p-b-5">
+                            <button type="submit"
+                                class="btn btn-primary" id="btn-send">Enviar</button>
+                            <button type="reset"
+                                class="btn btn-default m-r-20" data-dismiss="modal">Cancelar</button>
+                        </div>                                         
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 
 {% endblock content %}
 
@@ -240,107 +321,16 @@
     <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
     <!-- notification js -->
     <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script> 
+    <!-- j-pro js -->
+    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.ui.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.maskedinput.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.j-pro.js' %}?{% now "U" %}"></script>
     <!-- Validações -->
     <script type="text/javascript" src="{% static 'assets/pages/validate-items/validate.js' %}?{% now "U" %}"></script>
+    <!-- Filtros -->
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/filter-divergent.js' %}?{% now "U" %}"></script>          
 <script>
-    document.getElementById('clearSearch').addEventListener('click', function() {
-        // Obtém a URL sem os parâmetros da query string
-        const baseUrl = window.location.origin + window.location.pathname;
-
-        // Redefine a URL sem os parâmetros da query string
-        window.history.replaceState(null, null, baseUrl);
-
-        // Recarrega a página sem os parâmetros da query string
-        window.location.reload();
-    });      
-
-    function addRow(button) {
-        // Clone the form row
-        const formRow = button.parentNode.parentNode;
-        const newFormRow = formRow.cloneNode(true);
-    
-        // Clear the input value in the cloned row
-        newFormRow.querySelector('input').value = '';
-    
-        // Update the button to be a remove button
-        const newButton = newFormRow.querySelector('button');
-        newButton.textContent = '-';
-        newButton.classList.remove('btn-primary');
-        newButton.classList.add('btn-danger');
-        newButton.setAttribute('onclick', 'removeRow(this)');
-    
-        // Append the new row to the form container
-        document.getElementById('form-container').appendChild(newFormRow);
-    }
-    
-    function removeRow(button) {
-        // Remove the form row
-        const formRow = button.parentNode.parentNode;
-        formRow.parentNode.removeChild(formRow);
-    }
-    
-    document.getElementById('applySearch').addEventListener('click', function() {
-        const rows = document.querySelectorAll('#form-container .form-row');
-        const params = new URLSearchParams();
-    
-        rows.forEach(row => {
-            const selectFiltro = row.querySelector('#select_filtros').value;
-            const selectOrigem = row.querySelector('#select_origem').value;
-            const input = row.querySelector('input').value;
-            if (selectFiltro && input) {
-                params.append(`${selectOrigem}-${selectFiltro}`, input);
-            }
-        });
-    
-        window.location.search = params.toString();
-    });
-    
-    function getQueryParams() {
-        const params = {};
-        const queryString = window.location.search.slice(1);
-        const queries = queryString.split('&');
-    
-        queries.forEach(query => {
-            const [key, value] = query.split('=');
-            if (key && value) {
-                if (!params[key]) {
-                    params[key] = [];
-                }
-                params[key].push(decodeURIComponent(value));
-            }
-        });
-    
-        return params;
-    }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        const queryParams = getQueryParams();
-    
-        Object.keys(queryParams).forEach(key => {
-            queryParams[key].forEach(value => {
-                const [selectOrigem, selectFiltro] = key.split('-');
-                const formRow = document.querySelector('#form-container .form-row');
-                const newFormRow = formRow.cloneNode(true);
-                newFormRow.querySelector('#select_origem').value = selectOrigem;
-                newFormRow.querySelector('#select_filtros').value = selectFiltro;
-                newFormRow.querySelector('input').value = value;
-    
-                const newButton = newFormRow.querySelector('button');
-                newButton.textContent = '-';
-                newButton.classList.remove('btn-primary');
-                newButton.classList.add('btn-danger');
-                newButton.setAttribute('onclick', 'removeRow(this)');
-    
-                document.getElementById('form-container').appendChild(newFormRow);
-            });
-        });
-    
-        // Remove the initial form row if queryParams are present
-        if (Object.keys(queryParams).length > 0) {
-            const initialFormRow = document.querySelector('#form-container .form-row');
-            initialFormRow.parentNode.removeChild(initialFormRow);
-        }
-    });        
+         
     
     var piscofinsData = {};
 
@@ -611,11 +601,18 @@
             $('#loader').show();
             updateAliquotasPisCofins();
             var data = hot.getData();
+            var filteredRowIndices = [];
+            data.forEach((row, index) => {
+                if (row[30] === true || row[30] === 1) {
+                    filteredRowIndices.push(index);
+                }
+            });            
             data = data.filter(row => row[30] === true || row[30] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
         
-            data.forEach(function(rowData, rowIndex) {
+            data.forEach(function(rowData, filteredIndex) {
+                var originalIndex = filteredRowIndices[filteredIndex]; // Get the original index of the filtered row
                 var validationPromise = validateData({
                     id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
                     client_id: client_id, // Certifique-se de ter accesso ao client_id aqui
@@ -630,23 +627,20 @@
                     piscofins_cst: rowData[21], // Ajuste conforme a estrutura real dos dados na tabela
                     naturezareceita: rowData[27],
                     type_product: rowData[29] // Ajuste conforme a estrutura real dos dados na tabela
-                }, client_id, unnecessary_fields, rowIndex); // Passa o índice da linha para validar
+                }, client_id, unnecessary_fields, originalIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
                     for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
                         if (result.isValid) {
-                            //if (colIndex != 30)
-                                hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
+                                hot.getCellMeta(originalIndex, colIndex).className = ''; // Remove a classe de erro
                         } else {
-                            //if (colIndex != 30)
-                            //{
-                                hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
+                                hot.getCellMeta(originalIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
                                 // Exibe mensagem de erro usando setDataAtRowProp
                                 result.errors.forEach(function(error) {
                                     var field = error.field;
                                     var message = error.message;
-                                    hot.setDataAtRowProp(rowIndex, field, message); 
+                                    hot.setDataAtRowProp(originalIndex, field, message); 
                                 }); 
                             //}
                            
@@ -782,6 +776,96 @@
        
 </script>
 
+<script>
+    $(document).ready(function(){
+        var formUrl = "{% url 'items_divergent_upload' client_id=client.id %}";
+        
+        // Use o evento 'submit' no formulário corretamente identificado pelo ID
+        $('#j-pro').on('submit', function(event) {
+            console.log('upload form');
+            event.preventDefault();
+            
+            var formData = new FormData(this);
+            hideDiv();
+            
+            $.ajax({
+                url: formUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // Manipula a resposta de sucesso
+                    showDiv();
+                    var resp = '<ul class="alert alert-success">';
+                    resp += '<li class="success">' + response.message + '</li>';
+                    resp += '<li class="success">Tempo de processamento: ' + response.elapsed_time + ' segundos</li>';
+                    resp += '<li class="success">Linhas processadas:' + response.processed_rows + '</li>';
+                    resp += '</ul>';
+                    $('.j-response').html(resp);                        
+                },
+                error: function(xhr, status, error) {
+                    console.log(xhr);
+
+                    if (xhr.status === 500) {
+                        alert('Erro ao processar arquivo');
+                        showDiv();
+                    }                        
+
+                    var errors = '<ul class="alert alert-danger">';
+                    errors += '<li class="error">Tempo de processamento: ' + xhr.responseJSON.elapsed_time + ' segundos</li>';                            
+                    $.each(xhr.responseJSON.errors, function(key, value) {
+                        errors += '<li class="error">' + value + '</li>';
+                    });
+                    errors += '</ul>';
+                    $('.j-response').html(errors);
+                    showDiv();
+                }
+            });
+        
+        });
+        
+        // Validation
+        /*
+        $( "#uploadForm" ).justFormsPro({
+            rules: {
+                csv_file: {
+                    validate: true,
+                    required: true,
+                    size: 10,
+                    extension: "xlsx"
+                }
+            },
+            messages: {
+                csv_file: {
+                    size_extension: "Somente arquivo XLSX. Máx: 10Mb",
+                }
+            }
+        });
+        */
+        
+    }); 
+    
+    function hideDiv() {
+        const messagesDiv = document.getElementById('messages');
+        $('#loaderUpload').show();
+        $('.j-response').html('');
+        messagesDiv.style.opacity = '0'; // Define a opacidade para 0
+        setTimeout(() => {
+            messagesDiv.style.visibility = 'hidden'; // Define hidden após a transição
+        }, 500); // Tempo correspondente à duração da transição de opacidade
+    } 
+    
+    function showDiv() {
+        const messagesDiv = document.getElementById('messages');
+        $('#loaderUpload').hide();
+        messagesDiv.style.visibility = 'visible'; // Remove hidden
+        setTimeout(() => {
+            messagesDiv.style.opacity = '1'; // Define a opacidade para 1
+        }, 10); // Pequeno atraso para permitir que a transição funcione
+    }
+    
+</script>
 
     
 

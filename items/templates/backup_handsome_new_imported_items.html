@@ -9,22 +9,16 @@
 {% endblock title %}
 
 {% block customcss %}
-    <!-- Handson table css start 
-    <link rel="stylesheet" type="text/css" href="https://docs.handsontable.com/pro/bower_components/handsontable-pro/dist/handsontable.full.min.css">
-    -->
-    
+    <!-- Handson table css start -->
+    {% comment %} <link rel="stylesheet" type="text/css" href="https://docs.handsontable.com/pro/bower_components/handsontable-pro/dist/handsontable.full.min.css"> {% endcomment %}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
-                                                
     <!-- Notification.css -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/notification/notification.css' %}">
     <!-- Animate.css -->
     <link rel="stylesheet" type="text/css" href="{% static 'bower_components/animate.css/css/animate.css' %}">    
     <style>
-        .tabledit-input {
-            height: 20px !important;
-            font-size: 10px  !important;
-            padding: 0rem !important;
-            width: 95% !important;
+        .limit-field {
+            max-width: 80px !important;
         }
         .success-row {
             background-color: #d9f9d9 !important;
@@ -32,24 +26,9 @@
         .error-row {
             background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
         }
-
-        .handsontable .htCore td { /* Targets all cells in the Handsontable */
-            font-size: 10px; /* Or your desired smaller font size */
-        }
-        /* Target all column headers */
-        .handsontable .ht_master th {
-            font-size: 12px; /* Adjust the size as needed */
-        }
         
-        /* Target row headers */
-        .handsontable .ht_clone_left .htCore th {
-            font-size: 12px; /* Adjust the size as needed */
-        }        
     </style>
-    <!-- jpro forms css -->
-    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/demo.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/font-awesome.min.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/j-pro-modern.css' %}">    
+   
 {% endblock customcss %}
 
 
@@ -67,36 +46,26 @@
         <!-- Zero config.table start -->
         <div class="card">
             <div class="card-header">
-                <h5>Lista de Produtos Novos ou com Divergências:  <a href="{% url 'client_update' client.id %}">{{ client_name }}</a>  </h5>
+                <h5>Lista de Produtos Novos ou com Divergências: <a href="{% url 'client_update' client.id %}">{{ client_name }} </a> </h5>
 
                 <a href="{% url 'export_items_to_excel' client_id=client.id table='new' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
                     Exportar Cadastros de Itens Novos
-                </a>    
+                </a>       
                 
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
                     <i class="icofont icofont-filter"></i>
-                </button>   
-                
-                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#uploadModal"> 
-                    <i class="feather icon-upload-cloud"></i>
-                    Fazer Upload em Excel
-                </button>    
-
-                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" id="checkAllValidate"> 
-                    <i class="icofont icofont-verification-check"></i>
-                    Validar Todos
                 </button>  
-
+                
                 <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" id="checkAllRevenda"> 
                     <i class="icofont icofont-verification-check"></i>
                     Marcar todos como Revenda
-                </button>                  
+                </button>                
                 
                 <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
                     <i class="icofont icofont-save"></i>
                     Salvar Dados
-                </button>                 
+                </button>                
                                                                    
                 <span class="text-danger">Total de produtos novos: {{ total_items }}</span>
 
@@ -107,7 +76,7 @@
                         <div class="product-edit">
                             <ul class="nav nav-tabs nav-justified md-tabs " id="client-tabs" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active" href="{% url 'imported_item_list' client_id=client_id %}" role="tab">
+                                    <a class="nav-link active" data-toggle="tab" href="#new-items" role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-exclamation-circle"></i>
                                         </div>
@@ -123,13 +92,13 @@
                                     <div class="slide"></div>
                                 </li>                                  
                                 <li class="nav-item">
-                                    <a class="nav-link " href={% url 'imported_divergent_item_list' client_id=client_id %} role="tab">
+                                    <a class="nav-link" href={% url 'imported_divergent_item_list' client_id=client_id %} role="tab">
                                         <div class="f-20">
                                             <i class="icofont icofont-error"></i>
                                         </div>
                                         Produtos Divergentes</a>
                                     <div class="slide"></div>
-                                </li>   
+                                </li> 
                                 <li class="nav-item">
                                     <a class="nav-link" href={% url 'awaiting_item_list' client_id=client_id %} role="tab">
                                         <div class="f-20">
@@ -137,14 +106,14 @@
                                         </div>
                                         Aguardando Validação/Envio</a>
                                     <div class="slide"></div>
-                                </li>                                                                                                                                                          
+                                </li>                                                                                                                                                                                            
                             </ul>
                             <!-- Tab panes -->
-                            <div class="tab-content">       
-                                <!-- Inicio Tab Produtos Divergentes -->
-                                <div class="tab-pane active" id="divergent-items" role="tabpanel">                                   
+                            <div class="tab-content">   
+                                <!-- Inicio Tab Novos Produtos -->
+                                <div class="tab-pane active" id="new-items" role="tabpanel">                                   
                                     <div class="card">
-                                        <div class="card-block">  
+                                        <div class="card-block">   
                                             <div id="loader" class="preloader5 loader-block" style="
                                                 position: absolute;
                                                 top: 0;
@@ -161,10 +130,11 @@
                                                 <div class="circle-5 m"></div>
                                                 <div class="circle-5 r"></div>
                                                 
-                                            </div>                                                                                 
-                                            <div id="divergent-items-table" class="handsontable"></div>
+                                            </div>                                                                                
+                                            <div id="new-items-table" class="handsontable"></div>
+                                            
                                             <!-- Paginação -->  
-                                            <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center">
+                                            <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center m-t-2">
                                                 <ul class="pagination">
                                                     {% if page_obj.has_previous %}
                                                         <li class="page-item">
@@ -206,7 +176,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- End Tab Novos Produtos -->                                                                                         
+                                <!-- End Tab Novos Produtos -->                                                                                             
                             </div>
                         </div>
                     </div>
@@ -260,107 +230,25 @@
     </div>
 </div>
 
-<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header p-t-5 p-b-5 color-inverse text-white">
-                <h5 class="modal-title" id="uploadModalLabel">Upload de Arquivo</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true" class="text-white">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="j-wrapper j-wrapper-640">                  
-                    <form method="post"
-                        class="j-pro" id="j-pro" enctype="multipart/form-data"
-                        novalidate="">
-                        {% csrf_token %}
-                        <div id="loaderUpload" class="preloader5 loader-block" style="
-                            position: absolute;
-                            top: 0;
-                            left: 0;
-                            z-index: 9900;
-                            width: 100%;
-                            height: 100%;
-                            justify-content: center;
-                            background-color: rgba(255, 255, 255, 0.8);
-                            margin: 0 !important;
-                            display: none;
-                        ">
-                            <div class="circle-5 l"></div>
-                            <div class="circle-5 m"></div>
-                            <div class="circle-5 r"></div>
-                            
-                        </div>                         
-                        <!-- end /.header-->
-                        <div class="j-content">
-                            <!-- start file -->
-                            <div class="j-unit">
-                                <div class="j-input j-append-big-btn">
-                                    <label class="j-icon-left" for="file_input">
-                                        <i class="icofont icofont-download"></i>
-                                    </label>
-                                    <div class="j-file-button">
-                                        Procurar
-                                        <input type="file" name="csv_file" id="csv_file"
-                                            onchange="document.getElementById('file_input').value = this.value;">
-                                    </div>
-                                    <input type="text" id="file_input"
-                                        readonly=""
-                                        placeholder="nenhum arquivo selecionado">
-                                    <span class="j-hint">Somente XLSX</span>
-                                </div>
-                            </div>
-                            <!-- end file -->
-                            <!-- start response from server -->
-                            <div class="j-response" id="messages">
-                            </div>
-                            <!-- end response from server -->
-                        </div>
-                        <!-- end /.content -->    
-                        <div class="j-footer modal-footer p-t-5 p-b-5">
-                            <button type="submit"
-                                class="btn btn-primary" id="btn-send">Enviar</button>
-                            <button type="reset"
-                                class="btn btn-default m-r-20" data-dismiss="modal">Cancelar</button>
-                        </div>                                         
-                    </form>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
 
 {% endblock content %}
 
 {% block anotherjs %}
-    <!-- Handson table js 
-    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>  
-    -->
-    
+    <!-- Handson table js -->
+    {% comment %} <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script> {% endcomment %}
     <script src="
     https://cdn.jsdelivr.net/npm/handsontable@14.4.0/dist/handsontable.full.min.js
-    "></script>    
+    "></script>  
     <!-- notification js -->
     <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script> 
-    
-    <!-- j-pro js -->
-    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.ui.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.maskedinput.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'assets/pages/j-pro/js/jquery.j-pro.js' %}?{% now "U" %}"></script>
-
     <!-- Validações -->
-    <script type="text/javascript" src="{% static 'assets/pages/validate-items/validate.js' %}?{% now "U" %}"></script>      
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/validate.js' %}?{% now "U" %}"></script>          
     <!-- Filtros -->
-    <script type="text/javascript" src="{% static 'assets/pages/validate-items/filter-divergent.js' %}?{% now "U" %}"></script>      
-    
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/filter-new-await.js' %}"></script>          
 <script>
-     
+    
     
     var piscofinsData = {};
-
     // Adicionar os dados ao objeto
 {% for piscofins in piscofins_choices %}
     piscofinsData['{{ piscofins.code }}'] = {
@@ -387,26 +275,29 @@
     };
 {% endfor %}
 
-var naturezareceitaData = [];
-// Populate the naturezareceitaData array
-{% for naturezareceita in naturezareceita_choices %}
-naturezareceitaData.push({
-    id: '{{ naturezareceita.id }}',
-    code: '{{ naturezareceita.code }}',
-    piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %}
-});
-{% endfor %}
-
-
     var urlValidateCode = '{% url "validate_code_item" %}';
     var urlNewItem = '{% url "save_imported_item" %}';
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
     var unnecessary_fields = {{ client_erp_unnecessary_fields|safe }};
 
-    document.addEventListener("DOMContentLoaded", function() {
-        var container = document.getElementById('divergent-items-table');
+    var naturezareceitaData = [];
+    // Populate the naturezareceitaData array
+    {% for naturezareceita in naturezareceita_choices %}
+    naturezareceitaData.push({
+        id: '{{ naturezareceita.id }}',
+        code: '{{ naturezareceita.code }}',
+        piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %}
+    });
+    {% endfor %}
     
+    document.addEventListener("DOMContentLoaded", function() {
+        var container = document.getElementById('new-items-table');
+      /*
+        colHeaders: [
+        'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'CST Icms', 'Aliq.Icms', 'Aliq.IcmsRed', 'CBENEF', 'Protege', 'CST PIS/COFINS', 'Aliq.PIS', 'Aliq.COFINS', 'Nat.Receita', 'T.Prod.', ' '
+    ],    
+    */
         var dataOrigin = [
             {% for item in imported_items %}
                 [
@@ -446,7 +337,7 @@ naturezareceitaData.push({
                 [
                     { label: '', colspan: 5 },
                     { label: 'ICMS', colspan: 3 },
-                    { label: '', colspan: 3 },
+                    { label: '', colspan: 2 },
                     { label: 'PIS/COFINS', colspan: 3 },
                     { label: '', colspan: 3 }
                 ],
@@ -456,7 +347,8 @@ naturezareceitaData.push({
                     'CBENEF', 'Prot', 'CST', 'Al.PIS', 
                     'Al.COFINS', 'Nat.Rec', 'T.Prod.', 'Val.'
                 ] 
-            ],             
+            ],               
+
             columns: [
                 { data: 0, readOnly: true },
                 { data: 1 },
@@ -516,23 +408,23 @@ naturezareceitaData.push({
                     selectOptions: typeProductOptions.map(option => option.value !== null ? option.value : '')
                 },
                 { data: 19, type: 'checkbox' }              
-            ], 
-            stretchH: 'all',           
-            autoWrapRow: false,
+            ],     
+            stretchH: 'all',
+            autoWrapRow: true,
             height: 500,
             manualRowResize: false,
             manualColumnResize: false,
             contextMenu: [
-                'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column', 'hide_column'
+            'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column'
             ],
             filters: true,
+            hiddenColumns: true,
             dropdownMenu: true,
             allowInsertRow: false,
             allowRemoveRow: false,
             allowInsertColumn: false,
-            allowRemoveColumn: false,    
-            autoWrapCol: true, 
-            licenseKey: 'non-commercial-and-evaluation',                   
+            allowRemoveColumn: false,  
+            licenseKey: 'non-commercial-and-evaluation',            
             cells: function(row, col) {
                 var cellProperties = {};
 
@@ -547,7 +439,15 @@ naturezareceitaData.push({
                     cellProperties.renderer = oddRowRenderer;
                 }
                 return cellProperties;
-            },             
+            },   
+            afterCreateRow: function(index, amount) {
+                // Adiciona o listener de change ao select da coluna 11 nas novas linhas criadas
+                this.addChangeEventListenerToColumnSelects(11);
+            },
+            afterCreateCol: function(index, amount) {
+                // Adiciona o listener de change ao select da coluna 11 nas novas colunas criadas
+                this.addChangeEventListenerToColumnSelects(11);
+            },           
             afterChange: function(changes, source) {
                 if (source === 'edit' || source === 'CopyPaste.paste') {
                     changes.forEach(([row, prop, oldValue, newValue]) => {
@@ -558,7 +458,8 @@ naturezareceitaData.push({
                         } 
                     });
                 }
-            },       
+            }   
+                        
         });
 
         function evenRowRenderer(instance, td, row, col, prop, value, cellProperties) {
@@ -569,21 +470,14 @@ naturezareceitaData.push({
         function oddRowRenderer(instance, td, row, col, prop, value, cellProperties) {
             Handsontable.renderers.TextRenderer.apply(this, arguments);
             td.style.backgroundColor = '#ffffff'; // Cor da linha ímpar
-        }   
-
+        }           
+        
         $('#checkAllRevenda').click(function() {
             const rowCount = hot.countRows();
             for (let row = 0; row < rowCount; row++) {
                 hot.setDataAtCell(row, 15, 'Revenda');
             }
-        });      
-
-        $('#checkAllValidate').click(function() {
-            const rowCount = hot.countRows();
-            for (let row = 0; row < rowCount; row++) {
-                hot.setDataAtCell(row, 16, true);
-            }
-        });    
+        });        
 
         // Adiciona evento de clique ao botão "Validar"
         var btnValidate = document.getElementById('btn-validate');
@@ -591,7 +485,7 @@ naturezareceitaData.push({
             validateTable();
         });   
         
-        var tableContainer = document.getElementById('divergent-items-table'); // Obtém a referência da div da tabela
+        var tableContainer = document.getElementById('new-items-table'); // Obtém a referência da div da tabela
         var errorContainer = document.createElement('div');
         errorContainer.id = 'error-container';
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
@@ -600,35 +494,22 @@ naturezareceitaData.push({
         function updateAliquotasPisCofins() {
             const rowCount = hot.countRows();
             for (let row = 0; row < rowCount; row++) {
-                var isChecked = hot.getDataAtCell(row, 16)
                 var piscofins_cst = hot.getDataAtCell(row, 11)
-                if (isChecked === true || isChecked === 1) {
-                    var aliquotas = getAliquotas(piscofins_cst); // Obtém as aliquotas baseado no novo valor
-                    hot.setDataAtCell(row, 12, aliquotas ? aliquotas.pis_aliquota : ''); 
-                    hot.setDataAtCell(row, 13, aliquotas ? aliquotas.cofins_aliquota : ''); 
-                }
+                var aliquotas = getAliquotas(piscofins_cst); // Obtém as aliquotas baseado no novo valor
+                hot.setDataAtCell(row, 12, aliquotas ? aliquotas.pis_aliquota : ''); 
+                hot.setDataAtCell(row, 13, aliquotas ? aliquotas.cofins_aliquota : ''); 
             }
-        }
+        }        
 
         function validateTable() {
             $('#loader').show();
             updateAliquotasPisCofins();
             var data = hot.getData();
-            var filteredRowIndices = [];
-            data.forEach((row, index) => {
-                if (row[16] === true || row[16] === 1) {
-                    filteredRowIndices.push(index);
-                }
-            });
-
             data = data.filter(row => row[16] === true || row[16] === 1); // Filter based on boolean or 1
-
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
-
-            data.forEach(function(rowData, filteredIndex) {
-                var originalIndex = filteredRowIndices[filteredIndex]; // Get the original index of the filtered row
-
+        
+            data.forEach(function(rowData, rowIndex) {
                 var validationPromise = validateData({
                     id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
                     client_id: client_id, // Certifique-se de ter accesso ao client_id aqui
@@ -643,21 +524,21 @@ naturezareceitaData.push({
                     piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
                     naturezareceita: rowData[14],
                     type_product: rowData[15] // Ajuste conforme a estrutura real dos dados na tabela
-                }, client_id, unnecessary_fields, originalIndex); // Passa o índice da linha para validar
+                }, client_id, unnecessary_fields, rowIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
                     for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
                         if (result.isValid) {
-                            hot.getCellMeta(originalIndex, colIndex).className = ''; // Remove a classe de erro
+                            hot.getCellMeta(rowIndex, colIndex).className = ''; // Remove a classe de erro
                         } else {
-                            hot.getCellMeta(originalIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
+                            hot.getCellMeta(rowIndex, colIndex).className = 'error-row'; // Adiciona a classe de erro
                             // Exibe mensagem de erro usando setDataAtRowProp
                             result.errors.forEach(function(error) {
                                 var field = error.field;
                                 var message = error.message;
-                                hot.setDataAtRowProp(originalIndex, field, message); 
-                            }); 
+                                hot.setDataAtRowProp(rowIndex, field, message); 
+                            });                            
                         }
                     }
                 });
@@ -689,17 +570,26 @@ naturezareceitaData.push({
                     errorContainer.innerHTML = '';
 
                     var allErrors = []; // Array para armazenar todos os erros
+                    var validIndices = []; // Array para armazenar os índices das linhas válidas
 
                     results.forEach(function(result, index) {
                         if (!result.isValid) {                    
                             // Adiciona os erros da linha ao array geral
-                            allErrors.push(...result.errors.map(err => `Linha ${index + 1}: ${err.message}`));
+                            allErrors.push(...result.errors.map(err => ({
+                                message: `Linha ${index + 1}: ${err.message}`,
+                                line: index + 1
+                            })));
+                        } else {
+                            // Armazena o índice das linhas válidas
+                            validIndices.push(index);
                         }
                     });   
-                    
+
                     // Exibe todos os erros no container
+                    let errorList;
                     if (allErrors.length > 0) {
-                        var errorList = document.createElement('ul');
+                        allErrors.sort((a, b) => a.line - b.line);
+                        errorList = document.createElement('ul');
                         allErrors.forEach(function(error) {
                             var listItem = document.createElement('li');
                             listItem.classList.add('error'); // Adiciona a classe "error" ao item
@@ -707,77 +597,138 @@ naturezareceitaData.push({
                             errorList.appendChild(listItem);
                         });
                         errorContainer.appendChild(errorList);
-                        errorContainer.classList.remove('alert-success'); // Remove a classe de sucesso
-                        errorContainer.classList.add('alert-danger');  
+                        errorContainer.classList.remove('alert-success');
+                        errorContainer.classList.add('alert-danger');                            
+                    }                     
+
+                    if (validIndices.length == 0) {                       
                         $('#loader').hide();                      
                     } else { // If all fields are valid, proceed with code validation
-                        var dataToSend = hot.getData();
-                        // Filter rows where checkbox is checked
-                        var filteredDataToSend = dataToSend.filter(row => row[16] === true || row[16] === 1); // Filter based on boolean or 1
-
-                        const columnsToRemove = [16];
-                        filteredDataToSend = filteredDataToSend.map(row => {
-                            return row.filter((_, index) => !columnsToRemove.includes(index));
-                        });                        
-
-                        // Find the ID for each row based on piscofinsCst and code
-                        filteredDataToSend = filteredDataToSend.map(row => {
-                            var piscofinsCst = row[11];
-                            var codeNaturezaReceita = row[14];
-                            var codeItem = row[0];
-
-                            var matchingId = findIdByCodeAndPiscofinsCst(naturezareceitaData, codeNaturezaReceita, piscofinsCst);
-                            var matchingRow = dataOrigin.find(dataRow => dataRow[0] === codeItem); 
-
-                            row.push('0'); // Add 'fix_item'
-                            row.push(matchingId || ''); // Add the found ID (or empty string if not found)
-                            row.push(client_id)
-                            row.push(matchingRow[16]); // Push column 16 from 'data' (index adjusted)
-                            row.push(matchingRow[17]); // Push column 17 from 'data' (index adjusted)
-                            row.push(matchingRow[18]);                              
-                            return row;
-                        });                                     
-
-                        $.ajax({
-                            url: urlNewItem,
-                            type: 'POST',
-                            data: {
-                                items: JSON.stringify(filteredDataToSend), // Send entire table data as JSON
-                                csrfmiddlewaretoken: '{{ csrf_token }}' // Include CSRF token
-                            },
-                            success: function(response) {
-                                if (response.status === 'success') {
-                                    errorContainer.textContent = response.message;
-                                    errorContainer.classList.add('alert-success');
-                                    errorContainer.classList.remove('alert-danger');
-                                    location.reload();
-                                    $('#loader').hide();
-                                    // Apply success class to all rows
-                                    for (var i = 0; i < hot.countRows(); i++) {
-                                        if (dataToSend[i][16]) { // Check if the checkbox value is true
-                                            for (var j = 0; j < hot.countCols(); j++) {
-                                                hot.getCellMeta(i, j).className = 'success-row'; 
-                                                hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell
+                        var dataToSend = validIndices.map(index => hot.getDataAtRow(index));
+                        var dataToSendWithIndices = validIndices.map(index => ({
+                            index: index,
+                            data: hot.getDataAtRow(index)
+                        }));                        
+                        // Obter os códigos das linhas válidas
+                        var codes = dataToSend.map(row => row[0]);
+                    
+                        Promise.all(codes.map(code => validateCodes(code, client_id)))
+                            .then(function(codeValidationResults) {
+                                // Check if any code validation failed
+                                if (codeValidationResults.some(isValid => !isValid)) {
+                                    // Handle code validation errors (e.g., display in errorContainer)
+                                    if (!errorList) {
+                                        errorList = document.createElement('ul');
+                                    }
+                                    
+                                    codeValidationResults.forEach((isValid, resultIndex) => {
+                                        if (!isValid) {
+                                            var originalIndex = dataToSendWithIndices[resultIndex].index;
+                                            
+                                            var listItem = document.createElement('li');
+                                            listItem.classList.add('error'); 
+                                            listItem.textContent = `Linha ${originalIndex + 1}: Código inválido`;
+                                            errorList.appendChild(listItem);
+                    
+                                            // Apply error styling to invalid code row
+                                            for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
+                                                hot.getCellMeta(originalIndex, colIndex).className = 'error-row';
                                             }
+
+                                            // Adiciona o erro com o índice original ao array geral
+                                            allErrors.push({
+                                                message: `Linha ${originalIndex + 1}: Código inválido`,
+                                                line: originalIndex + 1
+                                            });                                            
                                         }
-                                    }                                              
-                                } else {
-                                    // Handle errors from the Django view
-                                    errorContainer.textContent = response.message;
+                                    });
+
+                                    // Ordena novamente todos os erros
+                                    allErrors.sort((a, b) => a.line - b.line);
+
+                                    // Limpa o errorContainer e exibe todos os erros ordenados
+                                    errorContainer.innerHTML = '';
+                                    errorList = document.createElement('ul'); // Recria errorList aqui para evitar duplicações
+                                    allErrors.forEach(function(error) {
+                                        var listItem = document.createElement('li');
+                                        listItem.classList.add('error');
+                                        listItem.textContent = error.message;
+                                        errorList.appendChild(listItem);
+                                    });                                   
+                                    errorContainer.appendChild(errorList);
                                     errorContainer.classList.remove('alert-success');
                                     errorContainer.classList.add('alert-danger');
                                     $('#loader').hide();
+                                } else { 
+                                    // Find the ID for each row based on piscofinsCst and code
+                                    dataToSend = dataToSend.map(row => {
+                                        var piscofinsCst = row[11];
+                                        var code = row[14];
+                                        var codeItem = row[0];
+
+                                        // Find the ID from naturezareceitaData
+                                        // var matchingId = null;
+                                        var matchingId = findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst);
+
+                                        // Find matching row in 'data' based on code
+                                        var matchingRow = dataOrigin.find(dataRow => dataRow[0] === codeItem);                                        
+
+                                        row.push('0'); // Add 'fix_item'
+                                        row.push(matchingId || ''); // Add the found ID (or empty string if not found)
+                                        row.push(client_id)
+                                        row.push(matchingRow[16]); // Push column 16 from 'data' (index adjusted)
+                                        row.push(matchingRow[17]); // Push column 17 from 'data' (index adjusted)
+                                        row.push(matchingRow[18]);                                        
+
+                                        return row;
+                                    });                                     
+
+                                    $.ajax({
+                                        url: urlNewItem,
+                                        type: 'POST',
+                                        data: {
+                                            items: JSON.stringify(dataToSend), // Send entire table data as JSON
+                                            csrfmiddlewaretoken: '{{ csrf_token }}' // Include CSRF token
+                                        },
+                                        success: function(response) {
+                                            if (response.status === 'success') {
+                                                errorContainer.textContent = response.message;
+                                                errorContainer.classList.add('alert-success');
+                                                errorContainer.classList.remove('alert-danger');
+                                                $('#loader').hide();
+                                                // Apply success class to all rows
+                                                for (var i = 0; i < hot.countRows(); i++) {
+                                                    for (var j = 0; j < hot.countCols(); j++) {
+                                                        hot.getCellMeta(i, j).className = 'success-row';
+                                                    }
+                                                }
+
+                                                // Disable editing in the table
+                                                hot.updateSettings({
+                                                    readOnly: true
+                                                });                                                
+                                            } else {
+                                                // Handle errors from the Django view
+                                                errorContainer.textContent = response.message;
+                                                errorContainer.classList.remove('alert-success');
+                                                errorContainer.classList.add('alert-danger');
+                                                $('#loader').hide();
+                                            }
+                                        },
+                                        error: function(jqXHR, textStatus, errorThrown) {
+                                            // Handle AJAX errors (display message to the user)
+                                            errorContainer.textContent = 'Erro ao salvar os itens. Tente novamente.';
+                                            errorContainer.classList.remove('alert-success');
+                                            errorContainer.classList.add('alert-danger');
+                                            $('#loader').hide();
+                                        }
+                                    });                                    
                                 }
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                // Handle AJAX errors (display message to the user)
-                                errorContainer.textContent = 'Erro ao salvar os itens. Tente novamente.';
-                                errorContainer.classList.remove('alert-success');
-                                errorContainer.classList.add('alert-danger');
+                            })
+                            .catch(function(error) {
+                                console.error('Erro ao validar códigos:', error);
                                 $('#loader').hide();
-                            }
-                        });                        
-                    
+                            });
                     }                 
                     
                 })
@@ -797,82 +748,153 @@ naturezareceitaData.push({
                 }
             }
             return -1; // Retorna -1 se o campo não for encontrado
-        }     
-
-    });
-       
-</script>
-
-<script>
-    $(document).ready(function(){
-        var formUrl = "{% url 'items_divergent_upload' client_id=client.id %}";
+        }        
         
-        // Use o evento 'submit' no formulário corretamente identificado pelo ID
-        $('#j-pro').on('submit', function(event) {
-            console.log('upload form');
-            event.preventDefault();
-            
-            var formData = new FormData(this);
-            hideDiv();
-            
-            $.ajax({
-                url: formUrl,
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    // Manipula a resposta de sucesso
-                    showDiv();
-                    var resp = '<ul class="alert alert-success">';
-                    resp += '<li class="success">' + response.message + '</li>';
-                    resp += '<li class="success">Tempo de processamento: ' + response.elapsed_time + ' segundos</li>';
-                    resp += '<li class="success">Linhas processadas:' + response.processed_rows + '</li>';
-                    resp += '</ul>';
-                    $('.j-response').html(resp);                        
-                },
-                error: function(xhr, status, error) {
-                    console.log(xhr);
-
-                    if (xhr.status === 500) {
-                        alert('Erro ao processar arquivo');
-                        showDiv();
-                    }                        
-
-                    var errors = '<ul class="alert alert-danger">';
-                    errors += '<li class="error">Tempo de processamento: ' + xhr.responseJSON.elapsed_time + ' segundos</li>';                            
-                    $.each(xhr.responseJSON.errors, function(key, value) {
-                        errors += '<li class="error">' + value + '</li>';
-                    });
-                    errors += '</ul>';
-                    $('.j-response').html(errors);
-                    showDiv();
+        /*
+        function validateData(data, rowIndex) {
+            return new Promise(function(resolve, reject) {
+                // Validações de cada campo
+                var errors = [];
+        
+                var codeItem = data['id'];
+                var clientId = client_id;
+                var ncm = data['ncm'];
+                var cest = data['cest'];
+                var description = data['description'];
+                var selectedCfop = data['cfop'];
+                var selectedIcmsCst = data['icms_cst'];
+                var selectedIcmsAliquota = data['icms_aliquota'];
+                var selectedIcmsAliquotaReduzida = data['icms_aliquota_reduzida'];
+                var selectedCbenef = data['cbenef']
+                var selectedPisCofinsCst = data['piscofins_cst'];
+                var selectedNaturezareceita = data['naturezareceita'];
+                var tipoProduto = data['type_product'];
+        
+                // Trim description and check if it's empty after trimming
+                description = description.trim();
+                if (description === '') {
+                    errors.push({ field: 'description', message: "A descrição é obrigatória." });
+                }
+        
+                // Check if tipoProduto is selected
+                if (tipoProduto === '' || tipoProduto === null || tipoProduto === undefined) {
+                    errors.push({ field: 'type_product', message: "O tipo de produto é obrigatório." });
+                }
+        
+                // Validação do NCM
+                if (!/^\d{8}$/.test(ncm)) {
+                    errors.push({ field: 'ncm', message: 'NCM deve ter 8 dígitos.' });
+                }
+        
+                // Validação do CEST
+                if (cest && !/^\d{7}$/.test(cest)) {
+                    errors.push({ field: 'cest', message: 'CEST deve ter 7 dígitos.' });
+                }
+        
+                // Validação de CFOP e ICMS CST
+                if (selectedCfop == '5405' && selectedIcmsCst != '60') {
+                    errors.push({ field: 'icms_cst', message: 'Quando o CFOP é 5405, o ICMS CST deve ser 60.' });
+                }
+        
+                // Revalidar condições
+                if (selectedIcmsCst != '20' && selectedIcmsAliquota != selectedIcmsAliquotaReduzida) {
+                    errors.push({ field: 'icms_aliquota_reduzida', message: 'ICMS Alíquota Reduzida deve ser igual a ICMS Alíquota quando ICMS CST não for 20.' });
+                }
+        
+                if (selectedIcmsCst == '40' || selectedIcmsCst == '60') {
+                    if (selectedIcmsAliquota != '0' || selectedIcmsAliquotaReduzida != '0') {
+                        errors.push({ field: 'icms_aliquota', message: 'Para ICMS ' + selectedIcmsCst + ', as alíquotas de ICMS precisam ser 0.' });
+                    }
+                }
+        
+                if (selectedIcmsCst == '20') {
+                    if (icmsAliquotaData.hasOwnProperty(selectedIcmsAliquotaReduzida) && icmsAliquotaData[selectedIcmsAliquotaReduzida].dataCode != 1) {
+                        errors.push({ field: 'icms_aliquota_reduzida_code', message: 'O valor do ICMS alíquota reduzida não é válido.' });
+                    }
+                }
+        
+                if (selectedCbenef) {
+                    if (cbenefData.hasOwnProperty(selectedCbenef) && cbenefData[selectedCbenef].icmsCst != selectedIcmsCst) {
+                        errors.push({ field: 'cbenef_cst', message: 'Esta não é uma combinação válida do CBENEF com o ICMS/CST selecionado.' });
+                    }                    
+                }
+                
+                if (selectedNaturezareceita) {
+                    console.log('selectedNaturezareceita:', selectedNaturezareceita)
+                    if (naturezareceitaData.hasOwnProperty(selectedNaturezareceita)) {
+                        console.log('selectedNaturezareceita 2 :', selectedNaturezareceita)
+                        if (naturezareceitaData[selectedNaturezareceita].piscofinsCst != selectedPisCofinsCst) {
+                            errors.push({ field: 'naturezareceita_cst', message: 'A combinação Natureza Receita: ' + selectedNaturezareceita + ' com o PIS/COFINS ' + selectedPisCofinsCst + ' não é uma combinação válida!' });
+                        }
+                    }
+                }
+        
+                // Se houver erros, rejeita a promessa com as mensagens de erro
+                if (errors.length > 0) {
+                    resolve({ isValid: false, errors: errors });
+                } else {
+                    resolve({ isValid: true });
                 }
             });
+        }
         
-        });
-    }); 
+
+        function validateCode(code, client) {
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: urlValidateCode,
+                    data: {
+                        'code': code,
+                        'client': client
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success === false) {
+                            resolve(false);
+                        } else {
+                            resolve(true);
+                        }
+                    },
+                    error: function() {
+                        reject('Erro ao validar o código. Tente novamente.');
+                    }
+                });
+            });
+        }   
+        
+        function validateCodes(codes, client) {
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: urlValidateCode, // Your server-side validation endpoint
+                    data: {
+                        'codes': JSON.stringify(codes), // Send codes as a JSON string
+                        'client': client
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success === false) {
+                            // Handle error response from server (e.g., some codes invalid)
+                            resolve(data.invalidCodes || []); // Resolve with an array of invalid codes
+                        } else {
+                            resolve([]); // All codes are valid
+                        }
+                    },
+                    error: function() {
+                        reject('Erro ao validar os códigos. Tente novamente.');
+                    }
+                });
+            });
+        }   
+        */     
+
+    });
     
-    function hideDiv() {
-        const messagesDiv = document.getElementById('messages');
-        $('#loaderUpload').show();
-        $('.j-response').html('');
-        messagesDiv.style.opacity = '0'; // Define a opacidade para 0
-        setTimeout(() => {
-            messagesDiv.style.visibility = 'hidden'; // Define hidden após a transição
-        }, 500); // Tempo correspondente à duração da transição de opacidade
-    } 
     
-    function showDiv() {
-        const messagesDiv = document.getElementById('messages');
-        $('#loaderUpload').hide();
-        messagesDiv.style.visibility = 'visible'; // Remove hidden
-        setTimeout(() => {
-            messagesDiv.style.opacity = '1'; // Define a opacidade para 1
-        }, 10); // Pequeno atraso para permitir que a transição funcione
-    }
-    
+
 </script>
+    
+
+    
 
 {% endblock anotherjs %}
 

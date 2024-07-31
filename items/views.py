@@ -136,7 +136,7 @@ def export_items_to_excel(request, client_id, table):
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
             'cofins_aliquota', 'naturezareceita', 'await_sync_at', 'sync_at' 
         )
-    elif table == 'divergent':
+    elif table == 'divergent' or table == 'desc_divergent':
         # Queryset de itens importados
         imported_items_queryset = ImportedItem.objects.filter(
             client=client, status_item=1, is_pending=True
@@ -181,8 +181,17 @@ def export_items_to_excel(request, client_id, table):
             other_information=Subquery(items_subquery.values('other_information')[:1])
         ).order_by('description', 'origem')
 
-        # Converter para DataFrame (se necessário)
-        df = pd.DataFrame(list(combined_queryset))
+        if table == 'desc_divergent':
+            # Filtrar onde a description do items_subquery é diferente da description do imported_items_queryset
+            filtered_queryset = combined_queryset.filter(
+                ~Q(description=F('description_base'))
+            )
+      
+            # Converter para DataFrame (se necessário)
+            df = pd.DataFrame(list(filtered_queryset))            
+        else:
+            # Converter para DataFrame (se necessário)
+            df = pd.DataFrame(list(combined_queryset))            
         
         # Ordem desejada das colunas
         desired_order = [
@@ -213,7 +222,7 @@ def export_items_to_excel(request, client_id, table):
         items = []
 
     # Converter para DataFrame
-    if table != 'divergent':
+    if table != 'divergent' and table != 'desc_divergent':
         df = pd.DataFrame(list(items))
         
         if table == 'new':
@@ -240,7 +249,7 @@ def export_items_to_excel(request, client_id, table):
     
     if table == 'new':
         response['Content-Disposition'] = f'attachment; filename=items_Novos_{client.name}.xlsx'
-    elif table == 'divergent':
+    elif table == 'divergent' or table == 'desc_divergent':
         response['Content-Disposition'] = f'attachment; filename=items_Divergentes_{client.name}.xlsx'
     elif table == 'await':
         response['Content-Disposition'] = f'attachment; filename=items_Aguardando_{client.name}.xlsx'        
@@ -261,7 +270,7 @@ def download_file(request, filename):
         return HttpResponseNotFound('Arquivo não encontrado')
 
 def validate_item(request):
-    codes_param = request.GET.get('codes[]')  # Check for multiple codes first
+    codes_param = request.GET.get('codes')  # Check for multiple codes first
     client = request.GET.get('client')
 
     if codes_param:
@@ -273,35 +282,16 @@ def validate_item(request):
     if not codes or not client:
         return JsonResponse({'success': False, 'message': 'Code(s) and client are required.'})
 
-    # Convert codes to integers for efficient database query
-    try:
-        codes = [int(code) for code in codes]
-    except ValueError:
-        return JsonResponse({'success': False, 'message': 'Invalid code format.'})
-
     # Check for existing codes in the database (bulk query)
     existing_codes = Item.objects.filter(code__in=codes, client=client).values_list('code', flat=True)
 
     # Determine invalid codes
     invalid_codes = [code for code in codes if code in existing_codes]
-
     if invalid_codes:
         return JsonResponse({'success': False, 'invalidCodes': invalid_codes})
     else:
         return JsonResponse({'success': True})
 
-# def validate_item(request):
-#     code = request.GET.get('code')
-#     client = request.GET.get('client')
-
-#     if not code or not client:
-#         return JsonResponse({'success': False, 'message': 'Code and client are required.'})
-
-#     exists = Item.objects.filter(code=code, client=client).exists()
-#     if exists:
-#         return JsonResponse({'success': False, 'message': 'This code for this client already exists.'})
-    
-#     return JsonResponse({'success': True, 'message': 'This code for this client is available.'})
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class ItemListView(ListView):
@@ -790,7 +780,7 @@ def save_bulk_imported_item(request):
         try:
             data = json.loads(request.POST.get('items', '[]'))
             
-            # print(data)
+            print(data)
             # return JsonResponse({'status': 'error', 'message': 'rrro'})
             
             # Validate each item and collect errors if any
@@ -1675,6 +1665,60 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
         context['page_range'] = page_range
         return context    
 
+# Função para validar uma linha do DataFrame
+def validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, cbenef_data, natureza_receita_dict):
+    errors = []
+    column_name = None 
+
+    column_name = 'cfop'
+    if row['cfop'] == 5405:
+        column_name = 'icms_cst'
+        if row['icms_cst'] != '60':
+            errors.append(f"Erro na linha {index + 2} [{column_name}]: Quando o CFOP é 5405, o ICMS CST deve ser 60.")
+
+    column_name = 'icms_aliquota_reduzida'
+    if row['icms_cst'] != '20' and row['icms_aliquota'] != row['icms_aliquota_reduzida']:
+        errors.append(f"Erro na linha {index + 2} [{column_name}]: ICMS Alíquota Reduzida deve ser igual a ICMS Alíquota quando ICMS CST não for 20.")
+
+    column_name = 'icms_aliquota'
+    if row['icms_cst'] in ['40', '41', '60']:
+        if row['icms_aliquota'] != 0 or row['icms_aliquota_reduzida'] != 0:
+            errors.append(f"Erro na linha {index + 2} [{column_name}]: Para ICMS {row['icms_cst']}, as alíquotas de ICMS precisam ser 0.")
+
+    column_name = 'icms_aliquota_reduzida'
+    if row['icms_cst'] == '20':
+        if row['icms_aliquota_reduzida'] not in valid_icms_aliquotas:
+            errors.append(f"Erro na linha {index + 2} [{column_name}]: O valor do ICMS alíquota reduzida não é válido.")
+
+    print('icms_cst:', row['icms_cst'], ' cbenef:',row['cbenef'])
+    cbenef_info = cbenef_data.get(row['cbenef'])
+    column_name = 'cbenef'
+    if row['icms_cst'] in ['20', '40', '41']:
+        print('entrrou no  icmscst')
+        if row['cbenef']:
+            print('entrrou no cbenef')
+            if cbenef_info:
+                if row['icms_cst'] != cbenef_info['icmsCst']:
+                    errors.append(f"Erro na linha {index + 2} [{column_name}]: ICMS CST {row['icms_cst']} não corresponde ao CBENEF {row['cbenef']}.")
+        else:
+            errors.append(f"Erro na linha {index + 2} [{column_name}]: Para o CST ICMS selecionado, o CBENEF é obrigatório.")
+
+    print('naturezareceita')
+    column_name = 'naturezareceita'
+    if 'naturezareceita' not in unnecessary_fields:
+        if row['piscofins_cst'] in ['04', '05', '06']:
+            if not row['naturezareceita']:
+                errors.append(f"Erro na linha {index + 2} [{column_name}]: Para o PIS/COFINS selecionado, a Natureza Receita é obrigatória.")
+            else:
+                nr_id = natureza_receita_dict.get((row['naturezareceita'], row['piscofins_cst']))
+                if not nr_id:
+                    errors.append(f"Erro na linha {index + 2} [{column_name}]: A combinação Natureza Receita: {row['naturezareceita']} com o PIS/COFINS {row['piscofins_cst']} não é uma combinação válida!")
+        else:
+            if row['naturezareceita']:
+                errors.append(f"Erro na linha {index + 2} [{column_name}]: Para o PIS/COFINS selecionado, a Natureza Receita não deve ser preenchida.")
+
+    return errors
+
 class XLSXUploadDivergentView(View):
     template_name = 'upload_items.html'
     logger = logging.getLogger(__name__)  # Configurar o logger
@@ -1695,6 +1739,7 @@ class XLSXUploadDivergentView(View):
         print('Divergentes');
         start_time = time.time()
         client = get_object_or_404(Client, id=client_id)
+        unnecessary_fields = client.erp.unnecessary_fields
         form = CSVUploadForm(request.POST, request.FILES)
         if form.is_valid():
             xlsx_file = request.FILES['csv_file']
@@ -1755,6 +1800,9 @@ class XLSXUploadDivergentView(View):
                 piscofins_cst_df = pd.DataFrame(list(PisCofinsCst.objects.values('code', 'pis_aliquota', 'cofins_aliquota')))
                 natureza_receita_df = pd.DataFrame(list(NaturezaReceita.objects.values('code', 'id', 'piscofins_cst_id')))
                 
+                cbenef_choices = CBENEF.objects.select_related('icms_cst').all()
+                cbenef_data = {cbenef.code: {'code': cbenef.code, 'icmsCst': cbenef.icms_cst.code if cbenef.icms_cst else None} for cbenef in cbenef_choices}                
+                
                 pis_cofins_cst_dict = piscofins_cst_df.set_index('code').to_dict('index')
                 natureza_receita_dict = natureza_receita_df.set_index(['code', 'piscofins_cst_id']).to_dict('index')
                 
@@ -1803,6 +1851,7 @@ class XLSXUploadDivergentView(View):
                             invalid_rows = df[(df[column_name].apply(lambda x: len(x) != length and x != ''))]
                         else:
                             invalid_rows = df[df[column_name].apply(lambda x: len(x) != length)]
+                                                        
                         for index, row in invalid_rows.iterrows():
                             error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]} não tem {length} dígitos."
                             invalid_details.append(error_message)
@@ -1811,6 +1860,9 @@ class XLSXUploadDivergentView(View):
                         for index, row in invalid_rows.iterrows():
                             error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]} é um valor inválido."
                             invalid_details.append(error_message)
+                    elif length is None and valid_set is None and allow_empty == False:
+                        invalid_rows = df[df[column_name].apply(lambda x: len(x) != length)]
+                        
                     else:
                         invalid_rows = pd.DataFrame()
                     return invalid_rows
@@ -1825,8 +1877,10 @@ class XLSXUploadDivergentView(View):
                     ('protege', valid_proteges),
                     ('cbenef', valid_cbenefs),
                     ('ncm', None, 8),
-                    ('cest', None, 7, True)  # Verificar comprimento de 7 dígitos, permitir vazio
+                    ('cest', None, 7, True),
+                    ('description', None, None, False) 
                 ]
+                print(df.info())
 
                 for column_name, valid_set, *length in columns_to_check:
                     if len(length) == 2:  # Se fornecidos length e allow_empty
@@ -1838,6 +1892,23 @@ class XLSXUploadDivergentView(View):
                     
                     if not invalid_rows.empty:
                         break
+                
+                # Validando todas as linhas
+                all_errors = []
+                for index, row in df.iterrows():
+                    errors = validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, cbenef_data, natureza_receita_dict)
+                    if errors:
+                        all_errors.extend(errors)
+
+                if all_errors:
+                    print(all_errors)
+                    end_time = time.time()
+                    elapsed_time = round(end_time - start_time, 3)
+                    return JsonResponse({
+                        'message': 'Linhas inválidas encontradas.',
+                        'errors': all_errors,
+                        'elapsed_time': elapsed_time
+                    }, status=400)                  
 
                 if invalid_details:
                     end_time = time.time()
@@ -1859,8 +1930,6 @@ class XLSXUploadDivergentView(View):
                 errors = []
 
                 batch_size = 1000
-                
-                print(df)
 
                 with transaction.atomic():                
                     for index, row in df.iterrows():
@@ -1950,17 +2019,6 @@ class XLSXUploadDivergentView(View):
                                 code__in=[item.code for item in items_to_update]  
                             )
                             imported_items_to_update.update(is_pending=False)                        
-
-                    # if items_to_update:
-                    #     for i in range(0, len(items_to_update), batch_size):
-                    #         batch = items_to_update[i:i + batch_size]
-                    #         Item.objects.bulk_update(batch, fields=[
-                    #             'barcode', 'description', 'ncm', 'cest', 'cfop_id', 'icms_cst_id', 
-                    #             'icms_aliquota_id', 'icms_aliquota_reduzida', 'protege_id', 'cbenef_id', 
-                    #             'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_id', 
-                    #             'type_product', 'other_information',
-                    #             'is_active', 'is_pending_sync', 'updated_at', 'user_updated'
-                    #         ])
 
             except (pd.errors.ParserError, KeyError, TypeError, ValueError) as e:
                 self.logger.error(f"Error processing Excel file: {e}")  

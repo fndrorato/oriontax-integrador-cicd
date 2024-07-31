@@ -38,20 +38,32 @@ def get_clients():
         user_route='',
         password_route=''
     )
+    
+# Função para calcular o valor de 'redbcicms_id' baseado nas regras fornecidas
+def calculate_redbcicms_id(row):
+    if row['icms_cst_id'] in ['000', '040', '041', '060']:
+        return 0
+    elif row['icms_cst_id'] == '020':
+        if row['icms_aliquota_id'] != 0:
+            return round((row['icms_aliquota_reduzida'] / row['icms_aliquota_id']) * 100, 2)
+        else:
+            return 0  # Evitar divisão por zero
+    else:
+        return None  # Ou outro valor padrão/adequado se necessário    
 
 def convert_df_otx_version_to_df_client(df_client):
     # Caminhos dos arquivos CSV
     path_icms = os.path.join(current_dir, 'relations', 'mac_sistemas_icms.csv')
-    path_piscofins = os.path.join(current_dir, 'relations', 'mac_sistemas_piscofins.csv')
 
     # Leitura dos arquivos CSV em DataFrames
     df_icms = pd.read_csv(path_icms, delimiter=';', dtype={'cst': str})
-    df_piscofins = pd.read_csv(path_piscofins, delimiter=';', dtype={'cstpis': str, 'cstcofins': str}) 
-
-    # Converter colunas para os tipos corretos
-    df_client['icms_cst_id'] = pd.to_numeric(df_client['icms_cst_id'], errors='coerce').astype('Int64') 
-    df_client['icms_aliquota_reduzida'] = pd.to_numeric(df_client['icms_aliquota_reduzida'], errors='coerce').astype('Int64')
     
+    # Garantir que os valores na coluna 'icms_cst_id' tenham exatamente 3 caracteres
+    df_client['icms_cst_int'] = pd.to_numeric(df_client['icms_cst_id'], errors='coerce').astype('Int64')
+    df_client['icms_cst_id'] = df_client['icms_cst_id'].str.zfill(3)
+    df_client['icms_aliquota_reduzida'] = pd.to_numeric(df_client['icms_aliquota_reduzida'], errors='coerce').astype('Int64')
+    # Aplicar a função ao DataFrame para criar a coluna 'redbcicms_id'
+    df_client['redbcicms_id'] = df_client.apply(calculate_redbcicms_id, axis=1)   
     df_client['piscofins_cst_id'] = pd.to_numeric(df_client['piscofins_cst_id'], errors='coerce').astype('Int64')
 
     df_client = df_client.rename(columns={
@@ -62,34 +74,46 @@ def convert_df_otx_version_to_df_client(df_client):
         'cbenef_id': 'cbenef',
         'piscofins_cst_id': 'piscofins_cst'
     })
+    
+    # TRATANDO PIS/COFINS
+    df_client['piscofins_cst'] = df_client['piscofins_cst'].astype(str).str.zfill(2)
+    df_client['cstpis'] = df_client['piscofins_cst']
+    df_client['cstcofins'] = df_client['piscofins_cst']
+    df_client['pis'] = df_client['pis_aliquota']
+    df_client['cofins'] = df_client['cofins_aliquota']     
+    
+    df_client = df_client.rename(columns={
+        'icms_cst': 'cst',
+        'icms_aliquota': 'icms'
+    })
+    df_client = df_client.rename(columns={
+        'icms_cst_int': 'icms_cst'
+    })      
+    
 
     df_icms = df_icms.rename(columns={
-        'tributacao': 'tributacao_id',
-        'icms': 'icms_id',
-        'cst': 'cst_id',
-        'redbcicms': 'redbcicms_id'
+        'tributacao': 'tributacao_id'
     })
-        
-    # Realizar o merge entre df_client e df_icms com base nas colunas de interesse
-    df_merged = pd.merge(df_client, df_icms[['tributacao_id', 'icms_id', 'cst_id', 'redbcicms_id', 
-                                             'cfop', 'icms_cst', 'icms_aliquota', 
-                                             'icms_aliquota_reduzida', 'protege']], 
-                         on=['cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege'], how='left')
-    # Renomear as colunas do df_piscofins para evitar conflitos
-    df_piscofins = df_piscofins.rename(columns={
-        'cstpis': 'cstpis_id',
-        'pis': 'pis_id',
-        'cstcofins': 'cstcofins_id',
-        'cofins': 'cofins_id'
-    })
-
-    # Realizar o merge entre df_merged e df_piscofins
-    df_final = pd.merge(df_merged, df_piscofins[['cstpis_id', 'pis_id', 'cstcofins_id', 'cofins_id',
-                                                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota']],
-                         on=['piscofins_cst', 'pis_aliquota', 'cofins_aliquota'], how='left')
     
+    '''
+    CAMPOS
+    icms = inteiro OK
+    cst = char (000) OK
+    redbcicms = ver cálculo
+    CÁLCULO PARA RedBCICMS
+    CST 0  e red 0 = alq red repete
+    CST 20 = faz a conta %red * alíq
+    CST 40, 60, 41 e red 0 = alq red será 0
+    CST 40, 60, 41 e red <>0 = traz o %red na alqred
+    FÓRMULA: (icms_aliquota_reduzida / RedBCICMS)/100 = ARREDONDAR PARA CIMA    
+    '''
+    # Realizar o merge entre df_client e df_icms com base nas colunas de interesse
+    df_merged = pd.merge(df_client, df_icms, on=['cfop', 'icms_cst', 'protege'], how='left')
+
+    # Realizar o merge entre df_merged e df_client
+    df_final = df_merged
     # Drop redundant columns from the final DataFrame
-    df_final.drop(columns=['piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege'], inplace=True)
+    df_final.drop(columns=['piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'cfop', 'icms_cst', 'protege'], inplace=True)
 
     df_final = df_final.rename(columns=lambda x: x.rstrip('_id') if x.endswith('_id') else x)
     

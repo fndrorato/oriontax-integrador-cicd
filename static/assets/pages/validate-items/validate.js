@@ -134,16 +134,19 @@ function validateCodes(codes, client) {
         $.ajax({
             url: urlValidateCode, // Your server-side validation endpoint
             data: {
-                'codes': JSON.stringify(codes), // Send codes as a JSON string
+                'codes': codes, // Send codes as a JSON string
                 'client': client
             },
             dataType: 'json',
             success: function(data) {
+                console.log(data)
                 if (data.success === false) {
                     // Handle error response from server (e.g., some codes invalid)
-                    resolve(data.invalidCodes || []); // Resolve with an array of invalid codes
+                    // resolve(data.invalidCodes || []); // Resolve with an array of invalid codes
+                    resolve(false);
                 } else {
-                    resolve([]); // All codes are valid
+                    // resolve([]); // All codes are valid
+                    resolve(true);
                 }
             },
             error: function() {
