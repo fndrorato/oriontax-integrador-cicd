@@ -226,10 +226,12 @@ class PasswordResetView(PasswordResetView):
         Send a django.core.mail.EmailMultiAlternatives to `to_email`.
         """
         # Add user to context
-        email = context['email']
         User = get_user_model()
-        user = User.objects.get(email=email)
-        context['user'] = user
+        try:
+            user = User.objects.get(email=context['email'])
+            context['user'] = user
+        except User.DoesNotExist:
+            context['user'] = None
         
         subject = render_to_string(subject_template_name, context)
         # Email subject *must not* contain newlines
