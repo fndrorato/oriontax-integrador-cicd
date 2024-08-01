@@ -12,6 +12,7 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.urls import reverse, reverse_lazy
 from django.utils.html import strip_tags
 from django.contrib import messages
 from django.urls import reverse_lazy
