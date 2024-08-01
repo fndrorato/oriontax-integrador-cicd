@@ -1,0 +1,1 @@
+Bem-vindo(a) ao nosso sistema, {{ user.get_full_name }}!

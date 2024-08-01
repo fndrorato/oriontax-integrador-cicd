@@ -1,0 +1,10 @@
+Olá {{ user.get_full_name }},
+
+Bem-vindo(a) ao nosso sistema!
+
+Para criar sua senha, clique no link abaixo:
+
+{{ password_reset_url }}
+
+Atenciosamente,
+A Equipe

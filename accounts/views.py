@@ -1,5 +1,6 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import PasswordChangeView, PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.http import JsonResponse
@@ -8,7 +9,9 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.template.loader import render_to_string
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, send_mail
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 from django.utils.html import strip_tags
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -17,6 +20,10 @@ from django.views.generic import TemplateView, ListView, UpdateView
 from django.contrib.auth.models import Group, User 
 from .models import Profile
 from .forms import UserModelForm, ProfileForm, generate_temporary_password
+import random
+import string
+
+
 
 @csrf_exempt
 def login_view(request):
@@ -88,6 +95,9 @@ class UserCreateView(TemplateView):
                 if request.POST.get('group'):
                     selected_group = Group.objects.get(name=request.POST.get('group'))
                     selected_group.user_set.add(user)
+                    
+                # Enviar e-mail de boas-vindas
+                self.send_welcome_email(user, request)                    
 
                 return redirect(reverse_lazy('new_user'))
             except IntegrityError as e:
@@ -102,6 +112,25 @@ class UserCreateView(TemplateView):
             'profile_form': profile_form, 
             'group_choices': Group.objects.all().values_list('name', flat=True)
         })
+        
+    def send_welcome_email(self, user, request):
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        password_reset_url = request.build_absolute_uri(
+            reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+        )
+        context = {
+            'user': user,
+            'password_reset_url': password_reset_url,
+        }
+        subject = render_to_string('welcome_email_subject.txt', context)
+        message = render_to_string('welcome_email.txt', context)
+        send_mail(
+            subject.strip(),  # Assunto do e-mail
+            message,  # Corpo do e-mail
+            None,  # Remetente (usa DEFAULT_FROM_EMAIL do settings)
+            [user.email]  # Destinatário
+        )       
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class UserUpdateView(UpdateView):
