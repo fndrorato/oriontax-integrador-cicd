@@ -78,6 +78,7 @@ class UserCreateView(TemplateView):
                 user = user_form.save(commit=False)
                 user.username = user.email  # set username to email
                 user.set_password(password)  # set temporary password
+                user.is_active = True
                 user.save()
 
                 # Verifique se o usuário já tem um perfil
