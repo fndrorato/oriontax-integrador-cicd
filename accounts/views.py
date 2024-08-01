@@ -227,6 +227,7 @@ class PasswordResetView(PasswordResetView):
         """
         # Add user to context
         email = context['email']
+        User = get_user_model()
         user = User.objects.get(email=email)
         context['user'] = user
         
