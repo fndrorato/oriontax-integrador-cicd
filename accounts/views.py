@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -210,13 +211,6 @@ class PasswordResetView(PasswordResetView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        User = get_user_model()
-        email = self.request.POST.get('email')
-        try:
-            user = User.objects.get(email=email)
-            context['user'] = user
-        except User.DoesNotExist:
-            context['user'] = None
         context['protocol'] = self.request.scheme
         context['domain'] = self.request.get_host()
         return context 
@@ -227,11 +221,15 @@ class PasswordResetView(PasswordResetView):
         """
         # Add user to context
         User = get_user_model()
+        # Obtenha o usuário com segurança
         try:
-            user = User.objects.get(email=context['email'])
-            context['user'] = user
+            user = get_object_or_404(User, email=context['email'])
         except User.DoesNotExist:
-            context['user'] = None
+            user = None 
+            
+        # Adicione o usuário ao contexto se existir
+        if user:
+            context['user'] = user             
         
         subject = render_to_string(subject_template_name, context)
         # Email subject *must not* contain newlines
