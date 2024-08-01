@@ -206,6 +206,15 @@ class PasswordResetView(PasswordResetView):
     subject_template_name = 'custom_password_reset_subject.txt'
     success_url = '/password_reset/done/'   
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_model = User()
+        user = user_model.objects.get(email=self.request.POST.get('email'))
+        context['user'] = user
+        context['protocol'] = self.request.scheme
+        context['domain'] = self.request.get_host()
+        return context    
+    
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'password_reset_done.html'
 
