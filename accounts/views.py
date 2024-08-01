@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import PasswordChangeView, PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib import messages
@@ -208,9 +208,13 @@ class PasswordResetView(PasswordResetView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user_model = User()
-        user = user_model.objects.get(email=self.request.POST.get('email'))
-        context['user'] = user
+        User = get_user_model()
+        email = self.request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            context['user'] = user
+        except User.DoesNotExist:
+            context['user'] = None
         context['protocol'] = self.request.scheme
         context['domain'] = self.request.get_host()
         return context    
