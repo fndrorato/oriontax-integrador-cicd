@@ -78,7 +78,7 @@
                     <i class="icofont icofont-filter"></i>
                 </button>   
                 
-                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#uploadModal"> 
+                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#uploadModal" onclick="clearDiv()"> 
                     <i class="feather icon-upload-cloud"></i>
                     Fazer Upload em Excel
                 </button>    
@@ -921,6 +921,15 @@ naturezareceitaData.push({
             messagesDiv.style.opacity = '1'; // Define a opacidade para 1
         }, 10); // Pequeno atraso para permitir que a transição funcione
     }
+
+    function clearDiv() {
+        const messagesDiv = document.getElementById('messages');
+        $('.j-response').html('');
+        messagesDiv.style.opacity = '0'; // Define a opacidade para 0
+        setTimeout(() => {
+            messagesDiv.style.visibility = 'hidden'; // Define hidden após a transição
+        }, 500); // Tempo correspondente à duração da transição de opacidade
+    }      
     
 </script>
 

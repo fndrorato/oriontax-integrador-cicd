@@ -1694,20 +1694,16 @@ def validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, cbenef_da
         if row['icms_aliquota_reduzida'] not in valid_icms_aliquotas:
             errors.append(f"Erro na linha {index + 2} [{column_name}]: O valor do ICMS alíquota reduzida não é válido.")
 
-    print('icms_cst:', row['icms_cst'], ' cbenef:',row['cbenef'])
     cbenef_info = cbenef_data.get(row['cbenef'])
     column_name = 'cbenef'
     if row['icms_cst'] in ['20', '40', '41']:
-        print('entrrou no  icmscst')
         if row['cbenef']:
-            print('entrrou no cbenef')
             if cbenef_info:
                 if row['icms_cst'] != cbenef_info['icmsCst']:
                     errors.append(f"Erro na linha {index + 2} [{column_name}]: ICMS CST {row['icms_cst']} não corresponde ao CBENEF {row['cbenef']}.")
         else:
             errors.append(f"Erro na linha {index + 2} [{column_name}]: Para o CST ICMS selecionado, o CBENEF é obrigatório.")
 
-    print('naturezareceita')
     column_name = 'naturezareceita'
     if 'naturezareceita' not in unnecessary_fields:
         if row['piscofins_cst'] in ['04', '05', '06']:
@@ -1740,7 +1736,7 @@ class XLSXUploadDivergentView(View):
     ]     
 
     def post(self, request, client_id):
-        print('Divergentes');
+        print('Divergentes')
         start_time = time.time()
         client = get_object_or_404(Client, id=client_id)
         unnecessary_fields = client.erp.unnecessary_fields
@@ -1756,7 +1752,7 @@ class XLSXUploadDivergentView(View):
                     'tipo_produto': str,  # Adicionar tipo_produto
                 })
                 
-                # print(df.columns)
+
                 
                 
                 # 1. Remover colunas específicas
@@ -1769,6 +1765,16 @@ class XLSXUploadDivergentView(View):
                     'code': 'codigo'
                 }
                 df = df.rename(columns=lambda x: x.replace('_base', '').replace('_cliente', '') if x not in rename_mapping else rename_mapping[x])
+                # Garantindo que a coluna ncm não terá .0 no final
+                df['ncm'] = df['ncm'].astype(str).str.rstrip('.0')
+                df['cest'] = df['cest'].astype(str).str.rstrip('.0')
+                df['codigo'] = df['codigo'].astype(str).str.rstrip('.0')
+                
+                pd.set_option('display.max_columns', None)
+                # print(df['ncm'].head())
+                # print(df['cest'].head())
+                # print(df.info())
+                # print(df.head())
 
                 # print(df.columns)
                 # Verificação das colunas obrigatórias
