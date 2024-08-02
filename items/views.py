@@ -1756,10 +1756,12 @@ class XLSXUploadDivergentView(View):
                     'tipo_produto': str,  # Adicionar tipo_produto
                 })
                 
+                # print(df.columns)
+                
                 
                 # 1. Remover colunas específicas
                 columns_to_remove = [col for col in df.columns if col.endswith('_cliente')]
-                columns_to_remove.append('client__name')  # Adicionando client__name à lista de colunas para remover
+                columns_to_remove.append('Cliente')  
                 df = df.drop(columns=columns_to_remove)
 
                 # 2. Renomear colunas
@@ -1768,7 +1770,7 @@ class XLSXUploadDivergentView(View):
                 }
                 df = df.rename(columns=lambda x: x.replace('_base', '').replace('_cliente', '') if x not in rename_mapping else rename_mapping[x])
 
-                print(df.columns)
+                # print(df.columns)
                 # Verificação das colunas obrigatórias
                 missing_columns = [col for col in self.REQUIRED_COLUMNS if col not in df.columns]
                 if missing_columns:
