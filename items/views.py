@@ -1741,20 +1741,41 @@ class XLSXUploadDivergentView(View):
         client = get_object_or_404(Client, id=client_id)
         unnecessary_fields = client.erp.unnecessary_fields
         form = CSVUploadForm(request.POST, request.FILES)
+        
+        # Verifique se o parâmetro 'new_items' foi passado e se é verdadeiro
+        new_items = request.POST.get('new_items')
+        if new_items:
+            new_items = new_items.lower() == 'true'
+        else:
+            new_items = False
+                    
         if form.is_valid():
             xlsx_file = request.FILES['csv_file']
             try:
-                df = pd.read_excel(xlsx_file, dtype={
-                    'ncm_base': str, 
-                    'cest_base': str, 
-                    'barcode_base': str, 
-                    'naturezareceita_base': str,
-                    'tipo_produto': str,  # Adicionar tipo_produto
-                })
+                if new_items:
+                    df = pd.read_excel(xlsx_file, dtype={
+                        'ncm': str, 
+                        'cest': str, 
+                        'barcode': str, 
+                        'naturezareceita': str,
+                        'tipo_produto': str,  # Adicionar tipo_produto
+                    })                    
+                else:
+                    df = pd.read_excel(xlsx_file, dtype={
+                        'ncm_base': str, 
+                        'cest_base': str, 
+                        'barcode_base': str, 
+                        'naturezareceita_base': str,
+                        'tipo_produto': str,  # Adicionar tipo_produto
+                    })
                 
+                # Função para remover .0 apenas quando presente
+                def remove_trailing_dot_zero(x):
+                    x = str(x)
+                    if x.endswith('.0'):
+                        return x[:-2]
+                    return x                
 
-                
-                
                 # 1. Remover colunas específicas
                 columns_to_remove = [col for col in df.columns if col.endswith('_cliente')]
                 columns_to_remove.append('Cliente')  
@@ -1766,12 +1787,13 @@ class XLSXUploadDivergentView(View):
                 }
                 df = df.rename(columns=lambda x: x.replace('_base', '').replace('_cliente', '') if x not in rename_mapping else rename_mapping[x])
                 # Garantindo que a coluna ncm não terá .0 no final
-                df['ncm'] = df['ncm'].astype(str).str.rstrip('.0')
-                df['cest'] = df['cest'].astype(str).str.rstrip('.0')
-                df['codigo'] = df['codigo'].astype(str).str.rstrip('.0')
+                # print(df['ncm'].head(8))
+                # df['ncm'] = df['ncm'].apply(remove_trailing_dot_zero)
+                # df['cest'] = df['cest'].astype(str).str.rstrip('.0')
+                # df['codigo'] = df['codigo'].astype(str).str.rstrip('.0')
                 
                 pd.set_option('display.max_columns', None)
-                # print(df['ncm'].head())
+                # print(df['ncm'].head(8))
                 # print(df['cest'].head())
                 # print(df.info())
                 # print(df.head())
@@ -1892,7 +1914,6 @@ class XLSXUploadDivergentView(View):
                     ('cest', None, 7, True),
                     ('description', None, None, False) 
                 ]
-                print(df.info())
 
                 for column_name, valid_set, *length in columns_to_check:
                     if len(length) == 2:  # Se fornecidos length e allow_empty
@@ -1913,7 +1934,6 @@ class XLSXUploadDivergentView(View):
                         all_errors.extend(errors)
 
                 if all_errors:
-                    print(all_errors)
                     end_time = time.time()
                     elapsed_time = round(end_time - start_time, 3)
                     return JsonResponse({
@@ -2030,7 +2050,17 @@ class XLSXUploadDivergentView(View):
                                 client=client,
                                 code__in=[item.code for item in items_to_update]  
                             )
-                            imported_items_to_update.update(is_pending=False)                        
+                            imported_items_to_update.update(is_pending=False)  
+                    
+                    # Lógica adicional para items_to_create e new_items
+                    if items_to_create and new_items:
+                        with transaction.atomic():
+                            # Atualiza os itens correspondentes em ImportedItem
+                            imported_items_to_create = ImportedItem.objects.filter(
+                                client=client,
+                                code__in=[item.code for item in items_to_create]
+                            )
+                            imported_items_to_create.update(is_pending=False)                                                  
 
             except (pd.errors.ParserError, KeyError, TypeError, ValueError) as e:
                 self.logger.error(f"Error processing Excel file: {e}")  

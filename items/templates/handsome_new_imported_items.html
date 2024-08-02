@@ -811,10 +811,10 @@ naturezareceitaData.push({
         
         // Use o evento 'submit' no formulário corretamente identificado pelo ID
         $('#j-pro').on('submit', function(event) {
-            console.log('upload form');
             event.preventDefault();
             
             var formData = new FormData(this);
+            formData.append('new_items', true); 
             hideDiv();
             
             $.ajax({
