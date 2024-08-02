@@ -947,17 +947,26 @@
                 if (data.status === 'success') {
                     swal(
                         'Sucesso!',
-                        'Dados enviados com sucesso.',
+                        data.message,
                         'success'
                     );
                     $('#loader-sent-data').hide();
                 } else {
-                    swal(
-                        'Erro!',
-                        'Ocorreu um erro ao enviar os dados do cliente.',
-                        'error'
-                    );                    
-                    console.log('Error: ' + data.message);
+                    if (data.status === 'warning') {
+                        swal(
+                            'Atenção!',
+                            data.message,
+                            'warning'
+                        );                    
+                        console.log('Error: ' + data.message);
+                    } else {
+                        swal(
+                            'Erro!',
+                            data.message,
+                            'error'
+                        );                    
+                        console.log('Error: ' + data.message);
+                    }
                     $('#loader-sent-data').hide();
                 }
             });

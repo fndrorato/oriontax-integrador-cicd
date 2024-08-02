@@ -298,9 +298,16 @@ class RunUpdateView(View):
             result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
 
             if result.returncode == 0:  # Código de saída 0 indica sucesso
-                return JsonResponse({'status': 'success', 'message': 'Script executed successfully'})
+                return JsonResponse({'status': 'success', 'message': 'Dados enviados com sucesso.'})
             else:
-                return JsonResponse({'status': 'error', 'message': 'Error executing script'})
+                if result.returncode == 2:
+                    return JsonResponse({'status': 'warning', 'message': 'Nenhum produto para ser sincronizado.'})
+                elif result.returncode == 3:
+                    return JsonResponse({'status': 'error', 'message': 'Erro ao executar a atualização.'})
+                elif result.returncode == 4:
+                    return JsonResponse({'status': 'error', 'message': 'Nao foi possível estabelecer conexão com o cliente.'})
+                else:
+                    return JsonResponse({'status': 'error', 'message': 'Ocorreu um erro ao executar a sincronização'})
             
         except Exception as e:
             print(f"Error: {str(e)}")

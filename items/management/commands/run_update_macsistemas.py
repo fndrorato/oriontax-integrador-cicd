@@ -182,13 +182,15 @@ def connect_and_update(host, user, password, port, database, client_name, client
             connection.commit()  # Confirma a transação
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
             print(f"Atualização realizada com sucesso para o cliente {client_name}")
-            return True, initial_log
+            code_mensagem = "Atualização realizada com sucesso."
+            return True, initial_log, code_mensagem
 
         except Exception as query_error:
             connection.rollback()  # Desfaz a transação em caso de erro
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao executar a atualização em massa: {query_error}\n"
             print(f"Erro ao executar a atualização em massa: {query_error}")
-            return False, initial_log
+            code_mensagem = 3
+            return False, initial_log, code_mensagem
 
         finally:
             cursor.close()
@@ -196,7 +198,8 @@ def connect_and_update(host, user, password, port, database, client_name, client
     except Exception as conn_error:
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao estabelecer conexão: {conn_error}\n"
         print(f"Erro ao estabelecer conexão: {conn_error}")
-        return False, initial_log
+        code_mensagem = 4
+        return False, initial_log, code_mensagem
 
     finally:
         if connection:
@@ -268,12 +271,6 @@ if __name__ == "__main__":
 
         # Cria um DataFrame a partir da lista de dicionários
         items_df = pd.DataFrame(items_list) 
-        # Removendo as colunas do DataFrame
-        items_df = items_df.drop(columns=columns_to_remove)  
-        print('Convertendo o DF para a versao do clinte')
-        items_df = convert_df_otx_version_to_df_client(items_df)    
-        print('DF convertido')
-        # sys.exit(1)  
         
         print('Total de itens em DF:', len(items_df))
         # Verifica se a quantidade de itens é maior que 1
@@ -284,10 +281,16 @@ if __name__ == "__main__":
             print(f"Não há atualizações para o cliente: {client.name}")
             save_imported_logs(client_id, initial_log) 
             if args.client_id:
-                sys.exit(1)  # Sair com código de erro 1 
-        else:              
+                sys.exit(2)  # Sair com código de erro 1 
+        else:   
+            print(items_df.columns)
+            items_df = items_df.drop(columns=columns_to_remove)  
+            print('Convertendo o DF para a versao do clinte')
+            items_df = convert_df_otx_version_to_df_client(items_df)    
+            print('DF convertido')
+            # sys.exit(1)                         
             try:
-                result, initial_log = connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log)
+                result, initial_log, mensagem_resultante = connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log)
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
                 print(f"Erro ao conectar ao cliente {client_name}: {e}") 
@@ -301,10 +304,9 @@ if __name__ == "__main__":
                     # Vamos atualizar apenas os itens que estao com staus = 1, ou seja Aguardando Sincronização
                     # os com status 2, apesar de ter sido enviado, não será atualizado novamente para manter
                     # a mesma data de envio original
-                    print('Ira gerar o codes to update')
+
                     current_time = timezone.now()
                     codes_to_update = items_df[items_df['status_item'] == 1]['code'].tolist()
-                    print('Codes:',codes_to_update)
                     num_updated = Item.objects.filter(
                         code__in=codes_to_update, 
                         status_item=1, 
@@ -336,5 +338,10 @@ if __name__ == "__main__":
                 save_imported_logs(client_id, initial_log)
                 print(f"Ocorreu um erro ao inserir as validações")  
                 if args.client_id:
-                    sys.exit(1)  # Sair com código de erro 1                       
+                    if mensagem_resultante == 3:
+                        sys.exit(3)
+                    elif mensagem_resultante == 4:
+                        sys.exit(4)
+                    else:
+                        sys.exit(1)  # Sair com código de erro 1                       
                        
