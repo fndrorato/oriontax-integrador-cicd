@@ -483,6 +483,9 @@ def validateSelect(client_id, items_df, df, initial_log=None):
         result_integration = ''
     else: 
         result_integration = initial_log
+    
+    client_instance = Client.objects.get(id=client_id)
+    unnecessary_fields = client_instance.erp.unnecessary_fields
         
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Dados Recebidos \n'
@@ -601,6 +604,9 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     divergence_counts = {col: 0 for col in expected_columns}
 
     columns_not_compare = ['sequencial', 'estado_origem', 'estado_destino']
+    # Mesclando as duas listas
+    columns_not_compare = columns_not_compare + unnecessary_fields
+  
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare]    
     # Criar uma nova coluna vazia para armazenar as colunas divergentes

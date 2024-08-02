@@ -31,7 +31,7 @@
         <!-- Zero config.table start -->
         <div class="card">
             <div class="card-header">
-                <h5>Lista de Produtos: {{ client_name }} </h5>
+                <h5>Lista de Produtos:  <a href="{% url 'client_update' client.id %}">{{ client_name }}</a> </h5>
 
                 <a href="{% url 'item_create' client_id=client.id %}" type="button" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-plus-circle m-r-5"></i>
@@ -62,7 +62,7 @@
                     Somente Revenda
                 </button>                
                                                                    
-                <span>Lista dos produtos cadastrados do cliente: {{ client_name }}</span>
+                <span class="text-danger">Total de produtos cadastrados: {{ total_items }}</span>
 
             </div>
             <div class="card-block">                  
@@ -147,8 +147,8 @@
                                 <li class="page-item">
                                     <a class="page-link" href="#">{{ page_num }}</a>
                                 </li>
-                            {% elif items.number == page_num %}
-                                <li class="page-item">
+                            {% elif page_obj.number == page_num %}
+                                <li class="page-item active">
                                     <a class="page-link" href="#">{{ page_num }}</a>
                                 </li>
                             {% else %}

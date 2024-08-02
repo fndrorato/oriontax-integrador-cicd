@@ -302,6 +302,7 @@ if __name__ == "__main__":
                     # os com status 2, apesar de ter sido enviado, não será atualizado novamente para manter
                     # a mesma data de envio original
                     print('Ira gerar o codes to update')
+                    current_time = timezone.now()
                     codes_to_update = items_df[items_df['status_item'] == 1]['code'].tolist()
                     print('Codes:',codes_to_update)
                     num_updated = Item.objects.filter(
@@ -310,7 +311,7 @@ if __name__ == "__main__":
                         client=client
                     ).update(
                         status_item=2,
-                        sync_at=F('sync_at')
+                        sync_at=current_time
                     )          
 
                     if num_updated > 0:
