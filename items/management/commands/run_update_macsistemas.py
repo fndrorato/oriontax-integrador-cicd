@@ -142,7 +142,7 @@ def connect_and_update(host, user, password, port, database, client_name, client
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão estabelecida com sucesso para o cliente {client_name}\n"
 
         try:
-            batch_size=250
+            batch_size=750
             cursor = connection.cursor()
             connection.autocommit = False  # Desativa autocommit
 
