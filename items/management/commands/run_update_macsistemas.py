@@ -142,8 +142,8 @@ def connect_and_update(host, user, password, port, database, client_name, client
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão estabelecida com sucesso para o cliente {client_name}\n"
 
         try:
-            batch_size=500
-            cursor = connection.cursor(prepared=True)
+            batch_size=1000
+            cursor = connection.cursor()
             connection.autocommit = False  # Desativa autocommit
 
             # Prepara os dados para atualização em massa
@@ -184,9 +184,9 @@ def connect_and_update(host, user, password, port, database, client_name, client
             for i in range(0, len(values), batch_size):
                 batch = values[i:i + batch_size]
                 cursor.executemany(update_query, batch)
-                # connection.commit()  # Confirma a transação após cada lote
+                connection.commit()  # Confirma a transação após cada lote
             
-            connection.commit()  # Confirma a transação
+            # connection.commit()  # Confirma a transação
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
             print(f"Atualização realizada com sucesso para o cliente {client_name}")
             code_mensagem = "Atualização realizada com sucesso."
