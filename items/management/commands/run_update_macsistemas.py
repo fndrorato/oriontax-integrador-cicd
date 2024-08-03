@@ -142,6 +142,7 @@ def connect_and_update(host, user, password, port, database, client_name, client
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão estabelecida com sucesso para o cliente {client_name}\n"
 
         try:
+            batch_size=500
             cursor = connection.cursor()
 
             # Prepara os dados para atualização em massa
@@ -177,9 +178,15 @@ def connect_and_update(host, user, password, port, database, client_name, client
                     cnpj = %s AND codigo = %s
             """
             # Executa a atualização em massa
-            cursor.executemany(update_query, values)
+            # cursor.executemany(update_query, values)
+            # Processar em lotes
+            for i in range(0, len(values), batch_size):
+                batch = values[i:i + batch_size]
+                cursor.executemany(update_query, batch)
+                connection.commit()  # Confirma a transação após cada lote
+            
 
-            connection.commit()  # Confirma a transação
+            # connection.commit()  # Confirma a transação
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
             print(f"Atualização realizada com sucesso para o cliente {client_name}")
             code_mensagem = "Atualização realizada com sucesso."
@@ -282,14 +289,17 @@ if __name__ == "__main__":
             save_imported_logs(client_id, initial_log) 
             if args.client_id:
                 sys.exit(2)  # Sair com código de erro 1 
-        else:   
-            print(items_df.columns)
+        else:               
             items_df = items_df.drop(columns=columns_to_remove)  
             print('Convertendo o DF para a versao do clinte')
+            timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+            initial_log += f'[{timestamp}] - Iniciando conversão  dos dados para o cliente: {client.name} \n'
             items_df = convert_df_otx_version_to_df_client(items_df)    
             print('DF convertido')
             # sys.exit(1)                         
             try:
+                timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+                initial_log += f'[{timestamp}] - Conectando e atuaizando... \n'                
                 result, initial_log, mensagem_resultante = connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log)
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
