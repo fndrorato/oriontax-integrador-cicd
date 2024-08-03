@@ -179,39 +179,6 @@ def connect_and_update(host, user, password, port, database, client_name, client
                 WHERE 
                     cnpj = %s AND codigo = %s
             """
-            
-            # Analisar a consulta com EXPLAIN
-            explain_query = """
-                EXPLAIN UPDATE oriontax.PRODUTO
-                SET 
-                    descricao = %s,
-                    ncm = %s,
-                    cest = %s,
-                    tributacao = %s,
-                    icms = %s,
-                    cst = %s,
-                    cstpis = %s,
-                    pis = %s,
-                    cstcofins = %s,
-                    cofins = %s,
-                    redbcicms = %s,
-                    codbenef = %s,
-                    dt_atualizacao = %s,
-                    alterado_orion = %s
-                WHERE 
-                    cnpj = %s AND codigo = %s
-            """            
-            # Executa a atualização em massa
-            # cursor.executemany(update_query, values)
-            # Executa EXPLAIN
-            cursor.execute(explain_query)
-            explain_result = cursor.fetchall()
-
-            # Formata e adiciona o resultado ao log
-            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - EXPLAIN result:\n"
-            for row in explain_result:
-                initial_log += f"{row}\n"  # Adiciona cada linha do resultado ao log
-            
             # Processar em lotes
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Antes do for range\n"
             for i in range(0, len(values), batch_size):
