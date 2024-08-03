@@ -184,14 +184,11 @@ def connect_and_update(host, user, password, port, database, client_name, client
             # Processar em lotes
             for i in range(0, len(values), batch_size):
                 batch = values[i:i + batch_size]
-                for row in batch:
-                    initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Antes do cursor execute\n"
-                    cursor.execute(update_query, row)  # Executa a consulta para cada linha individualmente
-                
-                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Antes do commit\n"                    
-                connection.commit()                  
-                # cursor.executemany(update_query, batch)
-                # connection.commit()  # Confirma a transação após cada lote
+                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Antes do executemany\n"
+                cursor.executemany(update_query, batch)
+                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Antes do commit\n"
+                connection.commit()  # Confirma a transação após cada lote
+
             
             # connection.commit()  # Confirma a transação
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
