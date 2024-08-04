@@ -138,67 +138,87 @@ def connect_and_update(host, user, password, port, database, client_name, client
             port=port,
             database=database
         )
-        
+
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão estabelecida com sucesso para o cliente {client_name}\n"
 
         try:
-            batch_size=1000
             cursor = connection.cursor()
-            connection.autocommit = False  # Desativa autocommit
+            connection.autocommit = False
 
-            # Prepara os dados para atualização em massa
-            current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            values = [
-                (
-                    row['description'], row['ncm'], row['cest'], row['tributacao'], row['icms'], row['cst'],
-                    row['cstpis'], row['pis'], row['cstcofins'], row['cofins'], row['redbcicms'], row['cbenef'],
-                    current_datetime, 'S', client_cnpj, row['code']
-                )
-                for _, row in items_df.iterrows()
-            ]
-            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Finalizando o values\n"            
-
-            # Define a query de atualização
             update_query = """
                 UPDATE oriontax.PRODUTO
                 SET 
-                    descricao = %s,
-                    ncm = %s,
-                    cest = %s,
-                    tributacao = %s,
-                    icms = %s,
-                    cst = %s,
-                    cstpis = %s,
-                    pis = %s,
-                    cstcofins = %s,
-                    cofins = %s,
-                    redbcicms = %s,
-                    codbenef = %s,
-                    dt_atualizacao = %s,
-                    alterado_orion = %s
-                WHERE 
-                    cnpj = %s AND codigo = %s
+                    descricao = CASE codigo 
             """
-            # Processar em lotes
-            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Antes do for range\n"
-            for i in range(0, len(values), batch_size):
-                batch = values[i:i + batch_size]
-                start_time = datetime.now()
-                initial_log += f"[{start_time.strftime('%d/%m/%Y %H:%M:%S')}] - Antes do executemany\n"
-                cursor.executemany(update_query, batch)
-                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Após executemany, tempo gasto: {datetime.now() - start_time}\n"
-                connection.commit()  # Confirma a transação após cada lote
-                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Após commit\n"
-            
-            
-            # connection.commit()  # Confirma a transação
+            values = []
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['description'])
+            update_query += " ELSE descricao END, ncm = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['ncm'])
+            update_query += " ELSE ncm END, cest = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['cest'])
+            update_query += " ELSE cest END, tributacao = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['tributacao'])
+            update_query += " ELSE tributacao END, icms = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['icms'])
+            update_query += " ELSE icms END, cst = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['cst'])
+            update_query += " ELSE cst END, cstpis = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['cstpis'])
+            update_query += " ELSE cstpis END, pis = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['pis'])
+            update_query += " ELSE pis END, cstcofins = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['cstcofins'])
+            update_query += " ELSE cstcofins END, cofins = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['cofins'])
+            update_query += " ELSE cofins END, redbcicms = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['redbcicms'])
+            update_query += " ELSE redbcicms END, codbenef = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(row['cbenef'])
+            update_query += " ELSE codbenef END, dt_atualizacao = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            update_query += " ELSE dt_atualizacao END, alterado_orion = CASE codigo"
+            for _, row in items_df.iterrows():
+                update_query += f" WHEN '{row['code']}' THEN %s"
+                values.append('S')
+            update_query += " ELSE alterado_orion END WHERE cnpj = %s"
+            values.append(client_cnpj)
+
+            cursor.execute(update_query, values)
+            connection.commit()
+
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
             print(f"Atualização realizada com sucesso para o cliente {client_name}")
             code_mensagem = "Atualização realizada com sucesso."
             return True, initial_log, code_mensagem
 
         except Exception as query_error:
-            connection.rollback()  # Desfaz a transação em caso de erro
+            connection.rollback()
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao executar a atualização em massa: {query_error}\n"
             print(f"Erro ao executar a atualização em massa: {query_error}")
             code_mensagem = 3
@@ -218,7 +238,6 @@ def connect_and_update(host, user, password, port, database, client_name, client
             connection.close()
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão com o banco de dados fechada para o cliente {client_name}\n"
             print("Conexão com o banco de dados fechada")
-
 
 if __name__ == "__main__":
     import argparse  # Import argparse for command-line arguments
