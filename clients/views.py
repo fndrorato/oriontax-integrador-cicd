@@ -73,7 +73,11 @@ class ClientUpdateView(UpdateView):
         context['users'] = User.objects.filter(groups=analysts_group)
         # Obtenha o ID do cliente
         client_id = self.kwargs.get('pk')
-        context['client_id'] = client_id   
+        context['client_id'] = client_id
+        
+        # Obtenha a instância do cliente
+        client = Client.objects.get(pk=client_id)
+        context['client_name'] = client.name        
         
         # Obtenha as stores associadas ao cliente
         stores = Store.objects.filter(client_id=client_id)
@@ -97,7 +101,6 @@ class ClientUpdateView(UpdateView):
         else:
             # Não salva o campo password_route vazio
             self.object.password_route = self.object.__class__.objects.get(pk=self.object.pk).password_route
-        
         
         self.object.save()
         return super().form_valid(form)       
