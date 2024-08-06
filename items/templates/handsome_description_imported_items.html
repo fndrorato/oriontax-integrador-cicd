@@ -725,6 +725,7 @@
                                     errorContainer.classList.add('alert-success');
                                     errorContainer.classList.remove('alert-danger');
                                     $('#loader').hide();
+                                    location.reload(); 
                                     // Apply success class to all rows
                                     for (var i = 0; i < hot.countRows(); i++) {
                                         if (dataToSend[i][30]) { // Check if the checkbox value is true
@@ -802,7 +803,8 @@
                     resp += '<li class="success">Tempo de processamento: ' + response.elapsed_time + ' segundos</li>';
                     resp += '<li class="success">Linhas processadas:' + response.processed_rows + '</li>';
                     resp += '</ul>';
-                    $('.j-response').html(resp);                        
+                    $('.j-response').html(resp);  
+                    location.reload();                       
                 },
                 error: function(xhr, status, error) {
                     console.log(xhr);

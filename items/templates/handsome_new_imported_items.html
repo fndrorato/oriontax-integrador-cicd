@@ -831,7 +831,8 @@ naturezareceitaData.push({
                     resp += '<li class="success">Tempo de processamento: ' + response.elapsed_time + ' segundos</li>';
                     resp += '<li class="success">Linhas processadas:' + response.processed_rows + '</li>';
                     resp += '</ul>';
-                    $('.j-response').html(resp);                        
+                    $('.j-response').html(resp);  
+                    location.reload();                      
                 },
                 error: function(xhr, status, error) {
                     console.log(xhr);
