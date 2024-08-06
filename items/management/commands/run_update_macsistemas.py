@@ -109,7 +109,7 @@ def convert_df_otx_version_to_df_client(df_client):
     '''
     # Realizar o merge entre df_client e df_icms com base nas colunas de interesse
     df_merged = pd.merge(df_client, df_icms, on=['cfop', 'icms_cst', 'protege'], how='left')
-
+ 
     # Realizar o merge entre df_merged e df_client
     df_final = df_merged
     # Drop redundant columns from the final DataFrame
@@ -142,6 +142,9 @@ def connect_and_update(host, user, password, port, database, client_name, client
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão estabelecida com sucesso para o cliente {client_name}\n"
 
         try:
+            print("Colunas do DataFrame:", items_df.columns)
+            print("Primeiras linhas do DataFrame:\n", items_df.head())
+            
             cursor = connection.cursor()
             connection.autocommit = False
 
@@ -208,6 +211,14 @@ def connect_and_update(host, user, password, port, database, client_name, client
                 values.append('S')
             update_query += " ELSE alterado_orion END WHERE cnpj = %s"
             values.append(client_cnpj)
+            
+            # Print the query and values for debugging
+            # print("Query gerada:\n", update_query)
+            # print("Valores associados:\n", values)            
+            with open("debug_log.txt", "a") as f:
+                f.write(f"Query gerada:\n{update_query}\n")
+                f.write(f"Valores associados:\n{values}\n")
+            
 
             cursor.execute(update_query, values)
             connection.commit()

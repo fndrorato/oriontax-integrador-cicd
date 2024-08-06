@@ -116,9 +116,10 @@ def convert_df_client_to_df_otx_version(df_client):
                          on=['cstpis', 'pis', 'cstcofins', 'cofins'], how='left')  
 
     # Preencher valores NaN nas colunas piscofins_cst_id, pis_aliquota_id e cofins_aliquota_id
-    df_final['piscofins_cst_id'] = df_final['piscofins_cst_id'].fillna(df_final['cstpis'])
-    df_final['pis_aliquota_id'] = df_final['pis_aliquota_id'].fillna(df_final['pis'])
-    df_final['cofins_aliquota_id'] = df_final['cofins_aliquota_id'].fillna(df_final['cofins'])
+    
+    df_final['piscofins_cst_id'] = df_final['piscofins_cst_id'].fillna('00')
+    df_final['pis_aliquota_id'] = df_final['pis_aliquota_id'].fillna(99)
+    df_final['cofins_aliquota_id'] = df_final['cofins_aliquota_id'].fillna(99)
     
     
     # Drop redundant columns from the final DataFrame

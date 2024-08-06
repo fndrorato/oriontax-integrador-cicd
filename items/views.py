@@ -791,7 +791,7 @@ def save_bulk_imported_item(request):
         try:
             data = json.loads(request.POST.get('items', '[]'))
             
-            # print(data)
+            print(data)
             # return JsonResponse({'status': 'error', 'message': 'rrro'})
             # 7892840233945
             # Validate each item and collect errors if any
@@ -915,9 +915,8 @@ def save_bulk_imported_item(request):
                     user = request.user
                     current_time = timezone.now()  
                     
-                    
                     # return JsonResponse({'status': 'error', 'message': 'rrro'})                           
-                    
+                    print('tipo_produto:', tipo_produto, ' code:', code)
                     if tipo_produto == '1':
                         variavel_oriontax = {
                             'code': code,
@@ -1736,7 +1735,6 @@ class XLSXUploadDivergentView(View):
     ]     
 
     def post(self, request, client_id):
-        print('Divergentes')
         start_time = time.time()
         client = get_object_or_404(Client, id=client_id)
         unnecessary_fields = client.erp.unnecessary_fields
@@ -1754,6 +1752,7 @@ class XLSXUploadDivergentView(View):
             try:
                 if new_items:
                     df = pd.read_excel(xlsx_file, dtype={
+                        'codigo': str, 
                         'ncm': str, 
                         'cest': str, 
                         'barcode': str, 
@@ -1762,6 +1761,7 @@ class XLSXUploadDivergentView(View):
                     })                    
                 else:
                     df = pd.read_excel(xlsx_file, dtype={
+                        'code': str,
                         'ncm_base': str, 
                         'cest_base': str, 
                         'barcode_base': str, 
@@ -1786,19 +1786,9 @@ class XLSXUploadDivergentView(View):
                     'code': 'codigo'
                 }
                 df = df.rename(columns=lambda x: x.replace('_base', '').replace('_cliente', '') if x not in rename_mapping else rename_mapping[x])
-                # Garantindo que a coluna ncm não terá .0 no final
-                # print(df['ncm'].head(8))
-                # df['ncm'] = df['ncm'].apply(remove_trailing_dot_zero)
-                # df['cest'] = df['cest'].astype(str).str.rstrip('.0')
-                # df['codigo'] = df['codigo'].astype(str).str.rstrip('.0')
+
                 
                 pd.set_option('display.max_columns', None)
-                # print(df['ncm'].head(8))
-                # print(df['cest'].head())
-                # print(df.info())
-                # print(df.head())
-
-                # print(df.columns)
                 # Verificação das colunas obrigatórias
                 missing_columns = [col for col in self.REQUIRED_COLUMNS if col not in df.columns]
                 if missing_columns:
