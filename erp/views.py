@@ -1,3 +1,4 @@
+from rolepermissions.decorators import has_role_decorator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -15,6 +16,7 @@ class ErpsListView(ListView):
     context_object_name = 'erps'
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
 class NewErpCreateView(CreateView):
     model = ERP
     form_class = ERPForm
@@ -33,6 +35,7 @@ class ErpUpdateView(UpdateView):
         return reverse_lazy('erp_update', kwargs={'pk': self.object.pk})  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
 class ErpDeleteView(DeleteView):
     model = ERP
     template_name = 'update_erp.html'

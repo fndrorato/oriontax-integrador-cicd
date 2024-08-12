@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
+{% load permissions_tags %}
 
 {% block title %}
     <h4>Editar Cliente: {{ client_name }}</span>
@@ -36,6 +37,11 @@
 
 
 {% block content %}
+{% if user|has_any_role:"gerente,administrador" %}
+    <input type="hidden" id="data-is-analyst" value="False">
+{% else %}
+    <input type="hidden" id="data-is-analyst" value="True">
+{% endif %}
 <div class="row">
     <div class="col-sm-12">
         <!-- Product edit card start -->
@@ -103,8 +109,10 @@
                             <div class="tab-content">
                                 <!-- Inicio Tab Dados Cliente -->
                                 <div class="tab-pane active" id="home" role="tabpanel">
+                                    {% if user|has_any_role:"gerente,administrador" %}
                                     <form class="md-float-material card-block"  method="POST" id="form-create-user">
                                         {% csrf_token %}
+                                    {% endif %}
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <label class="col-sm-6 col-lg-4 col-form-label">Nome</label>
@@ -254,7 +262,7 @@
                                                 </div>                                                
                                             </div>                                            
                                         </div>   
-                                        
+                                        {% if user|has_role:"administrador" %}
                                         <hr>
 
                                         <div class="row">
@@ -303,8 +311,10 @@
                                                     </div>
                                                 </div>                                                
                                             </div>                                                                                                                                    
-                                        </div>                                         
+                                        </div>
+                                        {% endif %}                                         
 
+                                        {% if user|has_any_role:"gerente,administrador" %}
                                         <div class="row">
                                             <div class="col-sm-12">
                                                 <div class="text-center m-t-20">
@@ -315,18 +325,21 @@
                                             </div>
                                         </div>
                                     </form>
+                                    {% endif %}
                                 </div>
                                 <!-- End Tab Dados Cliente -->
                                 <!-- Inicio Tab Lojas -->
                                 <div class="tab-pane" id="stores" role="tabpanel">                                   
                                     <div class="card">
                                         <div class="card-block">
+                                            {% if user|has_any_role:"gerente,administrador" %}
                                             <div class="text-right m-b-20">
                                                 <button type="button" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target="#data-store">
                                                     <i class="icofont icofont-plus-circle"></i>
                                                     Nova Loja
                                                 </button>
                                             </div>                                            
+                                            {% endif %}
                                             <div class="dt-responsive table-responsive">
                                                 <table id="simpletable" class="table table-striped table-bordered nowrap">
                                                     <thead>
@@ -334,7 +347,9 @@
                                                         <th class="text-center">Nome</th>
                                                         <th class="text-center">CNPJ</th>
                                                         <th class="text-center">Cidade</th>
+                                                        {% if user|has_any_role:"gerente,administrador" %}
                                                         <th class="text-center">Ação</th>
+                                                        {% endif %}
                                                     </tr>
                                                     </thead>
                                                     <tbody>
@@ -344,6 +359,7 @@
                                                                     <td class="text-center align-middle">{{ store.corporate_name }}</td>
                                                                     <td class="text-center align-middle">{{ store.cnpj }}</td>
                                                                     <td class="text-center align-middle">{{ store.city }} - {{store.city.uf_estado}}</td>
+                                                                    {% if user|has_any_role:"gerente,administrador" %}
                                                                     <td class="text-center align-middle">
                                                                         <button onclick="loadStoreData({{ store.id }})" data-toggle="modal" data-target="#data-store" type="button" class="btn btn-primary btn-md waves-effect waves-light text-white text-center">
                                                                             <i class="icofont icofont-ui-edit"></i>
@@ -353,6 +369,7 @@
                                                                             <i class="icofont icofont-trash"></i>
                                                                         </button>                                                                         
                                                                     </td>
+                                                                    {% endif %}
                                                                 </tr>                                    
                                                             {% endfor %}
                                                         {% endif %}
@@ -974,6 +991,20 @@
         }          
              
       </script>  
+      <script>
+        // Verifica se o usuário é um analista
+        var isAnalyst = document.getElementById('data-is-analyst').value;
+
+        if (isAnalyst) {
+            // Seleciona todos os input, select, textarea e checkbox no documento
+            var fields = document.querySelectorAll('input, select, textarea, checkbox');
+            
+            // Itera sobre os campos e desabilita cada um deles
+            fields.forEach(function(field) {
+                field.disabled = true;
+            });
+        }
+    </script>      
 {% endblock anotherjs %}
 
 

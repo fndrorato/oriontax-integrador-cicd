@@ -8,6 +8,7 @@ from clients.views import CitySearchView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/v1/', include('api.urls')),
     path('', include('accounts.urls')),
     path('', include('erp.urls')),
     path('', include('clients.urls')),

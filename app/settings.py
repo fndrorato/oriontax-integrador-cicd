@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'rest_framework',
+    'rolepermissions',
     'crispy_forms',
     'widget_tweaks',
     'accounts',
@@ -51,6 +53,7 @@ INSTALLED_APPS = [
     'tasks',
     'accountings',
     'auditlog',
+    'api',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -159,6 +162,13 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+}
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.umbler.com'
 EMAIL_PORT = 587
@@ -206,4 +216,7 @@ LOGGING = {
         },
     },
 }
+
+ROLEPERMISSIONS_MODULE = 'app.permissions.roles'
+
 

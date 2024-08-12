@@ -1,3 +1,4 @@
+from rolepermissions.decorators import has_role_decorator
 from django.shortcuts import render, redirect
 from urllib.parse import urlencode
 from django.views.generic import CreateView, ListView, UpdateView, DeleteView
@@ -12,8 +13,8 @@ class AccountingsListView(ListView):
     model = Accounting
     template_name = 'list_accountings.html'
     context_object_name = 'accountings'
-    
-@method_decorator(login_required(login_url='login'), name='dispatch')
+
+@method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')    
 class NewAccountingCreateView(CreateView):
     model = Accounting
     form_class = AccountingForm
@@ -35,6 +36,7 @@ class NewAccountingCreateView(CreateView):
         return redirect(self.get_success_url())   
    
 @method_decorator(login_required(login_url='login'), name='dispatch')
+# @method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')    
 class AccountingUpdateView(UpdateView):
     model = Accounting
     form_class = AccountingForm

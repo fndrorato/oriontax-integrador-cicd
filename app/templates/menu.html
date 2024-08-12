@@ -1,3 +1,5 @@
+{% load permissions_tags %}
+
 <nav class="pcoded-navbar">
     <div class="pcoded-inner-navbar">
         <ul class="pcoded-item pcoded-left-item">
@@ -21,23 +23,19 @@
                             <span class="pcoded-mtext">Listar Clientes</span>
                             <span class="pcoded-mcaret"></span>
                         </a>
-                    </li>                    
+                    </li>     
+                    {% if user|has_any_role:"gerente,administrador" %}               
                     <li class=" ">
                         <a href="{% url 'client_create' %}" data-i18n="nav.animations.main">
                             <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
                             <span class="pcoded-mtext">Novo Cliente</span>
                             <span class="pcoded-mcaret"></span>
                         </a>
-                    </li>
-                    <li class=" ">
-                        <a href="{% url 'validate_simulate' %}" data-i18n="nav.animations.main">
-                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
-                            <span class="pcoded-mtext">Validar Integração</span>
-                            <span class="pcoded-mcaret"></span>
-                        </a>
-                    </li>                    
+                    </li> 
+                    {% endif %}                   
                 </ul>
             </li>
+            {% if user|has_any_role:"gerente,administrador" %}
             <li class="pcoded-hasmenu">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-unlock"></i></span>
@@ -51,7 +49,8 @@
                             <span class="pcoded-mtext">Listar Usuários</span>
                             <span class="pcoded-mcaret"></span>
                         </a>
-                    </li>                    
+                    </li>    
+                    {% if user|has_role:"administrador" %}                
                     <li class=" ">
                         <a href="{% url 'new_user' %}" data-i18n="nav.animations.main">
                             <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
@@ -59,8 +58,10 @@
                             <span class="pcoded-mcaret"></span>
                         </a>
                     </li>
+                    {% endif %}
                 </ul>
             </li>
+            {% endif %}
             <li class="pcoded-hasmenu">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-cpu"></i></span>
@@ -87,7 +88,7 @@
             <li class="pcoded-hasmenu">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-clipboard"></i></span>
-                    <span class="pcoded-mtext">Impostos</span>
+                    <span class="pcoded-mtext">Tributos</span>
                     <span class="pcoded-mcaret"></span>
                 </a>
                 <ul class="pcoded-submenu">

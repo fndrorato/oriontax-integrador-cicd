@@ -1,3 +1,4 @@
+from rolepermissions.decorators import has_role_decorator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse
@@ -36,6 +37,7 @@ class CfopsListView(ListView):
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class CfopCreateView(TemplateView):
     template_name = 'cfop.html'
 
@@ -68,6 +70,7 @@ class CfopDetailView(DetailView):
         return JsonResponse(data)  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class CfopUpdateView(UpdateView):
     model = Cfop
     form_class = CfopForm
@@ -80,6 +83,7 @@ class CfopUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})   
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class CfopDeleteView(View):
     def delete(self, request, *args, **kwargs):
         cfop_id = kwargs.get('pk')
@@ -108,6 +112,7 @@ class IcmsCstListView(ListView):
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsCstCreateView(TemplateView):
     template_name = 'icmscst.html'
 
@@ -139,6 +144,7 @@ class IcmsCstDetailView(DetailView):
         return JsonResponse(data)  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsCstUpdateView(UpdateView):
     model = IcmsCst
     form_class = IcmsCstForm
@@ -151,6 +157,7 @@ class IcmsCstUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})   
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsCstDeleteView(View):
     def delete(self, request, *args, **kwargs):
         code_id = kwargs.get('pk')
@@ -162,7 +169,6 @@ class IcmsCstDeleteView(View):
             return JsonResponse({'success': False, 'error': 'Icms CST not found'}, status=404)
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)                      
-
 
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
@@ -179,6 +185,7 @@ class IcmsAliquotaListView(ListView):
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsAliquotaCreateView(TemplateView):
     template_name = 'icmsaliquota.html'
 
@@ -210,6 +217,7 @@ class IcmsAliquotaDetailView(DetailView):
         return JsonResponse(data)  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsAliquotaUpdateView(UpdateView):
     model = IcmsAliquota
     form_class = IcmsAliquotaForm
@@ -222,6 +230,7 @@ class IcmsAliquotaUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})   
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsAliquotaDeleteView(View):
     def delete(self, request, *args, **kwargs):
         code_id = kwargs.get('pk')
@@ -250,6 +259,7 @@ class IcmsAliquotaReduzidaListView(ListView):
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsAliquotaReduzidaCreateView(TemplateView):
     template_name = 'icmsaliquotareduzida.html'
 
@@ -281,6 +291,7 @@ class IcmsAliquotaReduzidaDetailView(DetailView):
         return JsonResponse(data)  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsAliquotaReduzidaUpdateView(UpdateView):
     model = IcmsAliquotaReduzida
     form_class = IcmsAliquotaReduzForm
@@ -293,6 +304,7 @@ class IcmsAliquotaReduzidaUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})   
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class IcmsAliquotaReduzidaDeleteView(View):
     def delete(self, request, *args, **kwargs):
         code_id = kwargs.get('pk')
@@ -320,6 +332,7 @@ class CbenefListView(ListView):
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class CbenefCreateView(TemplateView):
     template_name = 'cbenef.html'
 
@@ -356,6 +369,7 @@ class CbenefDetailView(DetailView):
         return JsonResponse(data) 
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class CbenefUpdateView(UpdateView):
     model = CBENEF
     form_class = CBENEFForm
@@ -368,6 +382,7 @@ class CbenefUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})   
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class CbenefDeleteView(View):
     def delete(self, request, *args, **kwargs):
         code_id = kwargs.get('pk')
@@ -395,6 +410,7 @@ class ProtegeListView(ListView):
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class ProtegeCreateView(TemplateView):
     template_name = 'protege.html'
 
@@ -426,6 +442,7 @@ class ProtegeDetailView(DetailView):
         return JsonResponse(data)  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class ProtegeUpdateView(UpdateView):
     model = Protege
     form_class = ProtegeForm
@@ -438,6 +455,7 @@ class ProtegeUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})   
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class ProtegeDeleteView(View):
     def delete(self, request, *args, **kwargs):
         code_id = kwargs.get('pk')
@@ -466,6 +484,7 @@ class PisCofinsCstListView(ListView):
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class PisCofinsCstCreateView(TemplateView):
     template_name = 'piscofinsaliquota.html'
 
@@ -499,6 +518,7 @@ class PisCofinsCstDetailView(DetailView):
         return JsonResponse(data)  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class PisCofinsCstUpdateView(UpdateView):
     model = PisCofinsCst
     form_class = PisCofinsCstForm
@@ -511,6 +531,7 @@ class PisCofinsCstUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})   
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class PisCofinsCstDeleteView(View):
     def delete(self, request, *args, **kwargs):
         code_id = kwargs.get('pk')
@@ -541,6 +562,7 @@ class NaturezaReceitaListView(ListView):
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class NaturezaReceitaCreateView(TemplateView):
     template_name = 'naturezareceita.html'
 
@@ -575,6 +597,7 @@ class NaturezaReceitaDetailView(DetailView):
         return JsonResponse(data)  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class NaturezaReceitaUpdateView(UpdateView):
     model = NaturezaReceita
     form_class = NaturezaReceitaForm
@@ -587,6 +610,7 @@ class NaturezaReceitaUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})   
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
 class NaturezaReceitaDeleteView(View):
     def delete(self, request, *args, **kwargs):
         code_id = kwargs.get('pk')

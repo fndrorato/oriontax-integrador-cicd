@@ -19,11 +19,12 @@ from django.urls import reverse_lazy
 from django.db import IntegrityError
 from django.views.generic import TemplateView, ListView, UpdateView
 from django.contrib.auth.models import Group, User 
+from rolepermissions.roles import assign_role
+from rolepermissions.decorators import has_role_decorator
 from .models import Profile
 from .forms import UserModelForm, ProfileForm, generate_temporary_password
 import random
 import string
-
 
 
 @csrf_exempt
@@ -36,6 +37,12 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
+                
+                # Obtém o nome do grupo do usuário
+                user_group = user.groups.first()  # Assume que o usuário pertence a apenas um grupo
+                if user_group:
+                    assign_role(user, user_group.name.lower())  # Atribui o papel com base no nome do grupo
+                                
                 return JsonResponse({"success": True, "redirect_url": reverse_lazy('home')})
             else:
                 return JsonResponse({"success": False, "errors": ["Email ou senha inválida."]})
@@ -46,6 +53,7 @@ def login_view(request):
     return render(request, 'login.html', {'login_form': AuthenticationForm()})
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
 class UsersListView(ListView):
     model = User
     template_name = 'list_users.html'
@@ -55,6 +63,7 @@ class UsersListView(ListView):
         return User.objects.select_related('profile').prefetch_related('groups').all()    
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')    
 class UserCreateView(TemplateView):
     template_name = 'create_user.html'
 
@@ -135,6 +144,7 @@ class UserCreateView(TemplateView):
         )       
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')    
 class UserUpdateView(UpdateView):
     model = User
     form_class = UserModelForm

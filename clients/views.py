@@ -18,6 +18,8 @@ from django.views import View
 from django.views.generic import ListView, CreateView, TemplateView, UpdateView, DeleteView, DetailView
 from items.models import Item
 from items.forms import CSVUploadForm
+from rolepermissions.decorators import has_role_decorator
+from rolepermissions.checkers import has_role
 from .utils import validateSysmo
 from django.db.models import F
 
@@ -37,9 +39,15 @@ class ClientListView(ListView):
     context_object_name = 'clients'
 
     def get_queryset(self):
-        return Client.objects.all()
+        user = self.request.user
+        
+        if has_role(user, 'analista'):
+            return Client.objects.filter(user_id=user.id)
+        else:
+            return Client.objects.all()
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
 class NewClientCreateView(CreateView):
     model = Client
     form_class = ClientForm
@@ -61,6 +69,7 @@ class NewClientCreateView(CreateView):
         return context  
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
+# @method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
 class ClientUpdateView(UpdateView):
     model = Client
     form_class = ClientForm
@@ -109,6 +118,7 @@ class ClientUpdateView(UpdateView):
         return reverse_lazy('client_update', kwargs={'pk': self.object.pk})     
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
 class StoreCreateView(TemplateView):
     template_name = 'update_client.html'
 
@@ -156,6 +166,7 @@ class StoreDetailView(DetailView):
         return JsonResponse(data)
         
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
 class StoreUpdateView(UpdateView):
     model = Store
     form_class = StoreForm
@@ -168,6 +179,7 @@ class StoreUpdateView(UpdateView):
         return JsonResponse({'success': False, 'errors': form.errors})       
         
 @method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
 class StoreDeleteView(View):
     def delete(self, request, *args, **kwargs):
         store_id = kwargs.get('pk')

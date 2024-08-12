@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
+{% load permissions_tags %}
 
 {% block title %}
     <h4>Natureza da Receita</h4>
@@ -35,12 +36,14 @@
                 <span>Lista da Natureza da Receita cadastrada.</span>
             </div>
             <div class="card-block">
+                {% if user|has_role:"administrador" %}
                 <div class="text-right m-b-20">
                     <button type="button" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target="#data-modal">
                         <i class="icofont icofont-plus-circle"></i>
                         Nova Natureza da Receita
                     </button>
                 </div>                  
+                {% endif %}
                 <div class="dt-responsive table-responsive">
                     <table id="simpletable" class="table compact table-striped table-bordered nowrap">
                         <thead>
@@ -50,7 +53,9 @@
                             <th class="text-center" width="40%">Descrição</th>
                             <th class="text-center" width="25%">NCM</th>
                             <th class="text-center">CST</th>
+                            {% if user|has_role:"administrador" %}
                             <th class="text-center">Ação</th>
+                            {% endif %}
                         </tr>
                         </thead>
                         <tbody>
@@ -62,6 +67,7 @@
                                         <td class="text-center align-middle text-break" style="white-space: break-spaces;">{{ naturezareceita.description|linebreaks }}</td>
                                         <td class="text-center align-middle" style="white-space: break-spaces;">{{ naturezareceita.ncm|linebreaks }}</td>
                                         <td class="text-center align-middle">{{ naturezareceita.piscofins_cst.code }}</td>
+                                        {% if user|has_role:"administrador" %}
                                         <td class="text-center align-middle">
                                             <button onclick="loadData({{ naturezareceita.id }})" data-toggle="modal" data-target="#data-modal" type="button" class="btn btn-primary btn-md waves-effect waves-light text-white text-center">
                                                 <i class="icofont icofont-ui-edit"></i>
@@ -71,6 +77,7 @@
                                                 <i class="icofont icofont-trash"></i>
                                             </button>  
                                         </td>
+                                        {% endif %}
                                     </tr>                                    
                                 {% endfor %}
                             {% endif %}

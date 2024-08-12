@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
+{% load permissions_tags %}
 
 {% block title %}
     <h4>Editar Usuário</h4>
@@ -47,8 +48,10 @@
                                 <!-- Inicio Tab Dados Usuario -->
                                 <!-- <form class="md-float-material card-block"> -->
                                 <div class="tab-pane active" id="user_tab" role="tabpanel">
+                                    {% if user|has_role:"administrador" %}
                                     <form class="md-float-material card-block"  method="POST" id="form-create-user">
                                         {% csrf_token %}
+                                    {% endif %}
                                         <div class="row">
                                             <label class="col-sm-4 col-lg-2 col-form-label">Primeiro Nome</label>
                                             <div class="col-sm-8 col-lg-10">
@@ -167,7 +170,7 @@
                                                 </div>
                                             </div>                                    
                                         </div>                                                                                
-
+                                        {% if user|has_role:"administrador" %}
                                         <div class="row">
                                             <div class="col-sm-12">
                                                 <div class="text-center m-t-20">
@@ -178,6 +181,7 @@
                                             </div>
                                         </div>
                                     </form>
+                                    {% endif %}
                                 </div>
                                 <!-- End Tab Dados Usuario -->
                                 <!-- Inicio Tab Equipe 

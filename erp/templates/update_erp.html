@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
+{% load permissions_tags %}
 
 
 
@@ -46,8 +47,10 @@
                                     </li>
                                 {% endfor %}
                             </ul>
-                        {% endif %}                                                
+                        {% endif %}       
+                        {% if user|has_any_role:"gerente,administrador" %}
                         <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                        {% endif %}
                             {% csrf_token %}
                             <div class="row">
                                 <label class="col-sm-4 col-lg-2 col-form-label">Nome</label>
@@ -66,7 +69,8 @@
                                         {{ form.description.errors }}
                                     </div>
                                 </div>                                    
-                            </div>                                                                                                                                            
+                            </div>     
+                            {% if user|has_any_role:"gerente,administrador" %}                                                                                                                                        
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="text-center m-t-20">
@@ -78,9 +82,12 @@
                                 </div>
                             </div>
                         </form>
+                        {% endif %}
+                        {% if user|has_role:"administrador" %} 
                         <form id="delete-form" method="post" action="{% url 'erp_delete' object.pk %}" style="display:inline;">
                             {% csrf_token %}
-                        </form>                        
+                        </form> 
+                        {% endif %}                       
                     </div>
                 </div>
             </div>

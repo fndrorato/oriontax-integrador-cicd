@@ -1,6 +1,7 @@
 import pandas as pd
 import openpyxl
 import logging
+import uuid
 from datetime import datetime
 from django.db import transaction
 from items.models import ImportedItem, Item
@@ -10,6 +11,24 @@ from django.utils import timezone
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)  # Obtenha um logger
+
+def generate_and_update_client_tokens(client_id=None):
+    if client_id:
+        try:
+            client = Client.objects.get(id=client_id)
+            client.token = uuid.uuid4()
+            client.save()
+            print(f"Token gerado e atualizado com sucesso para o cliente {client.name}.")
+        except Client.DoesNotExist:
+            print(f"Cliente com ID {client_id} não encontrado.")
+    else:
+        clients_without_token = Client.objects.filter(token__isnull=True)
+
+        for client in clients_without_token:
+            client.token = uuid.uuid4()
+            client.save()
+
+        print(f"{clients_without_token.count()} tokens gerados e atualizados com sucesso.")
 
 def save_imported_logs(client_id, log_result):
     client_instance = Client.objects.get(id=client_id)

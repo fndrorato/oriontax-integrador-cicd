@@ -2,6 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
+{% load permissions_tags %}
 
 {% block title %}
     <h4>Editar Contabilidade</h4>
@@ -41,7 +42,9 @@
                 {% endif %}                
                 <div class="row">
                     <div class="col-sm-12">
+                        {% if user|has_any_role:"gerente,administrador" %} 
                         <form class="md-float-material card-block"  method="POST" id="form-create-user">
+                        {% endif %}
                             {% csrf_token %}
                             <div class="row">
                                 <label class="col-sm-4 col-lg-2 col-form-label">Nome</label>
@@ -91,7 +94,8 @@
                                         {{ form.phone|add_class:"form-control telphone_with_code"|attr:"placeholder:(99) 99999-9999"|attr:"data-mask:(99) 99999-9999" }}
                                     </div>
                                 </div>                                    
-                            </div>                                                                                                                                                                                                
+                            </div>   
+                            {% if user|has_any_role:"gerente,administrador" %}                                                                                                                                                                                             
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="text-center m-t-20">
@@ -101,7 +105,9 @@
                                     </div>
                                 </div>
                             </div>
+                            
                         </form>
+                        {% endif %}
                     </div>
                 </div>
             </div>

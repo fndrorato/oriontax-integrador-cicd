@@ -10,17 +10,22 @@ from django.db.models import Q, Value, CharField, F, Subquery, OuterRef
 from django.db.models.functions import Concat, Cast
 from clients.models import Client, Store
 from items.models import Item, ImportedItem
-
-
-
+from rolepermissions.decorators import has_role_decorator
+from rolepermissions.checkers import has_role
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class HomeView(TemplateView):
     template_name = 'home.html'
 
     def get_context_data(self, **kwargs):
+        user = self.request.user        
         context = super().get_context_data(**kwargs)
-        clients = Client.objects.all().order_by('name')
+        
+        if has_role(user, 'analista'):
+            clients = Client.objects.filter(user_id=user.id).order_by('name')
+        else:
+            clients = Client.objects.all().order_by('name')
+            
         clients_with_item_count = []
         total_items = 0
         total_stores = 0
@@ -38,15 +43,7 @@ class HomeView(TemplateView):
                 code=OuterRef('code'),
                 status_item__in=[1, 2]
             ).values('code')
-            
-            # imported_itens_count_diver = ImportedItem.objects.filter(
-            #     client=client, 
-            #     is_pending=True, 
-            #     status_item=1
-            # ).exclude(
-            #     divergent_columns__icontains="description"
-            # ).count()
-            # Filtro para contar os itens do modelo ImportedItem
+
             imported_itens_count_diver = ImportedItem.objects.filter(
                 client=client,
                 is_pending=True,

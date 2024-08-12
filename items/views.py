@@ -34,6 +34,8 @@ from .forms import ItemForm, CSVUploadForm, ImportedItemForm
 from impostos.models import IcmsCst, IcmsAliquota, IcmsAliquotaReduzida, Protege, CBENEF, PisCofinsCst, NaturezaReceita, Cfop
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_GET, require_POST
+from rolepermissions.decorators import has_role_decorator
+from rolepermissions.checkers import has_role
 from .models import Item, ImportedItem
 from itertools import chain
 import openpyxl
@@ -301,10 +303,16 @@ class ItemListView(ListView):
     paginate_by = 50  # Defina quantos itens você quer por página
 
     def get_queryset(self):
+        user = self.request.user
         client_id = self.kwargs.get('client_id')
-        client = get_object_or_404(Client, id=client_id)
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)
 
         queryset = Item.objects.filter(client=client).order_by('description')
+            
         # Filter with ForeignKey lookups and other fields
         filter_kwargs = {}
         for field_name in ['code', 'barcode', 'description', 'ncm', 'cest', 'icms_aliquota_reduzida', 'pis_aliquota', 'cofins_aliquota', 'type_product']:
@@ -365,6 +373,19 @@ class ItemDetailView(DetailView):
     model = Item
     template_name = 'item_detail.html'
     context_object_name = 'item'
+    
+    def get_object(self):
+        # Obter o objeto Item
+        user = self.request.user
+        item = super().get_object()
+        # Verificar se o usuário tem o papel de analista
+        if has_role(user, 'analista'):
+            print('entrrou como analista')
+            # Verificar se o item pertence a um cliente cujo user_id corresponde ao usuário logado
+            if item.client.user_id != self.request.user.id:
+                raise PermissionDenied("Você não tem permissão para visualizar este item.")
+
+        return item    
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class ItemCreateView(CreateView):
@@ -416,8 +437,14 @@ class ItemUpdateView(UpdateView):
     template_name = 'update_item.html'
 
     def get_queryset(self):
+        user = self.request.user
         client_id = self.kwargs.get('client_id')
-        client = get_object_or_404(Client, id=client_id)
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)        
+        
         return Item.objects.filter(client=client)
 
     def get_context_data(self, **kwargs):
@@ -467,8 +494,13 @@ class ImportedItemListViewNewItem(ListView):
     paginate_by = 50  # Defina quantos itens você quer por página
 
     def get_queryset(self):
+        user = self.request.user
         client_id = self.kwargs.get('client_id')
-        client = get_object_or_404(Client, id=client_id)
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)  
 
         queryset = ImportedItem.objects.filter(
             client=client, 
@@ -542,8 +574,14 @@ class ImportedItemListViewAwaitSyncItem(ListView):
     paginate_by = 100  # Defina quantos itens você quer por página
 
     def get_queryset(self):
+        
         client_id = self.kwargs.get('client_id')
-        client = get_object_or_404(Client, id=client_id)
+        user = self.request.user
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)  
 
         queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).order_by('description')  
         
@@ -640,7 +678,7 @@ def save_imported_item(request):
     if request.method == 'POST':
         try:
             data = request.POST
-            print(data)
+
             # Extract data from the request
             tipo_produto = data.get('fix_item', '');
             code = data.get('code', '').strip()
@@ -791,7 +829,7 @@ def save_bulk_imported_item(request):
         try:
             data = json.loads(request.POST.get('items', '[]'))
             
-            print(data)
+            # print(data)
             # return JsonResponse({'status': 'error', 'message': 'rrro'})
             # 7892840233945
             # Validate each item and collect errors if any
@@ -896,6 +934,7 @@ def save_bulk_imported_item(request):
                     piscofins_cst_code = piscofins_cst
                                         
                     # Verificar se o client_id é válido
+                    
                     client = get_object_or_404(Client, id=client_id)  
                     cfop = get_object_or_404(Cfop, cfop=cfop_code)          
                     icms_cst = get_object_or_404(IcmsCst, code=icms_cst_code)
@@ -1042,7 +1081,13 @@ class XLSXUploadView(View):
     ]     
 
     def get(self, request, client_id):
-        client = get_object_or_404(Client, id=client_id)
+        user = self.request.user
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)          
+
         form = CSVUploadForm()
         context = {
             'form': form,
@@ -1052,7 +1097,13 @@ class XLSXUploadView(View):
 
     def post(self, request, client_id):
         start_time = time.time()
-        client = get_object_or_404(Client, id=client_id)
+        user = self.request.user
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)  
+                    
         form = CSVUploadForm(request.POST, request.FILES)
         if form.is_valid():
             xlsx_file = request.FILES['csv_file']
@@ -1330,7 +1381,13 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
-        client = get_object_or_404(Client, id=client_id)
+        user = self.request.user
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)  
+            
         filters = self.request.GET.dict()
         
         # Anota os querysets com a coluna 'origem'
@@ -1506,7 +1563,13 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
 
     def get_queryset(self):
         client_id = self.kwargs.get('client_id')
-        client = get_object_or_404(Client, id=client_id)
+        user = self.request.user
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)  
+            
         filters = self.request.GET.dict()
         
         # Anota os querysets com a coluna 'origem'
@@ -1736,7 +1799,13 @@ class XLSXUploadDivergentView(View):
 
     def post(self, request, client_id):
         start_time = time.time()
-        client = get_object_or_404(Client, id=client_id)
+        user = self.request.user
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)  
+            
         unnecessary_fields = client.erp.unnecessary_fields
         form = CSVUploadForm(request.POST, request.FILES)
         

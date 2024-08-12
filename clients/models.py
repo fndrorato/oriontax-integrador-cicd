@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from erp.models import ERP
@@ -22,9 +23,10 @@ class Client(models.Model):
         ('25', '25'),
         ('30', '30'),
     ]  
-    
+
     name = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=18, blank=True, null=True, default='', verbose_name="CNPJ")
+    token = models.UUIDField(default=uuid.uuid4, unique=True, blank=True, null=True)
     num_stores = models.IntegerField()
     date_contract = models.DateField()
     date_send = models.DateField()
