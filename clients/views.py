@@ -3,6 +3,8 @@ import pandas as pd
 import sys
 import subprocess  # Importar subprocess para executar o script Python
 import os
+import re
+import uuid
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.core.management import call_command
@@ -22,6 +24,19 @@ from rolepermissions.decorators import has_role_decorator
 from rolepermissions.checkers import has_role
 from .utils import validateSysmo
 from django.db.models import F
+
+
+@login_required(login_url='login')
+@has_role_decorator(['administrador', 'gerente'])
+def generate_token(request, client_id):
+    print('cliente:', client_id)
+    try:
+        client = Client.objects.get(id=client_id)
+        client.token = uuid.uuid4()  # Gera um novo token UUID
+        client.save()
+        return JsonResponse({'success': True, 'token': str(client.token)})
+    except Client.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Cliente não encontrado'})
 
 class CitySearchView(View):
     def get(self, request, *args, **kwargs):
@@ -55,9 +70,6 @@ class NewClientCreateView(CreateView):
     success_url = '/clientes/'
     
     def form_invalid(self, form):
-        print("Form is invalid")
-        print("POST data:", self.request.POST)
-        print("Form errors:", form.errors)
         return super().form_invalid(form)    
     
     def get_context_data(self, **kwargs):
@@ -66,7 +78,20 @@ class NewClientCreateView(CreateView):
         analysts_group = Group.objects.get(name='analista')
         context['users'] = User.objects.filter(groups=analysts_group)  
         
-        return context  
+        return context
+    
+    def form_valid(self, form):
+        cnpj = form.cleaned_data.get('cnpj')
+        
+        if cnpj:
+            # Remove todos os caracteres não numéricos
+            numeros = re.sub(r'\D', '', cnpj)
+            
+            # Aplica a formatação desejada
+            if len(numeros) == 14:  # Verifica se há 14 dígitos
+                form.instance.cnpj = f"{numeros[:2]}.{numeros[2:5]}.{numeros[5:8]}/{numeros[8:12]}-{numeros[12:]}"
+        
+        return super().form_valid(form)    
     
 @method_decorator(login_required(login_url='login'), name='dispatch')
 # @method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')
@@ -86,7 +111,8 @@ class ClientUpdateView(UpdateView):
         
         # Obtenha a instância do cliente
         client = Client.objects.get(pk=client_id)
-        context['client_name'] = client.name        
+        context['client_name'] = client.name  
+        context['client_token'] = client.token
         
         # Obtenha as stores associadas ao cliente
         stores = Store.objects.filter(client_id=client_id)
@@ -103,6 +129,18 @@ class ClientUpdateView(UpdateView):
     def form_valid(self, form):
         # Obter a instância atual do cliente
         self.object = form.save(commit=False)
+        
+        # Formatar o CNPJ se preenchido
+        cnpj = form.cleaned_data.get('cnpj')
+        
+        if cnpj:
+            # Remove todos os caracteres não numéricos
+            numeros = re.sub(r'\D', '', cnpj)
+            
+            # Aplica a formatação desejada
+            if len(numeros) == 14:  # Verifica se há 14 dígitos
+                self.object.cnpj = f"{numeros[:2]}.{numeros[2:5]}.{numeros[5:8]}/{numeros[8:12]}-{numeros[12:]}"        
+        
         password_route = form.cleaned_data.get('password_route')
         
         if password_route:

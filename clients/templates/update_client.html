@@ -109,6 +109,23 @@
                             <div class="tab-content">
                                 <!-- Inicio Tab Dados Cliente -->
                                 <div class="tab-pane active" id="home" role="tabpanel">
+                                    <div id="loader-load-home" class="preloader3 loader-block" style="
+                                        position: absolute;
+                                        top: 0;
+                                        left: 0;
+                                        z-index: 9900;
+                                        width: 100%;
+                                        height: 100%;
+                                        justify-content: center;
+                                        background-color: rgba(255, 255, 255, 0.8);
+                                        margin: 0 !important;
+                                        display: none;
+                                    ">
+                                        <div class="circ1 loader-primary"></div>
+                                        <div class="circ2 loader-primary"></div>
+                                        <div class="circ3 loader-primary"></div>
+                                        <div class="circ4 loader-primary"></div>
+                                    </div>                                     
                                     {% if user|has_any_role:"gerente,administrador" %}
                                     <form class="md-float-material card-block"  method="POST" id="form-create-user">
                                         {% csrf_token %}
@@ -209,8 +226,8 @@
                                         </div>    
                                         
                                         <div class="row">
-                                            <div class="col-md-6">
-                                                <label class="col-sm-6 col-lg-4 col-form-label">Comercial Responsável</label>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Comercial Responsável</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.commercial_responsible.errors }}</span>
                                                     <div class="input-group">
@@ -218,8 +235,8 @@
                                                     </div>
                                                 </div>                                                  
                                             </div>
-                                            <div class="col-md-6">
-                                                <label class="col-sm-6 col-lg-4 col-form-label">Proprietário</label>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Proprietário</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.owner.errors }}</span>
                                                     <div class="input-group">
@@ -227,6 +244,15 @@
                                                     </div>
                                                 </div>                                                
                                             </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">CNPJ Principal</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.cnpj.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.cnpj|add_class:"form-control"|attr:"placeholder:00.000.000/0000-00" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                            
                                         </div>   
 
                                         <div class="row">
@@ -264,7 +290,7 @@
                                         </div>   
                                         {% if user|has_role:"administrador" %}
                                         <hr>
-
+                                        <h5>Informações para conexão</h5>
                                         <div class="row">
                                             <div class="col-md-3">
                                                 <label class="col-sm-12 col-lg-12 col-form-label">Endereço para conectar</label>
@@ -285,7 +311,7 @@
                                                 </div>                                                
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="col-sm-6 col-lg-4 col-form-label">Porta</label>
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Porta</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.port_route.errors }}</span>
                                                     <div class="input-group">
@@ -303,7 +329,7 @@
                                                 </div>                                                
                                             </div>
                                             <div class="col-md-2">
-                                                <label class="col-sm-6 col-lg-4 col-form-label">Senha</label>
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Senha</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.password_route.errors }}</span>
                                                     <div class="input-group">
@@ -312,6 +338,21 @@
                                                 </div>                                                
                                             </div>                                                                                                                                    
                                         </div>
+
+                                        <hr>
+                                        <h5>Token Para Conexão via API</h5>
+                                        <div class="row mt-2">
+                                            <div class="col-md-12">
+                                                <div class="input-group input-group-button">
+                                                    <span class="input-group-addon btn btn-inverse" id="button-refresh-token">
+                                                        <i class="icofont icofont-key"></i>
+                                                        <span class="">Gerar Token</span>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="token-api" value="{{client_token}}" readonly>
+                                                </div>                                                                 
+                                            </div>                           
+                                        </div>    
+                                    
                                         {% endif %}                                         
 
                                         {% if user|has_any_role:"gerente,administrador" %}
@@ -995,7 +1036,7 @@
         // Verifica se o usuário é um analista
         var isAnalyst = document.getElementById('data-is-analyst').value;
 
-        if (isAnalyst) {
+        if (isAnalyst==='True') {
             // Seleciona todos os input, select, textarea e checkbox no documento
             var fields = document.querySelectorAll('input, select, textarea, checkbox');
             
@@ -1004,6 +1045,44 @@
                 field.disabled = true;
             });
         }
+
+        $(document).ready(function() {
+            $('#button-refresh-token').click(function() {
+                var clientId = {{ client.id }};  // Pegando o ID do cliente do contexto Django
+                $('#loader-load-home').show();
+    
+                $.ajax({
+                    url: '/clientes/generate-token/' + clientId + '/',  // URL para a view que gera o token
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            $('#loader-load-home').hide();
+                            $('#token-api').val(response.token);  // Atualiza o campo com o novo token
+                            swal(
+                                'Sucesso!',
+                                'Token gerado com sucesso',
+                                'success'
+                            );                            
+                        } else {
+                            $('#loader-load-home').hide();
+                            swal(
+                                'Erro!',
+                                'Não foi possível gerar o token. Tente novamente.',
+                                'error'
+                            );                              
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#loader-load-home').hide();
+                        swal(
+                            'Erro!',
+                            'Ocorreu um erro ao gerar o token',
+                            'error'
+                        ); 
+                    }
+                });
+            });
+        });        
     </script>      
 {% endblock anotherjs %}
 

@@ -14,4 +14,6 @@ urlpatterns = [
     path('clientes/validador-integracao/', views.XLSXSimulateValidateItems.as_view(), name='validate_simulate'),
     path('clientes/executar-sincronizacao/<int:client_id>/', views.RunSelectView.as_view(), name='run_select'),    
     path('clientes/executar-atualizacoes/<int:client_id>/', views.RunUpdateView.as_view(), name='run_update'),    
+    
+    path('clientes/generate-token/<int:client_id>/', views.generate_token, name='generate_token'),    
 ]
