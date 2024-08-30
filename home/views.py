@@ -32,6 +32,7 @@ class HomeView(TemplateView):
         total_imported_itens = 0
 
         for client in clients:
+            print('entrruo no loop')
             item_count = Item.objects.filter(client=client).count()
             store_count = Store.objects.filter(client=client).count()
             
@@ -85,7 +86,12 @@ class HomeView(TemplateView):
                 'produtos_aguardando_sync': itens_await_sync,
             })
         context['total_stores'] = total_stores
-        context['media_items'] = round(total_items / clients.count(),1)
+        
+        if clients.count() > 0:
+            context['media_items'] = round(total_items / clients.count(),1)
+        else:
+            context['media_items'] = 0
+            
         context['clients'] = clients_with_item_count
         context['total_imported_itens'] = total_imported_itens
         return context

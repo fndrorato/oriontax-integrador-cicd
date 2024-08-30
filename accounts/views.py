@@ -59,8 +59,8 @@ class UsersListView(ListView):
     template_name = 'list_users.html'
     context_object_name = 'users'
     
-    def get_queryset(self):
-        return User.objects.select_related('profile').prefetch_related('groups').all()    
+    def get_queryset(self):      
+        return User.objects.select_related('profile').prefetch_related('groups').exclude(id=1)
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
 @method_decorator(has_role_decorator('administrador'), name='dispatch')    
@@ -232,10 +232,17 @@ class ProfileUpdateView(UpdateView):
 
     def form_valid(self, form):
         user_form = UserModelForm(self.request.POST, instance=self.request.user)
+        
+        # Definir a flag antes de chamar `is_valid`
+        user_form.skip_email_validation = True  # Ou False, dependendo da necessidade
+        
+        # Definir o campo is_active como True
+        user_form.instance.is_active = True
+                
         if user_form.is_valid() and form.is_valid():
             user_form.save()
             return super().form_valid(form)
-        else:
+        else:         
             return self.render_to_response(self.get_context_data(form=form))
             
 def logout_view(request):

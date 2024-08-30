@@ -53,6 +53,9 @@ class SignUpForm(forms.ModelForm):
         return user
     
 class UserModelForm(forms.ModelForm):
+    
+    skip_email_validation = False  # Flag para controlar a validação de email
+    
     class Meta:
         model = User
         fields = ('first_name', 'last_name', 'email', 'is_active')
@@ -62,12 +65,12 @@ class UserModelForm(forms.ModelForm):
         super(UserModelForm, self).__init__(*args, **kwargs)
                 
     def clean_email(self):
-        email = self.cleaned_data['email']
-        # Check if email already exists in the database
-        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError('Este email já está em uso.')
-
-        return email 
+        print(self.skip_email_validation)
+        if not self.skip_email_validation:
+            email = self.cleaned_data['email']
+            if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError('Este email já está em uso.')
+        return self.cleaned_data['email']
     
     def save(self, commit=True):
         user = super(UserModelForm, self).save(commit=False)
@@ -84,9 +87,9 @@ class ProfileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)
         supervisor_users = User.objects.filter(groups__name='supervisor')
-        print("Supervisor users:", supervisor_users)  # Verifique se está retornando usuários
+        # print("Supervisor users:", supervisor_users)  # Verifique se está retornando usuários
         manager_users = User.objects.filter(groups__name='gerente')
-        print("Manager users:", manager_users)  # Verifique se está retornando usuários
+        # print("Manager users:", manager_users)  # Verifique se está retornando usuários
         self.fields['supervisor'].queryset = supervisor_users
         self.fields['manager'].queryset = manager_users       
 
