@@ -112,7 +112,7 @@ DATABASES = {
         'PASSWORD': 'orion@2024',
         'HOST': '18.204.98.107',
         'PORT': '5432',
-    }
+    },   
 }
 
 # Password validation
