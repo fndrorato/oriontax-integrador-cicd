@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from django.db import transaction
 from api.models import ImportedItemTest, ItemTest
-from .models import Client, LogIntegration
+from clients.models import Client, LogIntegration
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from decimal import Decimal
