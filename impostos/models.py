@@ -79,7 +79,8 @@ class NaturezaReceita(models.Model):
     CATEGORY_CHOICES = [
         ('Substituição Tributária', 'Substituição Tributária'),
         ('Alíquota Zero', 'Alíquota Zero'),
-        ('Monofásico', 'Monofásico')
+        ('Monofásico', 'Monofásico'),
+        ('Suspensão', 'Suspensão'),
     ]
 
     id = models.AutoField(primary_key=True)  # Campo autonumérico como chave primária

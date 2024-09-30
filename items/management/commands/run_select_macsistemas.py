@@ -159,8 +159,8 @@ def convert_df_client_to_df_otx_version(df_client):
     df_final['piscofins_cst'] = df_final['piscofins_cst'].apply(lambda x: x.zfill(2))    
     
     pd.set_option('display.max_columns', None)
-    # print(df_final.head())
-    # print(df_final.info())
+    print(df_final.head())
+    print(df_final.info())
     return df_final    
 
 def connect_and_query(host, user, password, port, database, client_name, client_cnpj, initial_log):

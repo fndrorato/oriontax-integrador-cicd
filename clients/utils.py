@@ -567,11 +567,7 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Tratar valores None na coluna 'cbenef'
     items_df['cbenef'] = items_df['cbenef'].fillna('')    
 
-    print('7-Encontrando os novos produtos... ')
-    # print(items_df.head())
-    # print(df.head())
-    # print(df.head(2).transpose())
-    # print(items_df.head(2).transpose())    
+    print('7-Encontrando os novos produtos... ')   
     ################################
     # 1- Encontrar os novos produtos
     # Realizar a junção para encontrar os itens presentes em df mas não em items_df
@@ -609,13 +605,14 @@ def validateSelect(client_id, items_df, df, initial_log=None):
         raise ValueError(f"Colunas ausentes no DataFrame merged_df: {missing_columns}")
 
     print('12-comparando as colunas- gerando _df e _items_df')
+    # Converter o DataFrame em CSV com separador |
+    print('Vai converter o merged_df')
+    merged_df.to_csv('merged_df.csv', sep='|', index=False)    
     # Comparar as colunas
     # Lidar com valores nulos e tipos de dados diferentes
     for col in expected_columns:
         # Preencher valores nulos com strings vazias
         merged_df[f'{col}_df'] = merged_df[f'{col}_df'].fillna('').astype(str)
-        # merged_df[f'{col}_items_df'] = merged_df[f'{col}_items_df'].fillna('').astype(str)
-        # a versao com infer_objects atende a versao futura do pandas
         merged_df[f'{col}_items_df'] = merged_df[f'{col}_items_df'].fillna('').astype(str).infer_objects(copy=False)
 
     divergence_mask = pd.Series(False, index=merged_df.index)  # Inicializa a máscara como False
@@ -629,7 +626,7 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare]    
     # Criar uma nova coluna vazia para armazenar as colunas divergentes
-    merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]        
+    merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]            
 
     # Itera sobre as linhas do DataFrame
     for idx, row in merged_df.iterrows():
@@ -662,35 +659,12 @@ def validateSelect(client_id, items_df, df, initial_log=None):
                     # Adiciona o nome da coluna nas divergências para a linha
                     merged_df.at[idx, "divergent_columns_df"].append(col)
                     divergence_counts[col] += 1
-            
-            # Imprime o resultado para a linha atual
-            # print(f"Code: {code}")
-            # for result in comparison_results:
-            #     print(f"  Column: {result['column']}, DF Value: {result['df_value']}, Items DF Value: {result['items_df_value']}, Divergence: {result['divergence']}")
-            # print(f"  Divergent Columns: {merged_df.at[idx, 'divergent_columns_df']}")
-        
                     
         except Exception as e:
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             result_integration = f'[{timestamp}] - Erro na comparação da linha {idx}: {e} \n'
             save_imported_logs(client_id, result_integration)
             problematic_columns.append(col) 
-
-
-
-    # for col in filtered_columns:
-    #     try:
-    #         col_mask = merged_df[f'{col}_df'] != merged_df[f'{col}_items_df']
-    #         divergence_counts[col] = col_mask.sum()  # Conta as divergências na coluna
-    #         divergence_mask |= col_mask
-            
-    #         for idx in merged_df.index[col_mask]:
-    #             merged_df.at[idx, "divergent_columns_df"].append(col)                            
-    #     except Exception as e:
-    #         timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    #         result_integration += f'[{timestamp}] - Erro na comparação da coluna \'{col}\': {e} \n'
-    #         save_imported_logs(client_id, result_integration)
-    #         problematic_columns.append(col)
 
     # Converte listas para strings separadas por vírgulas e listas vazias para strings vazias
     merged_df["divergent_columns_df"] = merged_df["divergent_columns_df"].apply(lambda x: ', '.join(x) if x else '')
@@ -709,13 +683,6 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     ).count()
 
     print(f"Número de itens que serão atualizados: {num_to_update}")    
-    # codigos_para_atulizar = Item.objects.filter(
-    #     code__in=codes_to_update, 
-    #     status_item=2, 
-    #     client_id=client_id
-    # ).values('code', 'description').order_by('description')  
-    # print(codigos_para_atulizar) 
-    # return 
     
     current_time = timezone.now() 
     num_updated = Item.objects.filter(
@@ -733,8 +700,6 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     other_columns = sorted(df_items_divergent.columns[1:])
     df_items_divergent = df_items_divergent[[first_column] + other_columns]
     
-    # print(df_items_divergent.head())
-    # df_items_divergent.to_excel('df_items_divergent.xlsx', index=False) 
     print('13-montando o message')
     if len(new_items_df) > 0 or len(df_items_divergent) > 0 or num_updated > 0:
         message = (f"Foram encontrados {len(new_items_df)} novos produtos "
