@@ -114,10 +114,10 @@ def convert_df_otx_version_to_df_client(df_client):
           
 def connect_and_update(host, token, client_name, items_df, initial_log):
 # Substitua pelo seu token de acesso
-    DROPBOX_ACCESS_TOKEN = 'sl.B9lW1B5bg9J7f7gNb5Jiqpuh3Y7ITSnkruxl5NkibyZUmSRpBBnzv1DiH-w8RVVsylp4h--oE6ApUl6viFYFMFVjdgM0SICHS6y2RK3oVZP2xfzEYyLjRrOi5Bfp_2EZaJ73Z4JL3ZNhcGk'
+    DROPBOX_ACCESS_TOKEN = token
 
     # URL da pasta compartilhada
-    SHARED_LINK_URL = 'https://www.dropbox.com/scl/fo/yclr9n5nf3igro23ayufj/AFAYQQxEjL8-D7JbuGzKSfY?rlkey=s7p50hr27tskudfwnb0twbfcx&st=es9a30u4&dl=0'
+    SHARED_LINK_URL = host
     
     try:
         # Conectar à API do Dropbox
@@ -309,8 +309,7 @@ if __name__ == "__main__":
             try:
                 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
                 initial_log += f'[{timestamp}] - Conectando e atuaizando... \n'                
-                # result, initial_log, mensagem_resultante = connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log)
-                result, initial_log, mensagem_resultante = connect_and_update(client_name, items_df, initial_log)
+                result, initial_log, mensagem_resultante = connect_and_update(host, access_token, client_name, items_df, initial_log)
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
                 print(f"Erro ao conectar ao cliente {client_name}: {e}") 

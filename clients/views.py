@@ -312,6 +312,8 @@ class RunSelectView(View):
         try:
             if client.erp.name == 'SYSMO':
                 script_execute = 'run_select.py'
+            elif client.erp.name == 'TILLIT':
+                script_execute = 'run_select_tilit.py'
             else:
                 script_execute = 'run_select_macsistemas.py' 
             # Obter o caminho completo para o script run_select.py
@@ -338,6 +340,8 @@ class RunUpdateView(View):
         try:
             if client.erp.name == 'SYSMO':
                 script_execute = 'run_update_sysmo.py'
+            elif client.erp.name == 'TILLIT':
+                script_execute = 'run_update_tilit.py'
             else:
                 script_execute = 'run_update_macsistemas.py'             
             # Obter o caminho completo para o script run_select.py
