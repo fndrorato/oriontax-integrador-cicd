@@ -85,7 +85,7 @@
                                         </div>  
 
                                         <div class="row">
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <label class="col-sm-4 col-lg-12 col-form-label">Data do Contrato</label>
                                                 <div class="col-sm-8 col-lg-10">
                                                     <span class="messages text-danger">{{ form.date_contract.errors }}</span>
@@ -94,16 +94,7 @@
                                                     </div>
                                                 </div>                                                  
                                             </div>
-                                            <div class="col-md-3">
-                                                <label class="col-sm-4 col-lg-12 col-form-label">Data do Envio</label>
-                                                <div class="col-sm-8 col-lg-10">
-                                                    <span class="messages text-danger">{{ form.date_send.errors }}</span>
-                                                    <div class="input-group">
-                                                        {{ form.date_send|add_class:"form-control date"|attr:"placeholder:dd/mm/yyyy"|attr:"data-mask:99/99/9999" }}
-                                                    </div>
-                                                </div>                                                
-                                            </div>
-                                            <div class="col-md-3">
+                                            <div class="col-md-4">
                                                 <label class="col-sm-4 col-lg-12 col-form-label">Primeira Carga</label>
                                                 <div class="col-sm-8 col-lg-10">
                                                     <span class="messages text-danger">{{ form.first_load_date.errors }}</span>
@@ -112,7 +103,7 @@
                                                     </div>
                                                 </div>                                                
                                             </div>                                                                                        
-                                            <div class="col-md-3">                                                
+                                            <div class="col-md-4">                                                
                                                 <label class="col-sm-8 col-lg-8 col-form-label">Dia do envio</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.day_sent.errors }}</span>
