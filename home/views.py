@@ -105,15 +105,16 @@ class SearchResultsView(ListView):
         if query:
             # Execute a pesquisa em diferentes modelos
             results_client = Client.objects.filter(
-                Q(accounting__name__icontains=query) | Q(name__icontains=query)
+                (Q(accounting__name__icontains=query) | Q(name__icontains=query)) & ~Q(id=4)
             ).select_related('user').annotate(
                 result_type=Value('Cliente', output_field=CharField()),
                 display_name=F('name'),
                 extra_info=Concat('user__first_name', Value(' '), 'user__last_name', output_field=CharField()),
                 last_updated=F('updated_at')
-            )
+            )        
+            
             results_store = Store.objects.filter(
-                Q(corporate_name__icontains=query) | Q(city__nome__icontains=query)
+                (Q(corporate_name__icontains=query) | Q(city__nome__icontains=query)) & ~Q(client_id=4)
             ).annotate(
                 result_type=Value('Loja', output_field=CharField()),
                 display_name=F('corporate_name'),
@@ -121,7 +122,7 @@ class SearchResultsView(ListView):
                 last_updated=F('updated_at')
             )
             results_item = Item.objects.filter(
-                Q(description__icontains=query) | Q(barcode__icontains=query )
+                (Q(description__icontains=query) | Q(barcode__icontains=query )) & ~Q(client_id=4) 
             ).select_related('client__user').annotate(
                 result_type=Value('Produtos', output_field=CharField()),
                 display_name=Concat(Cast(F('code'), CharField()), Value(' - '), F('description'), output_field=CharField()),

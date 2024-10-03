@@ -4,6 +4,7 @@ import django
 import dropbox
 import pandas as pd
 import requests
+import time
 from io import StringIO
 from datetime import datetime
 import chardet
@@ -227,16 +228,16 @@ def connect_and_query(host, token, client_name, initial_log):
         
         # Verifica se a pasta 'Consulta' existe
         # consulta_folder = next((folder for folder in items if folder.name.lower() == 'consulta' and isinstance(folder, dropbox.files.FolderMetadata)), None)
-        consulta_folder = next((folder for folder in result.entries if folder.name.lower() == 'consulta' and isinstance(folder, dropbox.files.FolderMetadata)), None)
+        consulta_folder = next((folder for folder in result.entries if folder.name.lower() == 'export' and isinstance(folder, dropbox.files.FolderMetadata)), None)
         
         if not consulta_folder:
             print('nao encontrou a pasta consulta')
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - A pasta 'Consulta' não foi encontrada.\n"
             return None, initial_log
         else:
-            print('pasta consulta encontrada')
+            print('pasta export encontrada')
         
-        print("\nArquivos dentro de 'consulta':")
+        print("\nArquivos dentro de 'export':")
         # Usa o caminho relativo dentro do link compartilhado para acessar a pasta 'Consulta'
         path_consulta = f"/{consulta_folder.name}"
         result_consulta = dbx.files_list_folder(path=path_consulta, shared_link=shared_link)
@@ -251,24 +252,30 @@ def connect_and_query(host, token, client_name, initial_log):
         if not csv_files:
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum arquivo CSV encontrado na pasta 'Consulta'.\n"
             return None, initial_log
+        else:
+            print(f"Quantidade de arquivos CSV encontrados: {len(csv_files)}")
+            
         # Criar um DataFrame para armazenar os dados de todos os arquivos CSV
         all_data = []
         for csv_file in csv_files:
-            print(f"Lendo arquivo: {csv_file.name}")
-            # Faz o download do arquivo CSV usando o link compartilhado
-            _, response = dbx.files_download(path=csv_file.path_lower)
+            try:
+                print(f"Lendo arquivo: {csv_file.name}")
+                # Faz o download do arquivo CSV usando o link compartilhado
+                _, response = dbx.files_download(path=csv_file.path_lower)
+                time.sleep(1)
 
-            # Detectar a codificação do arquivo
-            raw_data = response.content
-            detected_encoding = chardet.detect(raw_data)['encoding']
-            print(f"Codificação detectada: {detected_encoding}")
+                # Detectar a codificação do arquivo
+                raw_data = response.content
+                detected_encoding = chardet.detect(raw_data)['encoding']
 
-            # Decodifica os dados brutos
-            data = raw_data.decode(detected_encoding)
-            
-            # Ler o CSV usando o delimitador correto '|'
-            df = process_csv(data)
-            all_data.append(df)
+                # Decodifica os dados brutos
+                data = raw_data.decode(detected_encoding)
+
+                # Ler o CSV usando o delimitador correto '|'
+                df = process_csv(data)
+                all_data.append(df)
+            except Exception as e:
+                print(f"Erro ao baixar ou processar o arquivo {csv_file.name}: {e}")
 
         # Concatenar todos os DataFrames em um único DataFrame
         final_df = pd.concat(all_data, ignore_index=True)
@@ -318,37 +325,38 @@ if __name__ == "__main__":
         
         drop_connect = AccessDropbox.objects.last()
 
-        if drop_connect:
-            dropbox_client_id = drop_connect.client_id
-            dropbox_client_secret = drop_connect.client_secret
-            dropbox_authorization_code = drop_connect.code
-            dropbox_access_token = drop_connect.access_token
-            dropbox_refresh_token = drop_connect.refresh_token
+        # if drop_connect:
+        #     dropbox_client_id = drop_connect.client_id
+        #     dropbox_client_secret = drop_connect.client_secret
+        #     dropbox_authorization_code = drop_connect.code
+        #     dropbox_access_token = drop_connect.access_token
+        #     dropbox_refresh_token = drop_connect.refresh_token
 
-            # Se o refresh_token for nulo ou vazio, gere novos tokens
-            if not dropbox_refresh_token:
-                access_token, refresh_token = get_access_token_with_auth_code(
-                    dropbox_client_id, dropbox_client_secret, dropbox_authorization_code
-                )
+        #     # Se o refresh_token for nulo ou vazio, gere novos tokens
+        #     if not dropbox_refresh_token:
+        #         access_token, refresh_token = get_access_token_with_auth_code(
+        #             dropbox_client_id, dropbox_client_secret, dropbox_authorization_code
+        #         )
 
-                # Atualize o modelo com o novo access_token e refresh_token
-                drop_connect.access_token = access_token
-                drop_connect.refresh_token = refresh_token
-                drop_connect.save()
-            else:
-                # Atualize o access_token usando o refresh_token
-                access_token = refresh_access_token(dropbox_client_id, dropbox_client_secret, dropbox_refresh_token)
+        #         # Atualize o modelo com o novo access_token e refresh_token
+        #         drop_connect.access_token = access_token
+        #         drop_connect.refresh_token = refresh_token
+        #         drop_connect.save()
+        #     else:
+        #         # Atualize o access_token usando o refresh_token
+        #         access_token = refresh_access_token(dropbox_client_id, dropbox_client_secret, dropbox_refresh_token)
 
-                # Atualize o modelo com o novo access_token
-                drop_connect.access_token = access_token
-                drop_connect.save()
-        else:
-            print("Nenhuma conexão do Dropbox encontrada no banco de dados.") 
-            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Não existe configuração para conectar ao cliente {client_name}: {e}\n"
-            save_imported_logs(client_id, initial_log) 
-            if args.client_id:
-                sys.exit(1)  # Sair com código de erro 1             
-            
+        #         # Atualize o modelo com o novo access_token
+        #         drop_connect.access_token = access_token
+        #         drop_connect.save()
+        # else:
+        #     print("Nenhuma conexão do Dropbox encontrada no banco de dados.") 
+        #     initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Não existe configuração para conectar ao cliente {client_name}: {e}\n"
+        #     save_imported_logs(client_id, initial_log) 
+        #     if args.client_id:
+        #         sys.exit(1)  # Sair com código de erro 1             
+        
+        access_token = 'sl.B-Dmay6-iSndRHs47c9jzu4xG6gZabmRQYkJMErnq5XWB7yejHHTxvgXbkFGWqILyw47Pkrpzw_4zKBDe-mdi-rMe4uxMygm5lnxBnAHCY50oD6VWjB8dBAO1AzOqzVVZ0MeL_8N891FE2s'   
         
         try: 
             df_client, initial_log = connect_and_query(host, access_token, client_name, initial_log)
@@ -360,6 +368,7 @@ if __name__ == "__main__":
                 sys.exit(1)  # Sair com código de erro 1 
                    
         if df_client is None:
+            print('Nada a ser importado')
             save_imported_logs(client_id, initial_log)
             if args.client_id:
                 sys.exit(1)  # Sair com código de erro 1             
