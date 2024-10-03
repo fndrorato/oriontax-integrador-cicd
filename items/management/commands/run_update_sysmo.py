@@ -79,7 +79,8 @@ def connect_and_update(host, user, password, port, database, client_name, items_
                     row['cest'], row['cfop_id'], row['icms_cst_id'], row['icms_aliquota_id'],
                     row['icms_aliquota_reduzida'], row['protege_id'], row['cbenef_id'], row['piscofins_cst_id'],
                     row['pis_aliquota'], row['piscofins_cst_id'], row['cofins_aliquota'], 
-                    row['naturezareceita_code'], row['estado_origem'], row['estado_destino']
+                    row['naturezareceita_code'], row['estado_origem'], row['estado_destino'],
+                    'S'
                 )
                 for _, row in items_df.iterrows()
             ]
@@ -97,7 +98,8 @@ def connect_and_update(host, user, password, port, database, client_name, items_
                     cd_sequencial, cd_produto, tx_codigobarras, tx_descricaoproduto, tx_ncm, 
                     tx_cest, nr_cfop, nr_cst_icms, vl_aliquota_integral_icms, vl_aliquota_final_icms, 
                     vl_aliquota_fcp, tx_cbenef, nr_cst_pis, vl_aliquota_pis, nr_cst_cofins, 
-                    vl_aliquota_cofins, nr_naturezareceita, tx_estadoorigem, tx_estadodestino
+                    vl_aliquota_cofins, nr_naturezareceita, tx_estadoorigem, tx_estadodestino,
+                    fl_recebido
                 ) VALUES %s
             """, values)
 

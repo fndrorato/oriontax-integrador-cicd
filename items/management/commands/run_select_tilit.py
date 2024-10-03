@@ -276,6 +276,8 @@ def connect_and_query(host, token, client_name, initial_log):
                 all_data.append(df)
             except Exception as e:
                 print(f"Erro ao baixar ou processar o arquivo {csv_file.name}: {e}")
+                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao baixar ou processar o arquivo {csv_file.name}: {e}.\n"
+                return None, initial_log                
 
         # Concatenar todos os DataFrames em um único DataFrame
         final_df = pd.concat(all_data, ignore_index=True)
@@ -325,38 +327,36 @@ if __name__ == "__main__":
         
         drop_connect = AccessDropbox.objects.last()
 
-        # if drop_connect:
-        #     dropbox_client_id = drop_connect.client_id
-        #     dropbox_client_secret = drop_connect.client_secret
-        #     dropbox_authorization_code = drop_connect.code
-        #     dropbox_access_token = drop_connect.access_token
-        #     dropbox_refresh_token = drop_connect.refresh_token
+        if drop_connect:
+            dropbox_client_id = drop_connect.client_id
+            dropbox_client_secret = drop_connect.client_secret
+            dropbox_authorization_code = drop_connect.code
+            dropbox_access_token = drop_connect.access_token
+            dropbox_refresh_token = drop_connect.refresh_token
 
-        #     # Se o refresh_token for nulo ou vazio, gere novos tokens
-        #     if not dropbox_refresh_token:
-        #         access_token, refresh_token = get_access_token_with_auth_code(
-        #             dropbox_client_id, dropbox_client_secret, dropbox_authorization_code
-        #         )
+            # Se o refresh_token for nulo ou vazio, gere novos tokens
+            if not dropbox_refresh_token:
+                access_token, refresh_token = get_access_token_with_auth_code(
+                    dropbox_client_id, dropbox_client_secret, dropbox_authorization_code
+                )
 
-        #         # Atualize o modelo com o novo access_token e refresh_token
-        #         drop_connect.access_token = access_token
-        #         drop_connect.refresh_token = refresh_token
-        #         drop_connect.save()
-        #     else:
-        #         # Atualize o access_token usando o refresh_token
-        #         access_token = refresh_access_token(dropbox_client_id, dropbox_client_secret, dropbox_refresh_token)
+                # Atualize o modelo com o novo access_token e refresh_token
+                drop_connect.access_token = access_token
+                drop_connect.refresh_token = refresh_token
+                drop_connect.save()
+            else:
+                # Atualize o access_token usando o refresh_token
+                access_token = refresh_access_token(dropbox_client_id, dropbox_client_secret, dropbox_refresh_token)
 
-        #         # Atualize o modelo com o novo access_token
-        #         drop_connect.access_token = access_token
-        #         drop_connect.save()
-        # else:
-        #     print("Nenhuma conexão do Dropbox encontrada no banco de dados.") 
-        #     initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Não existe configuração para conectar ao cliente {client_name}: {e}\n"
-        #     save_imported_logs(client_id, initial_log) 
-        #     if args.client_id:
-        #         sys.exit(1)  # Sair com código de erro 1             
-        
-        access_token = 'sl.B-Dmay6-iSndRHs47c9jzu4xG6gZabmRQYkJMErnq5XWB7yejHHTxvgXbkFGWqILyw47Pkrpzw_4zKBDe-mdi-rMe4uxMygm5lnxBnAHCY50oD6VWjB8dBAO1AzOqzVVZ0MeL_8N891FE2s'   
+                # Atualize o modelo com o novo access_token
+                drop_connect.access_token = access_token
+                drop_connect.save()
+        else:
+            print("Nenhuma conexão do Dropbox encontrada no banco de dados.") 
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Não existe configuração para conectar ao cliente {client_name}: {e}\n"
+            save_imported_logs(client_id, initial_log) 
+            if args.client_id:
+                sys.exit(1)  # Sair com código de erro 1             
         
         try: 
             df_client, initial_log = connect_and_query(host, access_token, client_name, initial_log)
