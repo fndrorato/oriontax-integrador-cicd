@@ -127,7 +127,7 @@ def convert_df_client_to_df_otx_version(df_client):
 
     # Renomear colunas
     df_final = df_final.rename(columns={
-        'codigo': 'code',
+        'numero': 'code',
         'descricao': 'description',
         'codbenef': 'cbenef',
         'cfop_id': 'cfop',
@@ -180,7 +180,7 @@ def connect_and_query(host, user, password, port, database, client_name, client_
 
             query = """
                 SELECT 
-                    cnpj, codigo, descricao, ncm, cest, tributacao,
+                    cnpj, numero, descricao, ncm, cest, tributacao,
                     icms, cst, cstpis, pis, cstcofins, cofins, redbcicms, codbenef
                 FROM oriontax.PRODUTO as p
                 WHERE p.cnpj = %s

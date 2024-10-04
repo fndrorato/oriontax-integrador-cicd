@@ -45,6 +45,7 @@ from io import BytesIO
 from auditlog.models import LogEntry
 from auditlog.registry import auditlog
 from app.utils import get_auditlog_history
+from datetime import timedelta, datetime
 
 ACTION_MAPPING = {
     LogEntry.Action.CREATE: 'Criação',
@@ -113,6 +114,8 @@ def get_item_logs(request, model_name, object_id):
     return JsonResponse({'logs': logs_data})
 
 def export_items_to_excel(request, client_id, table):
+    # Definir o fuso horário de Brasília (UTC-3)
+    brasilia_offset = timedelta(hours=-3)    
     # Obter o cliente
     client = get_object_or_404(Client, id=client_id)
 
@@ -130,7 +133,7 @@ def export_items_to_excel(request, client_id, table):
             'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
             'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
             'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information', 'await_sync_at', 'sync_at'
-        )        
+        )                
     elif table == 'new':
         items = ImportedItem.objects.filter(client=client, status_item=0).values(
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
@@ -192,8 +195,11 @@ def export_items_to_excel(request, client_id, table):
             # Converter para DataFrame (se necessário)
             df = pd.DataFrame(list(filtered_queryset))            
         else:
+            filtered_queryset = combined_queryset.filter(
+                Q(description=F('description_base'))
+            )            
             # Converter para DataFrame (se necessário)
-            df = pd.DataFrame(list(combined_queryset))            
+            df = pd.DataFrame(list(filtered_queryset))            
         
         # Ordem desejada das colunas
         desired_order = [
@@ -237,7 +243,14 @@ def export_items_to_excel(request, client_id, table):
                 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
                 'tipo_produto', 'outros_detalhes', 'a_enviar', 'enviado_em'
-            ]             
+            ]  
+
+            # Ajustar os horários para o fuso horário de Brasília (UTC-3)
+            if 'a_enviar' in df.columns:
+                df['a_enviar'] = pd.to_datetime(df['a_enviar']).apply(lambda x: (x + brasilia_offset).replace(tzinfo=None) if pd.notnull(x) else x)
+            if 'enviado_em' in df.columns:
+                df['enviado_em'] = pd.to_datetime(df['enviado_em']).apply(lambda x: (x + brasilia_offset).replace(tzinfo=None) if pd.notnull(x) else x)
+        
         else:
             df.columns = [
                 'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
