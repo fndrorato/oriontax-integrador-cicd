@@ -636,6 +636,7 @@ naturezareceitaData.push({
         errorContainer.id = 'error-container';
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
         tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);
+        $('#error-container').hide();   
     
         function updateAliquotasPisCofins() {
             const rowCount = hot.countRows();

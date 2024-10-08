@@ -557,7 +557,8 @@
         var errorContainer = document.createElement('div');
         errorContainer.id = 'error-container';
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
-        tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);        
+        tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling); 
+        $('#error-container').hide();       
 
         function updateAliquotasPisCofins() {
             const rowCount = hot.countRows();
@@ -646,7 +647,8 @@
                         errorContainer.appendChild(errorList);
                         errorContainer.classList.remove('alert-success'); // Remove a classe de sucesso
                         errorContainer.classList.add('alert-danger');  
-                        $('#loader').hide();                      
+                        $('#loader').hide();     
+                        $('#error-container').show();                 
                     } else { // If all fields are valid, proceed with code validation
                         var dataToSend = hot.getData();
                         // Filter rows where checkbox is checked
@@ -689,6 +691,7 @@
                                     errorContainer.classList.add('alert-success');
                                     errorContainer.classList.remove('alert-danger');
                                     $('#loader').hide();
+                                    $('#error-container').show();   
                                     location.reload(); 
                                     // Apply success class to all rows
 
@@ -713,6 +716,7 @@
                                     errorContainer.classList.remove('alert-success');
                                     errorContainer.classList.add('alert-danger');
                                     $('#loader').hide();
+                                    $('#error-container').show();   
                                 }
                             },
                             error: function(jqXHR, textStatus, errorThrown) {

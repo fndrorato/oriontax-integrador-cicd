@@ -110,10 +110,18 @@
                                         <td class="text-center align-middle">{{ item.cofins_aliquota }}</td>
                                         <td class="text-center align-middle">{{ item.naturezareceita.code }}</td>
                                         <td class="text-center align-middle">{{ item.type_product }}</td>
-                                        <td class="text-center align-middle" style="color: #33D176;">
-                                            
-                                                <i class="icofont icofont-ui-check"></i>
-                                            
+                                        <td class="text-center align-middle">
+                                        {% if item.status_item == 3 %}
+                                            <i class="icofont icofont-ui-check" style="color: #33D176;" title="Produto Validado"></i>
+                                        {% elif item.status_item == 4 %}
+                                            <i class="icofont icofont-ui-close" style="color: #F44336;" title="Inativo"></i>
+                                        {% elif item.status_item == 1 %}
+                                            <i class="icofont icofont-ui-reply" title="A ser enviado"></i>
+                                        {% elif item.status_item == 0 %}
+                                            <i class="icofont icofont-social-nimbuss" style="color: #F44336;" title="Produto Novo"></i>
+                                        {% else %}
+                                            <i class="icofont icofont-ui-rotation" style="color: #2196F3" title="Aguardando Sincronização"></i>
+                                        {% endif %}
                                         </td>
                                         <td class="text-center align-middle">                                             
                                             <a href="{% url 'item_update' client_id=client.id pk=item.id %}" type="button" class="text-center color-black">
@@ -273,7 +281,20 @@
                         <div class="col-sm-8">
                             <input type="text" class="form-control form-control-sm" name="naturezareceita" id="search_naturezareceita">
                         </div>
-                    </div>                                                                                                                                                                                                                           
+                    </div>   
+                    <div class=" row">
+                        <label class="col-sm-4 col-form-label">Status</label>
+                        <div class="col-sm-8">
+                            <select class="form-control form-control-sm" name="status_item" id="search_status_item">
+                                <option value="">Todos Status</option>
+                                <option value="0">Produto Novo</option>
+                                <option value="1">A ser enviado</option>
+                                <option value="2">Aguardando Sincronização</option>
+                                <option value="3">Validado</option> 
+                                <option value="4">Inativo</option> 
+                            </select>
+                        </div>
+                    </div>                                                                                                                                                                                                                                              
                 </form>
             </div>
             <div class="modal-footer p-t-5 p-b-5">
@@ -297,7 +318,8 @@
         var fields = [
             'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'cst_icms',
             'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege',
-            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 'tipo_produto'
+            'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 'tipo_produto',
+            'status_item'
         ];
 
         fields.forEach(function(field) {

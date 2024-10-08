@@ -133,7 +133,25 @@ def export_items_to_excel(request, client_id, table):
             'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
             'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
             'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information', 'await_sync_at', 'sync_at'
-        )                
+        )    
+        
+        # Subquery para obter divergent_columns de ImportedItem
+        imported_item_subquery = ImportedItem.objects.filter(
+            code=OuterRef('code'), client=client
+        ).values('divergent_columns')
+
+        # Anotar o items com divergent_columns (ou valor vazio se não existir)
+        items = items.annotate(
+            divergent_columns=Subquery(
+                imported_item_subquery, output_field=CharField()
+            )
+        ).annotate(
+            divergent_columns=models.Case(
+                models.When(divergent_columns__isnull=True, then=Value('')),
+                default=models.F('divergent_columns'),
+            )
+        )         
+                            
     elif table == 'new':
         items = ImportedItem.objects.filter(client=client, status_item=0).values(
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
@@ -242,7 +260,7 @@ def export_items_to_excel(request, client_id, table):
                 'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
                 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
-                'tipo_produto', 'outros_detalhes', 'a_enviar', 'enviado_em'
+                'tipo_produto', 'outros_detalhes', 'a_enviar', 'enviado_em', 'colunas_divergentes'
             ]  
 
             # Ajustar os horários para o fuso horário de Brasília (UTC-3)
@@ -328,17 +346,25 @@ class ItemListView(ListView):
             
         # Filter with ForeignKey lookups and other fields
         filter_kwargs = {}
-        for field_name in ['code', 'barcode', 'description', 'ncm', 'cest', 'icms_aliquota_reduzida', 'pis_aliquota', 'cofins_aliquota', 'type_product']:
+        for field_name in ['code', 'barcode', 'description', 'ncm', 'cest', 'icms_aliquota_reduzida', 'pis_aliquota', 'cofins_aliquota', 'type_product', 'status_item']:
             value = self.request.GET.get(field_name)
             if value:
-                filter_kwargs[f"{field_name}__icontains"] = value
+                print(field_name)
+                # Use 'exact' for status_item, since it's an IntegerField
+                if field_name == 'status_item':
+                    print(value)
+                    filter_kwargs[f"{field_name}__exact"] = value
+                else:
+                    filter_kwargs[f"{field_name}__icontains"] = value
 
+        print(filter_kwargs)
         queryset = queryset.filter(**filter_kwargs)
 
         # Handle ForeignKey filters separately
         for field_name in ['cfop', 'icms_cst', 'icms_aliquota', 'protege', 'cbenef', 'piscofins_cst', 'naturezareceita']:
             value = self.request.GET.get(field_name)
             if value:
+                print('Handle Foreign Key')
                 try:
                     if field_name == 'naturezareceita':
                         queryset = queryset.filter(**{f"{field_name}__code__icontains": value})

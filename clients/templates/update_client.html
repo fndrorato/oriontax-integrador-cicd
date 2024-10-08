@@ -755,9 +755,20 @@
                     error: function(xhr) {
                         var errors = xhr.responseJSON;
                         var errorMessages = '';
-                        $.each(errors, function(key, value) {
-                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
-                        });
+                        if (xhr.status === 504) {
+                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' +
+                                'A requisição demorou demais para ser processada. Por favor, tente novamente mais tarde.' +
+                                '</div>';
+                        } else {
+                            var errors = xhr.responseJSON;
+                            $.each(errors, function(key, value) {
+                                errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
+                            });
+                        }
+                        $('.theme-loader').animate({
+                            'opacity': '0',
+                        }, 200);  
+                        $('.theme-loader').hide();                         
                         $('#message').html(errorMessages);
                     },
                     complete: function() {
@@ -802,10 +813,21 @@
                     error: function(xhr) {
                         var errors = xhr.responseJSON;
                         var errorMessages = '';
-                        $.each(errors, function(key, value) {
-                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
-                        });
-                        $('#message').html(errorMessages);
+                        if (xhr.status === 504) {
+                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' +
+                                'A requisição demorou demais para ser processada. Por favor, tente novamente mais tarde.' +
+                                '</div>';
+                        } else {
+                            var errors = xhr.responseJSON;
+                            $.each(errors, function(key, value) {
+                                errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
+                            });
+                        }
+                        $('.theme-loader').animate({
+                            'opacity': '0',
+                        }, 200);  
+                        $('.theme-loader').hide();                         
+                        $('#message').html(errorMessages);                        
                     },
                     complete: function() {
                         $('.theme-loader').animate({

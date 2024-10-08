@@ -18,6 +18,7 @@ class Item(models.Model):
         (1, 'Aguardando Sincronização'),        
         (2, 'Enviado - Aguard Validação'),
         (3, 'Validado'),
+        (4, 'Inativo')
     ]    
         
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)

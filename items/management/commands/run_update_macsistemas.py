@@ -148,69 +148,154 @@ def connect_and_update(host, user, password, port, database, client_name, client
             cursor = connection.cursor()
             connection.autocommit = False
 
+            # update_query = """
+            #     UPDATE oriontax.PRODUTO
+            #     SET 
+            #         descricao = CASE codigo 
+            # """
+            # values = []
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['description'])
+            # update_query += " ELSE descricao END, ncm = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['ncm'])
+            # update_query += " ELSE ncm END, cest = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['cest'])
+            # update_query += " ELSE cest END, tributacao = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['tributacao'])
+            # update_query += " ELSE tributacao END, icms = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['icms'])
+            # update_query += " ELSE icms END, cst = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['cst'])
+            # update_query += " ELSE cst END, cstpis = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['cstpis'])
+            # update_query += " ELSE cstpis END, pis = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['pis'])
+            # update_query += " ELSE pis END, cstcofins = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['cstcofins'])
+            # update_query += " ELSE cstcofins END, cofins = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['cofins'])
+            # update_query += " ELSE cofins END, redbcicms = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['redbcicms'])
+            # update_query += " ELSE redbcicms END, codbenef = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(row['cbenef'])
+            # update_query += " ELSE codbenef END, dt_atualizacao = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            # update_query += " ELSE dt_atualizacao END, alterado_orion = CASE codigo"
+            # for _, row in items_df.iterrows():
+            #     update_query += f" WHEN '{row['code']}' THEN %s"
+            #     values.append('S')
+            # update_query += " ELSE alterado_orion END WHERE cnpj = %s"
+            # values.append(client_cnpj)
+            
+           # Início da consulta de atualização
             update_query = """
                 UPDATE oriontax.PRODUTO
                 SET 
-                    descricao = CASE codigo 
+                    descricao = CASE 
             """
             values = []
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['description'])
-            update_query += " ELSE descricao END, ncm = CASE codigo"
+
+            update_query += " ELSE descricao END, ncm = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['ncm'])
-            update_query += " ELSE ncm END, cest = CASE codigo"
+
+            update_query += " ELSE ncm END, cest = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['cest'])
-            update_query += " ELSE cest END, tributacao = CASE codigo"
+
+            update_query += " ELSE cest END, tributacao = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['tributacao'])
-            update_query += " ELSE tributacao END, icms = CASE codigo"
+
+            update_query += " ELSE tributacao END, icms = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['icms'])
-            update_query += " ELSE icms END, cst = CASE codigo"
+
+            update_query += " ELSE icms END, cst = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['cst'])
-            update_query += " ELSE cst END, cstpis = CASE codigo"
+
+            update_query += " ELSE cst END, cstpis = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['cstpis'])
-            update_query += " ELSE cstpis END, pis = CASE codigo"
+
+            update_query += " ELSE cstpis END, pis = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['pis'])
-            update_query += " ELSE pis END, cstcofins = CASE codigo"
+
+            update_query += " ELSE pis END, cstcofins = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['cstcofins'])
-            update_query += " ELSE cstcofins END, cofins = CASE codigo"
+
+            update_query += " ELSE cstcofins END, cofins = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['cofins'])
-            update_query += " ELSE cofins END, redbcicms = CASE codigo"
+
+            update_query += " ELSE cofins END, redbcicms = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['redbcicms'])
-            update_query += " ELSE redbcicms END, codbenef = CASE codigo"
+
+            update_query += " ELSE redbcicms END, codbenef = CASE"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(row['cbenef'])
-            update_query += " ELSE codbenef END, dt_atualizacao = CASE codigo"
+
+            update_query += """
+                ELSE codbenef END, 
+                dt_atualizacao = CASE
+            """
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            update_query += " ELSE dt_atualizacao END, alterado_orion = CASE codigo"
+
+            update_query += """
+                ELSE dt_atualizacao END, 
+                alterado_orion = CASE
+            """
             for _, row in items_df.iterrows():
-                update_query += f" WHEN '{row['code']}' THEN %s"
+                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
                 values.append('S')
+
             update_query += " ELSE alterado_orion END WHERE cnpj = %s"
-            values.append(client_cnpj)
+            values.append(client_cnpj)            
             
             # Print the query and values for debugging
             # print("Query gerada:\n", update_query)

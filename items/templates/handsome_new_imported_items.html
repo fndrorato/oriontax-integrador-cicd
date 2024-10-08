@@ -164,7 +164,7 @@
                                             </div>                                                                                 
                                             <div id="divergent-items-table" class="handsontable"></div>
                                             <!-- Paginação -->  
-                                            <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center">
+                                            <div class="col-lg-12 col-md-12 col-sm-12 mt-2 d-flex justify-content-center">
                                                 <ul class="pagination">
                                                     {% if page_obj.has_previous %}
                                                         <li class="page-item">
@@ -592,13 +592,14 @@ naturezareceitaData.push({
         btnValidate.addEventListener('click', function() {
             validateTable();
         });   
-        
+
         var tableContainer = document.getElementById('divergent-items-table'); // Obtém a referência da div da tabela
         var errorContainer = document.createElement('div');
         errorContainer.id = 'error-container';
         errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
         tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling);
-    
+        $('#error-container').hide();
+
         function updateAliquotasPisCofins() {
             const rowCount = hot.countRows();
             for (let row = 0; row < rowCount; row++) {
@@ -711,7 +712,8 @@ naturezareceitaData.push({
                         errorContainer.appendChild(errorList);
                         errorContainer.classList.remove('alert-success'); // Remove a classe de sucesso
                         errorContainer.classList.add('alert-danger');  
-                        $('#loader').hide();                      
+                        $('#loader').hide(); 
+                        $('#error-container').show();                      
                     } else { // If all fields are valid, proceed with code validation
                         var dataToSend = hot.getData();
                         // Filter rows where checkbox is checked
@@ -754,6 +756,7 @@ naturezareceitaData.push({
                                     errorContainer.classList.remove('alert-danger');
                                     location.reload();
                                     $('#loader').hide();
+                                    $('#error-container').show();
                                     // Apply success class to all rows
                                     for (var i = 0; i < hot.countRows(); i++) {
                                         if (dataToSend[i][16]) { // Check if the checkbox value is true
@@ -769,6 +772,7 @@ naturezareceitaData.push({
                                     errorContainer.classList.remove('alert-success');
                                     errorContainer.classList.add('alert-danger');
                                     $('#loader').hide();
+                                    $('#error-container').show();
                                 }
                             },
                             error: function(jqXHR, textStatus, errorThrown) {
