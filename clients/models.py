@@ -29,7 +29,7 @@ class Client(models.Model):
     token = models.UUIDField(default=uuid.uuid4, unique=True, blank=True, null=True)
     num_stores = models.IntegerField()
     date_contract = models.DateField()
-    date_send = models.DateField()
+    date_send = models.DateField(blank=True, null=True)
     economic_benefit = models.BooleanField(verbose_name="Benefício Econômico")
     erp = models.ForeignKey(ERP, on_delete=models.RESTRICT)
     accounting = models.ForeignKey('accountings.Accounting', on_delete=models.RESTRICT, verbose_name="Contabilidade")

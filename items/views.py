@@ -349,15 +349,12 @@ class ItemListView(ListView):
         for field_name in ['code', 'barcode', 'description', 'ncm', 'cest', 'icms_aliquota_reduzida', 'pis_aliquota', 'cofins_aliquota', 'type_product', 'status_item']:
             value = self.request.GET.get(field_name)
             if value:
-                print(field_name)
                 # Use 'exact' for status_item, since it's an IntegerField
                 if field_name == 'status_item':
-                    print(value)
                     filter_kwargs[f"{field_name}__exact"] = value
                 else:
                     filter_kwargs[f"{field_name}__icontains"] = value
 
-        print(filter_kwargs)
         queryset = queryset.filter(**filter_kwargs)
 
         # Handle ForeignKey filters separately
