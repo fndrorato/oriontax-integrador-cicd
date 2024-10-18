@@ -309,13 +309,19 @@ class XLSXSimulateValidateItems(View):
 class RunSelectView(View):
     def get(self, request, client_id):
         client = get_object_or_404(Client, id=client_id)
+
+        if not client.connection_route:
+            return JsonResponse({'status': 'warning', 'message': 'Este cliente não possui uma rota configurada para sincronizar dados.'})        
+
         try:
             if client.erp.name == 'SYSMO':
                 script_execute = 'run_select.py'
             elif client.erp.name == 'TILLIT':
                 script_execute = 'run_select_tilit.py'
+            elif client.erp.name == 'MAC Sistemas':
+                script_execute = 'run_update_macsistemas.py'             
             else:
-                script_execute = 'run_select_macsistemas.py' 
+                return JsonResponse({'status': 'warning', 'message': 'O sistema desse cliente não está configurado a sincronização.'})
             # Obter o caminho completo para o script run_select.py
             script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', script_execute)
             
@@ -337,13 +343,20 @@ class RunSelectView(View):
 class RunUpdateView(View):
     def get(self, request, client_id):
         client = get_object_or_404(Client, id=client_id)
+        
+        if not client.connection_route:
+            return JsonResponse({'status': 'warning', 'message': 'Este cliente não possui uma rota configurada para sincronizar dados.'})
+        
         try:
             if client.erp.name == 'SYSMO':
                 script_execute = 'run_update_sysmo.py'
             elif client.erp.name == 'TILLIT':
                 script_execute = 'run_update_tilit.py'
-            else:
+            elif client.erp.name == 'MAC Sistemas':
                 script_execute = 'run_update_macsistemas.py'             
+            else:
+                return JsonResponse({'status': 'warning', 'message': 'O sistema desse cliente não está configurado a sincronização.'})
+            
             # Obter o caminho completo para o script run_select.py
             script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', script_execute)
             
