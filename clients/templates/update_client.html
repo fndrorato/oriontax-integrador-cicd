@@ -1000,12 +1000,19 @@
                     );
                     $('#loader-load-data').hide();
                 } else {
-                    swal(
-                        'Erro!',
-                        'Ocorreu um erro ao importar dados do cliente.',
-                        'error'
-                    );                    
-                    console.log('Error: ' + data.message);
+                    if (data.status === 'warning') {
+                        swal(
+                            'Atenção!',
+                            data.message,
+                            'warning'
+                        );                    
+                    } else {
+                        swal(
+                            'Erro!',
+                            data.message,
+                            'error'
+                        );                    
+                    }
                     $('#loader-load-data').hide();
                 }
             });
