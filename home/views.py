@@ -32,7 +32,6 @@ class HomeView(TemplateView):
         total_imported_itens = 0
 
         for client in clients:
-            print('entrruo no loop')
             item_count = Item.objects.filter(client=client).count()
             store_count = Store.objects.filter(client=client).count()
             

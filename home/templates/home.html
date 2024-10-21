@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% load humanize %}
 
 
@@ -53,7 +54,7 @@
                     <div class="row align-items-center">
                         <div class="col">
                             <p class="m-b-5">Média de Itens/Cliente</p>
-                            <h4 class="m-b-0">{{ media_items }}</h4>
+                            <h4 class="m-b-0">{{ media_items|custom_floatformat }}</h4>
                         </div>
                         <div class="col col-auto text-right">
                             <i class="feather icon-shopping-cart f-50 text-c-blue"></i>
@@ -68,7 +69,9 @@
                     <div class="row align-items-center">
                         <div class="col">
                             <p class="m-b-5">Produtos com problema</p>
-                            <h4 class="m-b-0">{{ total_imported_itens }} </h4>
+                            <h4 class="m-b-0">{{ total_imported_itens|custom_floatformat:0 }}</h4>
+                            
+
                         </div>
                         <div class="col col-auto text-right">
                             <i class="feather icon-book f-50 text-c-pink"></i>
@@ -93,11 +96,11 @@
                                     <th>#</th>
                                     <th>Cliente</th>
                                     <th>Analista</th>
-                                    <th class="text-center">Núm Lojas</th>
-                                    <th class="text-center">Cadastros</th>
-                                    <th class="text-center">Pend. Novos</th>
-                                    <th class="text-center">Pend. Nome Diferente</th>
-                                    <th class="text-center">Pend. Divergentes</th>
+                                    <th class="text-center">Lojas</th>
+                                    <th class="text-center">Cadastrados</th>
+                                    <th class="text-center">Novos</th>
+                                    <th class="text-center">Nomes Diferentes</th>
+                                    <th class="text-center">Com Divergência</th>
                                     <th class="text-center">Pendentes</th>
                                     <th class="text-center">Aguardando Sinc.</th>
                                     <th class="text-center">Ação</th>
@@ -112,7 +115,7 @@
                                                 {{ client_info.client.name }}
                                             </a>
                                         </td>
-                                        <td>{{ client_info.client.user.get_full_name }}</td>
+                                        <td>{{ client_info.client.user.get_full_name|custom_full_name }}</td>
                                         <td class="text-center">{{ client_info.store_count }}</td>
                                         <td class="text-center">{{ client_info.item_count|intcomma }}</td>
                                         <td class="text-center">{{ client_info.produtos_novos_pendentes|intcomma }}</td>
@@ -123,14 +126,19 @@
                                         <td class="text-center">
                                             {% if client_info.imported_itens_count > 0 %}
                                                 <a href="{% url 'imported_item_list' client_id=client_info.client.id %}" type="button" class="btn btn-danger btn-mini waves-effect waves-light text-white">
-                                                    <i class="icofont icofont-exclamation-tringle"></i>
-                                                    pendentes
+                                                    <i class="icofont icofont-exclamation-tringle" style="font-size: 1.5em;"></i>
+                                                    
                                                 </a>    
+                                            {% else %}
+                                                <a href="{% url 'imported_item_list' client_id=client_info.client.id %}" type="button" class="btn btn-outline-danger btn-mini waves-effect waves-light text-black">
+                                                    <i class="icofont icofont-exclamation-tringle" style="font-size: 1.5em;"></i>          
+                                                </a>                                  
                                             {% endif %}
+
                                             <a href="{% url 'item_list' client_id=client_info.client.id %}" type="button" class="btn btn-primary btn-mini waves-effect waves-light text-white">
-                                                <i class="icofont icofont-ui-edit"></i>
-                                                ver cadastros
-                                            </a>                                             
+                                                <i class="icofont icofont-eye-alt" style="font-size: 1.5em;"></i>
+                                            </a>
+                                                                                        
                                         </td>
                                     </tr>
                                 {% endfor %}                                
