@@ -41,7 +41,6 @@ def custom_full_name(name):
     # Verifica se há mais de 3 palavras
     if len(words) <= 3:
         return name
-    
 
     return f"{words[0]} {words[1]} {words[-1]}"
     
