@@ -146,6 +146,22 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Dados Recebidos para o Sistema Sysmo \n'
     
+    # Excluindo os items que estão marcados como INSUMOS OU IMOBILIZADOS
+    filtered_df = items_df[items_df['type_product'] != 'Revenda']
+    # Excluindo as linhas de df em que o 'code' também está presente em filtered_df['code']
+    df_filtered = df[~df['code'].isin(filtered_df['code'])]
+    # Verifica se o número de linhas foi reduzido após a filtragem
+    if len(df) > len(df_filtered):
+        # Calcula quantos itens foram excluídos
+        itens_excluidos = len(df) - len(df_filtered) 
+        timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')    
+        result_integration += f'[{timestamp}] - {itens_excluidos} itens excluídos por serem classificados como Insumos ou Imobilizados.\n'
+   
+    # Substitui df pelo df_filtered após a filtragem
+    df = df_filtered
+    # Exclui a coluna 'type_product' de items_df
+    items_df = items_df.drop('type_product', axis=1)       
+    
     # Eliminar as colunas indesejadas
     df = df.drop(columns=['nr_cst_cofins'])
     print('2-Colunas indesejadas do client DF')

@@ -148,7 +148,7 @@ if __name__ == "__main__":
             items_queryset = Item.objects.filter(client=client).values(
                 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
                 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
-                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 
+                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'type_product',
                 naturezareceita_code=F('naturezareceita__code')
             )        
             # Converte o queryset em uma lista de dicionários
