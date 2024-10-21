@@ -104,6 +104,19 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+# O DATABASE ABAIXO É O OFICIAL
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'oriontax',
+#         'USER': 'orion',
+#         'PASSWORD': 'orion@2024',
+#         'HOST': '18.204.98.107',
+#         'PORT': '5432',
+#     }
+# }
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',

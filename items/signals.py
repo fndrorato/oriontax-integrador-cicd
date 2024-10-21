@@ -1,4 +1,4 @@
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from .models import Item
@@ -28,3 +28,12 @@ def validate_item(sender, instance, **kwargs):
 
     if instance.piscofins_cst and instance.piscofins_cst.code == '01' and instance.naturezareceita:
         raise ValueError('Natureza Receita deve estar em branco quando PIS CST é 01.')
+
+@receiver(post_save, sender=Item)
+def update_status_item(sender, instance, **kwargs):
+    # Verifica se o type_product é diferente de 'Revenda'
+    if instance.type_product != 'Revenda':
+        # Verifica se o status_item já não é 3
+        if instance.status_item != 3:
+            instance.status_item = 3
+            instance.save(update_fields=['status_item'])  # Atualiza o campo status_item

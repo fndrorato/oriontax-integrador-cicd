@@ -279,7 +279,7 @@ if __name__ == "__main__":
                 # Criar um DataFrame vazio com as colunas desejadas
                 items_df = pd.DataFrame(columns=colunas_desejadas)
                            
-            items_df.drop(columns=['id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 'is_pending_sync', 'history', 'other_information', 'type_product'], inplace=True)            
+            items_df.drop(columns=['id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 'is_pending_sync', 'history', 'other_information'], inplace=True)            
             # print(items_df.info())
             try:
                 # Chama a função de validação

@@ -737,6 +737,11 @@ def save_imported_item(request):
             naturezareceita_instance = None
             type_product = data.get('type_product', '')
             
+            if type_product != 'Revenda':
+                next_status_item = 3
+            else:
+                next_status_item = 2
+            
             pis_aliquota = convert_to_decimal(pis_aliquota_str)
             cofins_aliquota = convert_to_decimal(cofins_aliquota_str)
             
@@ -775,7 +780,7 @@ def save_imported_item(request):
                     item.cofins_aliquota = cofins_aliquota
                     item.naturezareceita = naturezareceita_instance
                     item.type_product = type_product
-                    item.status_item = 2  # Verifique se precisa atualizar o status do item
+                    item.status_item = next_status_item  # Verifique se precisa atualizar o status do item
                     item.save()
 
                     # Update the ImportedItem model
@@ -800,7 +805,7 @@ def save_imported_item(request):
                         cofins_aliquota=cofins_aliquota,
                         naturezareceita=naturezareceita_instance,
                         type_product=type_product,
-                        status_item=2  # Verifique se precisa definir o status do item
+                        status_item=next_status_item  # Verifique se precisa definir o status do item
                     )
                     item.save()
 
@@ -865,9 +870,6 @@ def save_bulk_imported_item(request):
         try:
             data = json.loads(request.POST.get('items', '[]'))
             
-            # print(data)
-            # return JsonResponse({'status': 'error', 'message': 'rrro'})
-            # 7892840233945
             # Validate each item and collect errors if any
             # Lista para armazenar todos os itens
             items_list = []            
@@ -990,8 +992,7 @@ def save_bulk_imported_item(request):
                     user = request.user
                     current_time = timezone.now()  
                     
-                    # return JsonResponse({'status': 'error', 'message': 'rrro'})                           
-                    print('tipo_produto:', tipo_produto, ' code:', code)
+
                     if tipo_produto == '1':
                         variavel_oriontax = {
                             'code': code,
@@ -1017,10 +1018,16 @@ def save_bulk_imported_item(request):
                         variavel_oriontax['protege'] = int(variavel_oriontax['protege'])
                         variavel_oriontax['piscofins_cst'] = int(variavel_oriontax['piscofins_cst'])
                         var_status_item = comparar_item_filtrado(client.erp.name, variavel_oriontax, itens_filtrados_dict)
+                        
+                        
+                        if type_product != 'Revenda':
+                            var_status_item = 3
+                        
                         # Regras:
                         # Quando estiver atualizando e ver  que ficou igual ao dos
                         # itens importados, mudar o status diretamente para 3,
                         # pois não tem a necessidade de enviar novamente
+                        # Se o tipo de produto for IMOBILIZADO OU INSUMO, ir direto para 3
                         # Obs.: Quando o sistema do cliente for SYSMO
                         # Para os casos de CST ICMS 40,41,60 ignorar as aliquotas de ICMS
                         
@@ -1058,6 +1065,11 @@ def save_bulk_imported_item(request):
                         estado_origem = row[20]
                         estado_destino = row[21]
                         
+                        if type_product != 'Revenda':
+                            var_status_item = 3 
+                        else:
+                            var_status_item = 1                       
+                        
                         # Cria um novo item se tipo_produto não for igual a 1
                         item = Item(
                             code=code,
@@ -1085,7 +1097,7 @@ def save_bulk_imported_item(request):
                             await_sync_at = current_time,
                             user_created = user,
                             user_updated = user,
-                            status_item=1  # Verifique se precisa definir o status do item
+                            status_item=var_status_item  # Verifique se precisa definir o status do item
                         )
                         item.save()
 

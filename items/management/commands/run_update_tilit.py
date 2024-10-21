@@ -4,6 +4,7 @@ import django
 import pandas as pd
 import io
 import dropbox
+import traceback
 from io import StringIO
 from datetime import datetime
 from utils import refresh_access_token, get_access_token_with_auth_code
@@ -47,8 +48,6 @@ def convert_df_otx_version_to_df_client(df_client):
     # Leitura dos arquivos CSV em DataFrames
     df_icms = pd.read_csv(path_icms, delimiter=';', dtype={'icms_cst': str})
     
-    df_client.info()
-    
     df_client['icms_cst_id'] = df_client['icms_cst_id'].astype(str).str.zfill(2)
     df_client = df_client.drop(columns=['id', 'client_id', 'protege_id', 'pis_aliquota', 'cofins_aliquota'])
     df_client = df_client.rename(columns={
@@ -89,7 +88,7 @@ def convert_df_otx_version_to_df_client(df_client):
             'icms': 'ICMS'
     })   
     
-    df_final = df_final.drop(columns=['cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'status_item'])  
+    df_final = df_final.drop(columns=['cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida'])  
 
     # Definindo a nova ordem das colunas
     nova_ordem = [
@@ -102,13 +101,14 @@ def convert_df_otx_version_to_df_client(df_client):
         'CEST',
         'NATUREZARECEITAPIS',
         'CODBENEFICIOFISCAL',
+        
     ]
     
     # Reordenando as colunas do DataFrame df_final
     df_final = df_final[nova_ordem]
         
-    # Exibindo o DataFrame resultante
-    print(df_final)
+    # # Exibindo o DataFrame resultante
+    # print(df_final)
     
     return df_final
           
@@ -171,11 +171,9 @@ def connect_and_update(host, token, client_name, items_df, initial_log):
         path_atualiza = atualiza_folder.path_lower
         dropbox_path = f"{path_atualiza}/{csv_filename}"
         
-        print(csv_data)  # Verifique o conteúdo antes do upload
-        
         # Upload do CSV para a pasta "Atualiza"
-        dbx.files_upload(csv_data.encode(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
         # dbx.files_upload(csv_data.encode(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
+        dbx.files_upload(csv_data.encode(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
         print(f"Arquivo {csv_filename} carregado com sucesso na pasta 'Atualiza'")
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Arquivo {csv_filename} carregado com sucesso.\n"
         code_mensagem = "Atualização realizada com sucesso."
@@ -291,6 +289,7 @@ if __name__ == "__main__":
 
         # Cria um DataFrame a partir da lista de dicionários
         items_df = pd.DataFrame(items_list) 
+
         
         # Verifica se a quantidade de itens é maior que 1
         if len(items_df) == 0:
@@ -301,11 +300,13 @@ if __name__ == "__main__":
             save_imported_logs(client_id, initial_log) 
             if args.client_id:
                 sys.exit(2)  # Sair com código de erro 1 
-        else:               
+        else:   
             items_df = items_df.drop(columns=columns_to_remove)  
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             initial_log += f'[{timestamp}] - Iniciando conversão  dos dados para o cliente: {client.name} \n'
-            items_df = convert_df_otx_version_to_df_client(items_df)    
+            items_df_original = items_df
+            items_df = convert_df_otx_version_to_df_client(items_df)  
+
             try:
                 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
                 initial_log += f'[{timestamp}] - Conectando e atuaizando... \n'                
@@ -323,9 +324,10 @@ if __name__ == "__main__":
                     # Vamos atualizar apenas os itens que estao com staus = 1, ou seja Aguardando Sincronização
                     # os com status 2, apesar de ter sido enviado, não será atualizado novamente para manter
                     # a mesma data de envio original
-
+                    print(items_df_original.columns)  # Verifique os campos disponíveis no DataFrame
+                    
                     current_time = timezone.now()
-                    codes_to_update = items_df[items_df['status_item'] == 1]['code'].tolist()
+                    codes_to_update = items_df_original[items_df_original['status_item'] == 1]['code'].tolist()
                     num_updated = Item.objects.filter(
                         code__in=codes_to_update, 
                         status_item=1, 
@@ -347,11 +349,12 @@ if __name__ == "__main__":
                         sys.exit(0)  # Sair com código de sucesso
                         
                 except Exception as e:
-                    initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Ocorreu um erro durante a atualização dos itens: {e}\n"
-                    print(f"Ocorreu um erro durante a atualização dos itens: {e}")                
-                    save_imported_logs(client_id, initial_log) 
-                    if args.client_id: 
-                        sys.exit(1)  # Sair com código de erro 1        
+                    error_message = traceback.format_exc()  # Captura o traceback completo
+                    initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Ocorreu um erro durante a atualização dos itens: {e}\n{error_message}\n"
+                    print(f"Ocorreu um erro durante a atualização dos itens: {e}\n{error_message}")                
+                    save_imported_logs(client_id, initial_log)
+                    if args.client_id:
+                        sys.exit(1)      
             else:
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Ocorreu um erro ao inserir as validações\n"
                 save_imported_logs(client_id, initial_log)
