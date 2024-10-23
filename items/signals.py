@@ -45,6 +45,7 @@ def check_and_update_status_item(sender, instance, **kwargs):
     try:
         # Obtenha a instância original (antes da alteração)
         original_item = Item.objects.get(pk=instance.pk)
+        # print(f"Codigo: {instance.code} - {instance.description}")
 
         # Verifique se o 'type_product' mudou
         if original_item.type_product != instance.type_product:

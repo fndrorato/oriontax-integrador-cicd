@@ -1157,6 +1157,7 @@ class XLSXUploadView(View):
             xlsx_file = request.FILES['csv_file']
             try:
                 df = pd.read_excel(xlsx_file, dtype={
+                    'codigo': str,
                     'ncm': str, 
                     'cest': str, 
                     'barcode': str, 
@@ -1205,10 +1206,8 @@ class XLSXUploadView(View):
                 def get_natureza_receita_id(code, piscofins_cst_code):
                     return natureza_receita_dict.get((code, piscofins_cst_code), {}).get('id')            
 
-                # df['barcode'] = df['barcode'].fillna(0).astype(int).astype(str)
                 df['barcode'] = df['barcode'].fillna('').astype(str)
                 df['ncm'] = df['ncm'].astype(str)
-                # df['cest'] = df['cest'].fillna(0).astype(int).astype(str)
                 df['cest'] = df['cest'].fillna('').astype(str)
                 df['cfop'] = df['cfop'].astype(int)
                 df['icms_cst'] = df['icms_cst'].astype(str)
@@ -1318,7 +1317,7 @@ class XLSXUploadView(View):
                             natureza_receita_id = get_natureza_receita_id(row['naturezareceita'], piscofins_cst_code)
                             if not natureza_receita_id and row['naturezareceita'] != None:
                                 raise ValueError(f"NaturezaReceita com código {row['naturezareceita']} e PisCofinsCst {piscofins_cst_code} não encontrado")
-
+                            
                             item_data = {
                                 'client': client,
                                 'code': str(row['codigo']).strip(),
@@ -1370,10 +1369,12 @@ class XLSXUploadView(View):
                     for i in range(0, len(items_to_create), batch_size):
                         batch = items_to_create[i:i + batch_size]
                         Item.objects.bulk_create(batch, ignore_conflicts=True)
-
-                    if items_to_update:
+                    
+             
+                    
+                    if items_to_update:                        
                         for i in range(0, len(items_to_update), batch_size):
-                            batch = items_to_update[i:i + batch_size]
+                            batch = items_to_update[i:i + batch_size]                           
                             Item.objects.bulk_update(batch, fields=[
                                 'barcode', 'description', 'ncm', 'cest', 'cfop_id', 'icms_cst_id', 
                                 'icms_aliquota_id', 'icms_aliquota_reduzida', 'protege_id', 'cbenef_id', 
