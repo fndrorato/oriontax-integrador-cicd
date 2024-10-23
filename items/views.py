@@ -1341,6 +1341,8 @@ class XLSXUploadView(View):
                                 'is_pending_sync': True,
                                 'updated_at': current_time,
                                 'user_updated': user,
+                                # Define status_item com base em type_product
+                                'status_item': 3 if self.TYPE_PRODUCT_CHOICES[row['tipo_produto']] != 'Revenda' else 1
                             }
 
                             if str(row['codigo']).strip() in existing_items:
@@ -1368,9 +1370,7 @@ class XLSXUploadView(View):
 
                     for i in range(0, len(items_to_create), batch_size):
                         batch = items_to_create[i:i + batch_size]
-                        Item.objects.bulk_create(batch, ignore_conflicts=True)
-                    
-             
+                        Item.objects.bulk_create(batch, ignore_conflicts=True)         
                     
                     if items_to_update:                        
                         for i in range(0, len(items_to_update), batch_size):
@@ -1379,7 +1379,7 @@ class XLSXUploadView(View):
                                 'barcode', 'description', 'ncm', 'cest', 'cfop_id', 'icms_cst_id', 
                                 'icms_aliquota_id', 'icms_aliquota_reduzida', 'protege_id', 'cbenef_id', 
                                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_id', 
-                                'type_product', 'other_information',
+                                'type_product', 'other_information', 'status_item',
                                 'is_active', 'is_pending_sync', 'updated_at', 'user_updated'
                             ])
 
