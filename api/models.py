@@ -93,5 +93,9 @@ class ImportedItemTest(models.Model):
 
     def __str__(self):
         return self.description    
-    
+
+class FileMonitorStatus(models.Model):
+    is_running = models.BooleanField(default=False)
+    last_checked = models.DateTimeField(auto_now=True)
+
 

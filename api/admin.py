@@ -1,3 +1,6 @@
 from django.contrib import admin
+from api.models import FileMonitorStatus
 
-# Register your models here.
+@admin.register(FileMonitorStatus)
+class FileMonitorStatusAdmin(admin.ModelAdmin):
+    list_display = ('is_running', 'last_checked')

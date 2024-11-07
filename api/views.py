@@ -1,4 +1,7 @@
 import pandas as pd
+import json
+import datetime
+import os
 from datetime import datetime
 from django.utils import timezone
 from rest_framework.views import APIView
@@ -18,7 +21,7 @@ class ImportItemView(APIView):
     def post(self, request):
         client = request.user
         initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Cliente: {client.name} enviando dados através da API\n"
-        
+        data_json = request.data
         # Mapeia os campos do JSON recebido para os campos esperados pelo serializer
         def rename_fields(data):
             return {
@@ -59,6 +62,26 @@ class ImportItemView(APIView):
         if serializer.is_valid():
             # Transforma os dados validados em um dataframe
             df_json_recebido = pd.DataFrame(serializer.validated_data)
+            # Obtendo a data e hora atual para o timestamp
+            now = datetime.now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S")  # Formato yyyymmdd_hhmmss
+            
+            # Diretório para salvar os arquivos
+            save_dir = "logs/api"
+            os.makedirs(save_dir, exist_ok=True)  # Cria o diretório se não existir
+            
+            # Criando o nome do arquivo dinâmico (sem a extensão)
+            file_base_name = f"{client.id}_{timestamp}"
+            
+            # Caminho completo para o arquivo CSV
+            # csv_file_path = os.path.join(save_dir, f"{file_base_name}.csv")
+            # df_json_recebido.to_csv(csv_file_path, sep=';', index=False)
+            
+            # Caminho completo para o arquivo JSON
+            json_file_path = os.path.join(save_dir, f"{file_base_name}.json")
+            with open(json_file_path, 'w') as json_file:
+                json.dump(data_json, json_file, indent=4)           
+            
             df_json_recebido['sequencial'] = 0
             df_json_recebido['estado_origem'] = ''
             df_json_recebido['estado_destino'] = ''            
@@ -71,7 +94,7 @@ class ImportItemView(APIView):
                 naturezareceita_code=F('naturezareceita__code')
             )        
             if items_queryset:
-                items_df = pd.DataFrame(list(items_queryset.values()))
+                items_df = pd.DataFrame(list(items_queryset.values()))             
             else: 
                 # Lista das colunas desejadas
                 colunas_desejadas = [

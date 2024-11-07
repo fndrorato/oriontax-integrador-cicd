@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['oriontax.f5sys.com.br', '127.0.0.1', '174.138.73.68', 'beta-or
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'rest_framework',
+    'rest_framework.authtoken',
     'rolepermissions',
     'crispy_forms',
     'widget_tweaks',
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
     'accountings',
     'auditlog',
     'api',
+    'sales',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -117,17 +120,6 @@ DATABASES = {
 #     }
 # }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'oriontax',
-#         'USER': 'orion',
-#         'PASSWORD': 'orion@2024',
-#         'HOST': '18.204.98.107',
-#         'PORT': '5432',
-#     },   
-# }
-
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -184,12 +176,19 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+        # 'rest_framework.authentication.TokenAuthentication',  # Adicionando a autenticação por token
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),    
 }
+
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.umbler.com'
