@@ -520,16 +520,12 @@ def validateSelect(client_id, items_df, df, initial_log=None):
         result_integration = initial_log
     
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')    
-    result_integration += f'[{timestamp}] - Validando 01...\n'
+    result_integration += f'[{timestamp}] - Iniciando a validação\n'
     client_instance = Client.objects.get(id=client_id)
     unnecessary_fields = client_instance.erp.unnecessary_fields
-    result_integration += f'[{timestamp}] - Validando 02...\n'
     # Excluindo os items que estão marcados como INSUMOS OU IMOBILIZADOS
     filtered_df = items_df[items_df['type_product'] != 'Revenda']
-    result_integration += f'[{timestamp}] - Validando 03...\n'
-    # Excluindo as linhas de df em que o 'code' também está presente em filtered_df['code']
     df_filtered = df[~df['code'].isin(filtered_df['code'])]
-    result_integration += f'[{timestamp}] - Validando 04...\n'
     # Verifica se o número de linhas foi reduzido após a filtragem
     if len(df) > len(df_filtered):
         # Calcula quantos itens foram excluídos
@@ -542,20 +538,15 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Exclui a coluna 'type_product' de items_df
     items_df = items_df.drop('type_product', axis=1)    
     
-        
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Dados Recebidos \n'
     
     unique_values = df['protege'].unique()
-    print('3-Rename colunas')
-    print(unique_values)
     df['protege'] = df['protege'].fillna(0)
     unique_values = df['protege'].unique()
-    print(unique_values)
     
     df['protege'] = df['protege'].apply(lambda x: int(x))
     unique_values = df['protege'].unique()
-    print('3-Rename colunas2')
     
     # Verificar se as colunas existem
     expected_columns = ['barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
@@ -626,12 +617,6 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # 2- Encontrar os itens divergentes
     # Remover os itens encontrados em new_items_df do dataframe original df
     df = df[df['code'].isin(new_items_df['code']) == False]
-
-    # filtered_df.info()
-    # Remove todas as colunas, exceto 'code' e 'barcode'
-    # df1 = df1[['code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 'sequencial', 'estado_origem', 'estado_destino']]
-    # merged_df1 = df1.merge(filtered_df, on='code', suffixes=('_df', '_items_df'))
-    # merged_df1.to_csv('merged_df1.csv', sep='|', index=False)
 
     # Realizar a junção para verificar todos os itens e identificar divergências
     merged_df = df.merge(items_df, on='code', suffixes=('_df', '_items_df'))
@@ -810,18 +795,8 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Tratando os valores vazios da natureza da receita
     # Substitui valores vazios ('') por None no campo 'naturezareceita'
     df_items_divergent['naturezareceita'] = df_items_divergent['naturezareceita'].replace('', None)
-
         
-    print('15-inserindo os itens com divergencia')
-    # Itera sobre as linhas do DataFrame e imprime cada linha
-    # Itera sobre as linhas do DataFrame e imprime cada campo com o nome e o valor
-    # for index, row in df_items_divergent.iterrows():
-    #     print(f"Linha {index + 1}:")  # Mostra o índice da linha (opcional)
-    #     for field, value in row.items():
-    #         print(f"{field}: {value}")  # Exibe nome do campo e valor
-    #     print("-" * 20)  # Separador para cada linha (opcional)
-
-    
+    print('15-inserindo os itens com divergencia')  
 
     try:
         insert_result = insert_new_items(client_id, df_items_divergent, 1)
