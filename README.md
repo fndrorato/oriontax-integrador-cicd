@@ -20,6 +20,8 @@ O **Sistema de Integração Tributária de Produtos para Supermercados** é uma 
 - Cadastro de Contabilidades: Organização e armazenamento centralizado das informações fiscais de cada supermercado.
 - Regras Fiscais Personalizadas: Configuração de alíquotas e regras tributárias específicas para cada tipo de produto.
 - Gerenciamento de Impostos: Controle detalhado dos tributos aplicáveis, permitindo ajustes dinâmicos conforme legislações.
+
+![Impostos](docs/impostos.png)
 ### 🔍 Validação de Produtos
 - Recepção de Dados do Supermercado: Integração com os sistemas de ERP dos supermercados para receber informações dos produtos.
 - Classificação Automática:
@@ -27,6 +29,11 @@ O **Sistema de Integração Tributária de Produtos para Supermercados** é uma 
     - Produto Novo: Produto ainda não cadastrado no sistema.
     - Produto com Problemas: Necessita revisão manual por parte da equipe responsável.
 - Feedback Imediato: Indicação clara sobre a situação de cada produto, agilizando o processo de regularização tributária.
+
+![Produtos Novos](docs/produtos_novos.png)
+
+![Aguardando Sincronização](docs/aguardando.png)
+
 ### 🔄 Integração e Retorno de Dados
 - Envio de Produtos Validados: Após a validação, os dados dos produtos são enviados de volta ao supermercado por meio de integrações flexíveis:
     - API dedicada.
