@@ -11,6 +11,8 @@
 
 O **Sistema de Integração Tributária de Produtos para Supermercados** é uma solução desenvolvida para simplificar e otimizar a gestão tributária de produtos comercializados por supermercados no Brasil. O sistema realiza o acompanhamento e a validação de impostos como ICMS, PIS e COFINS, garantindo conformidade fiscal e reduzindo erros nas operações.
 
+![Dashboard](docs/dashboard.png)
+
 
 ## 📋 Funcionalidades Principais
 
