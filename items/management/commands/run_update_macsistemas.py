@@ -212,6 +212,15 @@ def connect_and_update(host, user, password, port, database, client_name, client
             # update_query += " ELSE alterado_orion END WHERE cnpj = %s"
             # values.append(client_cnpj)
             
+            print("Verificando valores NaN no DataFrame:")
+            print(items_df.isna().sum())
+            
+            tributacao_na_df = items_df[items_df['tributacao'].isna()]
+            print("Linhas com 'tributacao' como NaN:")
+            print(tributacao_na_df)
+            
+            
+            
            # Início da consulta de atualização
             update_query = """
                 UPDATE oriontax.PRODUTO
