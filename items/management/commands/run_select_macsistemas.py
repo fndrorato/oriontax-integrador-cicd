@@ -77,9 +77,14 @@ def convert_df_client_to_df_otx_version(df_client):
     CST 40, 60, 41 e red <>0 = traz o %red na alqred
     FÓRMULA: (Alíquota x RedBCICMS)/100 = ARREDONDAR PARA CIMA
     '''     
+    print(df_client['icms'].unique())
 
     # Converter colunas para os tipos corretos
-    df_client['icms'] = pd.to_numeric(df_client['icms'], errors='coerce').astype('Int64') 
+    # ANTES ERA CONVERTER PARA INT64 - agora para float
+    # df_client['icms'] = pd.to_numeric(df_client['icms'], errors='coerce').astype('Int64') 
+    df_client['icms'] = pd.to_numeric(df_client['icms'].apply(float), errors='coerce').astype('int64')
+    
+    # df_client['icms'] = pd.to_numeric(df_client['icms'], errors='coerce').astype(float) 
     df_client['redbcicms'] = pd.to_numeric(df_client['redbcicms'], errors='coerce').astype(float)
     df_client['cst'] = pd.to_numeric(df_client['cst'], errors='coerce').astype('Int64') 
     df_client.rename(columns={'cst': 'icms_cst'}, inplace=True)

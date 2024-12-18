@@ -132,7 +132,7 @@ class ClientItemView(APIView):
     def get(self, request):
         client = request.user
         initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Verificando se há atualizações para o cliente: {client.name}... executando API\n"  
-        
+ 
         items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2])
         
         current_time = timezone.now()

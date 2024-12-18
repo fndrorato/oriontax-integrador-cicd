@@ -587,7 +587,9 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Preencher valores nulos na coluna 'naturezareceita' com 0
     items_df['naturezareceita'] = items_df['naturezareceita'].fillna(0)
     df['naturezareceita'] = df['naturezareceita'].fillna(0)
+    # ANTES PASSAVA TUDO COMO INT - AGORA TESTE PARA VALIDAR SE FUNCIONA COM FLOAT
     df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
+    # df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float)
     df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
     df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
     df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)    

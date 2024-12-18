@@ -15,16 +15,17 @@ class ClientTokenAuthentication(BaseAuthentication):
     def authenticate(self, request):
         auth_header = request.headers.get('Authorization')
 
+        # Se o cabeçalho 'Authorization' não for fornecido, lança um erro 401
         if not auth_header:
-            return None
-        
+            raise AuthenticationFailed({'message': 'Cabeçalho Authorization ausente'})
+
         # Verifica se o header começa com 'Bearer '
         if not auth_header.startswith('Bearer '):
             raise AuthenticationFailed({'message': 'Formato de token inválido'})
-        
+
         # Extrai o token
         token = auth_header.split(' ')[1]
-        
+
         try:
             # Verifica se o token é um UUID válido
             uuid_token = uuid.UUID(token)
@@ -37,4 +38,32 @@ class ClientTokenAuthentication(BaseAuthentication):
             raise AuthenticationFailed({'message': 'Token inválido'})
 
         return (client, None)
+
+
+# class ClientTokenAuthentication(BaseAuthentication):
+#     def authenticate(self, request):
+#         auth_header = request.headers.get('Authorization')
+
+#         if not auth_header:
+#             return None
+        
+#         # Verifica se o header começa com 'Bearer '
+#         if not auth_header.startswith('Bearer '):
+#             raise AuthenticationFailed({'message': 'Formato de token inválido'})
+        
+#         # Extrai o token
+#         token = auth_header.split(' ')[1]
+        
+#         try:
+#             # Verifica se o token é um UUID válido
+#             uuid_token = uuid.UUID(token)
+#         except ValueError:
+#             raise AuthenticationFailed({'message': 'Token inválido'})        
+
+#         try:
+#             client = Client.objects.get(token=uuid_token)
+#         except (Client.DoesNotExist, ValidationError):
+#             raise AuthenticationFailed({'message': 'Token inválido'})
+
+#         return (client, None)
 

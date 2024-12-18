@@ -334,6 +334,7 @@ class ItemListView(ListView):
     paginate_by = 50  # Defina quantos itens você quer por página
 
     def get_queryset(self):
+        print(self.get)
         user = self.request.user
         client_id = self.kwargs.get('client_id')
         
@@ -360,11 +361,15 @@ class ItemListView(ListView):
         # Handle ForeignKey filters separately
         for field_name in ['cfop', 'icms_cst', 'icms_aliquota', 'protege', 'cbenef', 'piscofins_cst', 'naturezareceita']:
             value = self.request.GET.get(field_name)
+            
             if value:
-                print('Handle Foreign Key')
+                print(value)
+                print('Handle Foreign Key:', field_name)
                 try:
                     if field_name == 'naturezareceita':
                         queryset = queryset.filter(**{f"{field_name}__code__icontains": value})
+                    elif field_name == 'piscofins_cst':
+                        queryset = queryset.filter(**{f"{field_name}_id": value})
                     else:
                         queryset = queryset.filter(**{f"{field_name}_id": int(value)})
                 except ValueError:

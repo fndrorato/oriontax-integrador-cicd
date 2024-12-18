@@ -231,7 +231,7 @@
                     <div class=" row">
                         <label class="col-sm-4 col-form-label">CST ICMS</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control form-control-sm" name="cst_icms" id="search_cst_icms">
+                            <input type="text" class="form-control form-control-sm" name="icms_cst" id="search_icms_cst">
                         </div>
                     </div>
                     <div class=" row">
@@ -316,7 +316,7 @@
         var url = new URL(window.location.href);
         var urlParams = new URLSearchParams(window.location.search);
         var fields = [
-            'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'cst_icms',
+            'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
             'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege',
             'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 'tipo_produto',
             'status_item'
