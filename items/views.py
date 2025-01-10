@@ -1933,16 +1933,19 @@ class XLSXUploadDivergentView(View):
                 return JsonResponse({'error': f"Erro ao ler o arquivo Excel: {e}"}, status=400)
             
             try:
+                print('caiu aqui1')
                 valid_cfops = set(Cfop.objects.values_list('cfop', flat=True))
                 valid_icms_csts = set(IcmsCst.objects.values_list('code', flat=True))
                 valid_icms_aliquotas = set(IcmsAliquota.objects.values_list('code', flat=True))
+                print('caiu aqui2')
                 valid_piscofins_csts = set(PisCofinsCst.objects.values_list('code', flat=True))
                 valid_natureza_receitas = set(NaturezaReceita.objects.values_list('code', flat=True))
                 valid_proteges = set(Protege.objects.values_list('code', flat=True))
                 valid_cbenefs = set(CBENEF.objects.values_list('code', flat=True))
-                
+                print('caiu aqui3')
                 valid_natureza_receitas.add(None)
                 valid_cbenefs.add(None)
+                print('caiu aqui4')
 
                 piscofins_cst_df = pd.DataFrame(list(PisCofinsCst.objects.values('code', 'pis_aliquota', 'cofins_aliquota')))
                 natureza_receita_df = pd.DataFrame(list(NaturezaReceita.objects.values('code', 'id', 'piscofins_cst_id')))
@@ -1952,31 +1955,43 @@ class XLSXUploadDivergentView(View):
                 
                 pis_cofins_cst_dict = piscofins_cst_df.set_index('code').to_dict('index')
                 natureza_receita_dict = natureza_receita_df.set_index(['code', 'piscofins_cst_id']).to_dict('index')
-                
+                print('caiu aqui5')
                 def get_natureza_receita_id(code, piscofins_cst_code):
                     return natureza_receita_dict.get((code, piscofins_cst_code), {}).get('id')            
 
+                print('caiu aqui6')
                 # df['barcode'] = df['barcode'].fillna(0).astype(int).astype(str)
                 df['barcode'] = df['barcode'].fillna('').astype(str)
                 df['ncm'] = df['ncm'].astype(str)
                 # df['cest'] = df['cest'].fillna(0).astype(int).astype(str)
                 df['cest'] = df['cest'].fillna('').astype(str)
+                print('caiu aqui7')
                 df['cfop'] = df['cfop'].astype(int)
+                
                 df['icms_cst'] = df['icms_cst'].astype(str)
                 df['icms_aliquota'] = df['icms_aliquota'].astype(int)
+                print('caiu aqui8')
                 df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
+                print('caiu aqui9')
                 df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
+                print('caiu aqui10')
                 df['naturezareceita'] = df['naturezareceita'].fillna('').astype(str).str.zfill(3).replace(['000', 'nan'], None)
-                df['protege'] = df['protege'].astype(int)
+                print('caiu aqui11')
+                df['protege'] = df['protege'].fillna(0).astype(int)
+                print('caiu aqui12')
                 df['cbenef'] = df['cbenef'].astype(str).replace('nan', None)
+                print('caiu aqui13')
                 df['description'] = df['description'].str[:255]
+                print('caiu aqui14')
                 df['cbenef'] = df['cbenef'].str[:8]
+                print('caiu aqui100')
+                # result = "Hello" + 5
                 
                 # Adicionando a transformação e validação de tipo_produto
                 df['tipo_produto'] = df['tipo_produto'].str.capitalize().str.strip()
                 valid_tipo_produto = set(self.TYPE_PRODUCT_CHOICES.keys())
                 invalid_tipo_produto = df[~df['tipo_produto'].isin(valid_tipo_produto)]
-
+                print('caiu aqui101')
                 if not invalid_tipo_produto.empty:
                     invalid_details = [
                         f"Erro na linha {index + 2} [tipo_produto]: {row['tipo_produto']} é um valor inválido."
@@ -1991,7 +2006,7 @@ class XLSXUploadDivergentView(View):
                     }, status=400)                
 
                 invalid_details = []
-
+                print('caiu aqui102')
                 def check_invalid_rows(df, column_name, valid_set=None, length=None, allow_empty=False):
                     if length is not None:
                         if allow_empty:
@@ -2013,7 +2028,7 @@ class XLSXUploadDivergentView(View):
                     else:
                         invalid_rows = pd.DataFrame()
                     return invalid_rows
-
+                print('caiu aqui103')
                 columns_to_check = [
                     ('cfop', valid_cfops),
                     ('icms_cst', valid_icms_csts),
@@ -2027,7 +2042,7 @@ class XLSXUploadDivergentView(View):
                     ('cest', None, 7, True),
                     ('description', None, None, False) 
                 ]
-
+                print('caiu aqui 200')
                 for column_name, valid_set, *length in columns_to_check:
                     if len(length) == 2:  # Se fornecidos length e allow_empty
                         invalid_rows = check_invalid_rows(df, column_name, valid_set, length[0], length[1])
@@ -2038,7 +2053,7 @@ class XLSXUploadDivergentView(View):
                     
                     if not invalid_rows.empty:
                         break
-                
+                print('caiu aqui 201')
                 # Validando todas as linhas
                 all_errors = []
                 for index, row in df.iterrows():

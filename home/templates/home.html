@@ -95,6 +95,7 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Cliente</th>
+                                    <th>ERP</th>
                                     <th>Analista</th>
                                     <th class="text-center">Lojas</th>
                                     <th class="text-center">Cadastrados</th>
@@ -115,6 +116,7 @@
                                                 {{ client_info.client.name }}
                                             </a>
                                         </td>
+                                        <td>{{ client_info.client.erp.name }}</td>
                                         <td>{{ client_info.client.user.get_full_name|custom_full_name }}</td>
                                         <td class="text-center">{{ client_info.store_count }}</td>
                                         <td class="text-center">{{ client_info.item_count|intcomma }}</td>
