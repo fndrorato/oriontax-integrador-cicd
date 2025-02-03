@@ -81,6 +81,20 @@ def connect_and_query(host, user, password, port, database, client_name, initial
             
             # Convert rows to a pandas DataFrame
             df = pd.DataFrame(rows, columns=[desc[0] for desc in cursor.description])
+            # Exibir as primeiras linhas do DataFrame
+            print(df.head())
+
+            # Verificar o número de linhas e colunas
+            print(f"Número de linhas: {df.shape[0]}, Número de colunas: {df.shape[1]}")
+
+            # Exibir os tipos de dados de cada coluna
+            print(df.dtypes)
+
+            # Verificar se há valores nulos
+            print(df.isnull().sum())
+            sys.exit(1)
+
+            
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Consulta realizada com sucesso para o cliente {client_name}\n"
             return df, initial_log    
 

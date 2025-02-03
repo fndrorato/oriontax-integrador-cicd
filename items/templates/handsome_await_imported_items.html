@@ -325,12 +325,14 @@
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('new-items-table');
     
+
+
         var dataOrigin = [
             {% for item in imported_items %}
                 [
                     "{{ item.code }}",
                     "{{ item.barcode|zero_to_empty|default_if_none:'' }}",
-                    "{{ item.description }}",
+                    "{{ item.description|safe|escapejs }}",
                     "{{ item.ncm }}",
                     "{{ item.cest|zero_to_empty|default_if_none:'' }}",
                     "{{ item.cfop }}",
@@ -361,7 +363,7 @@
             {
                 "code": "{{ item.code }}",
                 "barcode": "{{ item.barcode|zero_to_empty|default_if_none:'' }}",
-                "description": "{{ item.description }}",
+                "description": "{{ item.description|safe|escapejs }}",
                 "ncm": "{{ item.ncm }}",
                 "cest": "{{ item.cest|zero_to_empty|default_if_none:'' }}",
                 "cfop": "{{ item.cfop }}",

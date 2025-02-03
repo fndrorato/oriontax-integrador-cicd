@@ -128,29 +128,61 @@ def export_items_to_excel(request, client_id, table):
             'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information'
         )
     elif table == 'await':
-        items = Item.objects.filter(client=client, status_item__in=[1, 2]).values(
+        print('await...')
+        # items = Item.objects.filter(client=client, status_item__in=[1, 2]).values(
+        #     'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
+        #     'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
+        #     'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
+        #     'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information', 'await_sync_at', 'sync_at'
+        # )  
+        items = Item.objects.filter(
+            client=client, 
+            status_item__in=[1, 2],
+        ).values(
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
             'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
             'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information', 'await_sync_at', 'sync_at'
-        )    
-        
+        )
+          
+        print('await1...')
         # Subquery para obter divergent_columns de ImportedItem
-        imported_item_subquery = ImportedItem.objects.filter(
-            code=OuterRef('code'), client=client
-        ).values('divergent_columns')
-
+        # imported_item_subquery = ImportedItem.objects.filter(
+        #     code=OuterRef('code'), client=client
+        # ).values('divergent_columns')
+        subquery_values = ImportedItem.objects.filter(client=client).values('code', 'divergent_columns')
+        # imported_item_subquery = ImportedItem.objects.filter(
+        #     code=OuterRef('code'), 
+        #     client=client,
+        #     client_id=OuterRef('client_id'),
+        # ).values('code', 'divergent_columns')
+        
+        print('await2...')
+        query = """
+            SELECT i.*, COALESCE(ii.divergent_columns, '') AS divergent_columns
+            FROM public.items_item AS i
+            LEFT JOIN public.items_importeditem AS ii
+            ON i.code = ii.code AND i.client_id = ii.client_id
+            WHERE i.client_id = %s AND i.status_item IN (1, 2)
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(query, [client.id])
+            rows = cursor.fetchall()     
+               
         # Anotar o items com divergent_columns (ou valor vazio se não existir)
-        items = items.annotate(
-            divergent_columns=Subquery(
-                imported_item_subquery, output_field=CharField()
-            )
-        ).annotate(
-            divergent_columns=models.Case(
-                models.When(divergent_columns__isnull=True, then=Value('')),
-                default=models.F('divergent_columns'),
-            )
-        )         
+        # items = items.annotate(
+        #     divergent_columns=Subquery(
+        #         imported_item_subquery, output_field=CharField()
+        #     )
+        # ).annotate(
+        #     divergent_columns=models.Case(
+        #         models.When(divergent_columns__isnull=True, then=Value('')),
+        #         default=models.F('divergent_columns'),
+        #     )
+        # )  
+
+                
+        print('await3...')       
                             
     elif table == 'new':
         items = ImportedItem.objects.filter(client=client, status_item=0).values(
@@ -246,22 +278,47 @@ def export_items_to_excel(request, client_id, table):
                      
     else:
         items = []
-
-    # Converter para DataFrame
+    
     if table != 'divergent' and table != 'desc_divergent':
-        df = pd.DataFrame(list(items))
+        print('Table1...:', table)
+        count = items.count()
+        print(f"O número de itens é: {count}")
+
+        print('Testando..')
         
+        print('Table2...:', table)
         if table == 'new':
+            df = pd.DataFrame(list(items))
             df['tipo_produto'] = ''
             df['outros_detalhes'] = ''
         
         if table == 'await':
+            # Transformar os resultados em DataFrame
+            # df = pd.DataFrame(rows, columns=[col[0] for col in cursor.description])            
+            # Transformar em DataFrame
+            df_items = pd.DataFrame(list(items))
+            df_subquery = pd.DataFrame(list(subquery_values))
+            # Fazer o merge dos DataFrames
+            df = pd.merge(
+                df_items, 
+                df_subquery, 
+                left_on='code', 
+                right_on='code', 
+                how='left'
+            )
+            print(df.columns)
+
+            # Substituir valores nulos em divergent_columns por string vazia
+            # df_result['divergent_columns'] = df_result['divergent_columns'].fillna('')            
+            # print(df.columns)
+            print('table await...')
             df.columns = [
                 'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
                 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
                 'tipo_produto', 'outros_detalhes', 'a_enviar', 'enviado_em', 'colunas_divergentes'
             ]  
+            
 
             # Ajustar os horários para o fuso horário de Brasília (UTC-3)
             if 'a_enviar' in df.columns:

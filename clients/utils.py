@@ -586,6 +586,7 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     ## TRATANDO OS DADOS DA BASE
     # Preencher valores nulos na coluna 'naturezareceita' com 0
     items_df['naturezareceita'] = items_df['naturezareceita'].fillna(0)
+    
     df['naturezareceita'] = df['naturezareceita'].fillna(0)
     # ANTES PASSAVA TUDO COMO INT - AGORA TESTE PARA VALIDAR SE FUNCIONA COM FLOAT
     df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
@@ -655,7 +656,36 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Filtrar as colunas esperadas para remover as colunas que não devem ser comparadas
     filtered_columns = [col for col in expected_columns if col not in columns_not_compare]    
     # Criar uma nova coluna vazia para armazenar as colunas divergentes
-    merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))]            
+    merged_df["divergent_columns_df"] = [[] for _ in range(len(merged_df))] 
+    
+    # remove o .0 de naturezareceita_df, ou seja, o que vem do cliente    
+    merged_df['naturezareceita_df'] = merged_df['naturezareceita_df'].replace(r'\.0$', '', regex=True)
+    # Filtra os valores que têm apenas 1 dígito e são diferentes de 0
+    merged_df['naturezareceita_df'] = merged_df['naturezareceita_df'].apply(
+        lambda x: str(int(x)).zfill(3) if len(str(int(x))) == 1 and int(x) != 0 else str(int(x))
+    )
+    
+    
+    # Filtrar os dados
+    test_df = merged_df[merged_df['code'] == '2674'][['code', 'naturezareceita_df', 'naturezareceita_items_df']]
+
+    # Verificar se há pelo menos uma linha antes de acessar
+    if not test_df.empty:
+        # Pegar os valores da primeira linha
+        valor_df = test_df.iloc[0]['naturezareceita_df']
+        valor_items_df = test_df.iloc[0]['naturezareceita_items_df']
+        
+        # Comparação direta
+        if valor_df == valor_items_df:
+            print('São iguais')
+        else:
+            print('São diferentes')
+    else:
+        print('Nenhum resultado encontrado para code = 2674')
+    
+    print(test_df.head())
+    # raise SystemExit
+    
     
     # Itera sobre as linhas do DataFrame
     for idx, row in merged_df.iterrows():
@@ -797,7 +827,11 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # Tratando os valores vazios da natureza da receita
     # Substitui valores vazios ('') por None no campo 'naturezareceita'
     df_items_divergent['naturezareceita'] = df_items_divergent['naturezareceita'].replace('', None)
-        
+    # # Remover possíveis strings e converter corretamente
+    # df_items_divergent['naturezareceita'] = (
+    #     pd.to_numeric(df_items_divergent['naturezareceita'], errors='coerce')
+    #     .astype('Int64')  # Mantém valores como inteiros sem erro em NaN
+    # )        
     print('15-inserindo os itens com divergencia')  
 
     try:
