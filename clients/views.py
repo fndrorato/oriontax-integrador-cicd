@@ -124,11 +124,25 @@ class ClientUpdateView(UpdateView):
         # Obtendo o log das integrações para esse cliente
         logs = LogIntegration.objects.filter(client_id=client_id)
         context['logs'] = logs
+        
         return context   
     
     def form_valid(self, form):
         # Obter a instância atual do cliente
         self.object = form.save(commit=False)
+        
+        # Depuração: Printando os valores antes da atualização
+        print("Antes da atualização:")
+        print(f"User Atual: {self.object.user}")  
+        
+        # Obtendo o user do form
+        new_user = form.cleaned_data.get('user')  
+
+        if new_user:
+            print(f"Novo User Selecionado: {new_user}")
+            self.object.user = new_user  # Atualizando o campo user
+        else:
+            print("Nenhum novo usuário selecionado no formulário.")                    
         
         # Formatar o CNPJ se preenchido
         cnpj = form.cleaned_data.get('cnpj')
@@ -149,7 +163,15 @@ class ClientUpdateView(UpdateView):
             # Não salva o campo password_route vazio
             self.object.password_route = self.object.__class__.objects.get(pk=self.object.pk).password_route
         
+        print("Antes de salvar:", self.object.__dict__)
         self.object.save()
+        print("Depois de salvar:", self.object.__dict__)
+
+        
+        # Depuração: Printando valores após atualização
+        print("Depois da atualização:")
+        print(f"User Atualizado: {self.object.user}")
+                
         return super().form_valid(form)       
 
     def get_success_url(self):

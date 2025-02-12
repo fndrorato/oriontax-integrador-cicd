@@ -8,7 +8,10 @@ from .models import Client, Store, Cities
 class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
-        fields = ['name', 'num_stores', 'date_contract', 'date_send', 'economic_benefit', 'erp', 'accounting', 'commercial_responsible', 'owner', 'email', 'contact', 'user', 'is_active', 'day_sent', 'first_load_date', 'connection_route', 'port_route', 'user_route', 'password_route', 'database_route', 'cnpj']
+        fields = ['name', 'num_stores', 'date_contract', 'date_send', 'economic_benefit', 'erp', 
+                  'accounting', 'commercial_responsible', 'owner', 'email', 'contact', 'user', 'is_active', 
+                  'day_sent', 'first_load_date', 'connection_route', 'port_route', 'user_route', 'password_route', 
+                  'database_route', 'cnpj']
 
     def __init__(self, *args, **kwargs):
         super(ClientForm, self).__init__(*args, **kwargs)

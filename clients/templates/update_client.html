@@ -271,11 +271,12 @@
                                                     <span class="messages text-danger">{{ form.user.errors }}</span>
                                                     <select name="user" id="id_user" class="form-control" required>
                                                         {% for user in users %}
-                                                            <option value="{{ user.id }}" {% if form.user and user.id == form.user %}selected{% endif %}>
+                                                            <option value="{{ user.id }}" {% if form.instance.user and user.id == form.instance.user.id %}selected{% endif %}>
                                                                 {{ user.get_full_name }}
                                                             </option>
                                                         {% endfor %}
-                                                    </select>
+                                                    </select> 
+
                                                 </div>                                                
                                             </div>                                            
                                         </div>   

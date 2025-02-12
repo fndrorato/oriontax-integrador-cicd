@@ -33,7 +33,6 @@ ALLOWED_HOSTS = ['oriontax.f5sys.com.br', '127.0.0.1', '174.138.73.68', 'beta-or
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
