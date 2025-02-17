@@ -327,12 +327,14 @@ def export_items_to_excel(request, client_id, table):
                 df['enviado_em'] = pd.to_datetime(df['enviado_em']).apply(lambda x: (x + brasilia_offset).replace(tzinfo=None) if pd.notnull(x) else x)
         
         else:
+            df = pd.DataFrame(list(items))
             df.columns = [
                 'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
                 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
                 'tipo_produto', 'outros_detalhes'
-            ]        
+            ]
+            df['outros_detalhes'].fillna('', inplace=True)        
 
     # Salvar o DataFrame em um arquivo Excel
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

@@ -48,7 +48,7 @@
                                 <!-- Inicio Tab Dados Usuario -->
                                 <!-- <form class="md-float-material card-block"> -->
                                 <div class="tab-pane active" id="user_tab" role="tabpanel">
-                                    {% if user|has_role:"administrador" %}
+                                    {% if request.user|has_role:"administrador" %}
                                     <form class="md-float-material card-block"  method="POST" id="form-create-user">
                                         {% csrf_token %}
                                     {% endif %}
@@ -170,7 +170,7 @@
                                                 </div>
                                             </div>                                    
                                         </div>                                                                                
-                                        {% if user|has_role:"administrador" %}
+                                        {% if request.user|has_role:"administrador" %}
                                         <div class="row">
                                             <div class="col-sm-12">
                                                 <div class="text-center m-t-20">
@@ -180,52 +180,13 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        {% endif %}
+                                    {% if request.user|has_role:"administrador" %}   
                                     </form>
                                     {% endif %}
+                                    
                                 </div>
                                 <!-- End Tab Dados Usuario -->
-                                <!-- Inicio Tab Equipe 
-                                <div class="tab-pane" id="tab_integrantes" role="tabpanel">
-                                    <form class="md-float-material card-block">
-                                        <div class="row">
-                                            <div class="col-sm-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="icofont icofont-all-caps"></i></span>
-                                                    <input type="text" class="form-control" placeholder="Title">
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="icofont icofont-underline"></i></span>
-                                                    <input type="text" class="form-control" placeholder="Label Name">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-sm-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="icofont icofont-ui-keyboard"></i></span>
-                                                    <input type="text" class="form-control" placeholder="Keyword">
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="icofont icofont-copy-alt"></i></span>
-                                                    <input type="text" class="form-control" placeholder="Description">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-sm-12">
-                                                <div class="text-center m-t-20">
-                                                    <button type="button" class="btn btn-primary waves-effect waves-light m-r-10">Save</button>
-                                                    <button type="button" class="btn btn-warning waves-effect waves-light">Discard</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                                 End Tab Equipe Usuario -->
                             </div>
                         </div>
                     </div>
@@ -243,6 +204,13 @@
     <script src="{% static 'assets/pages/form-masking/jquery.inputmask.js' %}"></script>
     <script src="{% static 'assets/pages/form-masking/autoNumeric.js' %}"></script>
     <script src="{% static 'assets/pages/form-masking/form-mask.js' %}?{% now "U" %}"></script>
+    <script>
+        console.log("Grupos do usuário:", "{{ user.groups.all|join:', ' }}");
+
+        // Passa o resultado do has_role para o JavaScript
+        var isAdmin = {% if request.user|has_role:"administrador" %}true{% else %}false{% endif %};
+        console.log("O usuário logado é administrador?", isAdmin);     
+    </script>    
 {% endblock anotherjs %}
 
 
