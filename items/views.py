@@ -292,6 +292,9 @@ def export_items_to_excel(request, client_id, table):
             df['tipo_produto'] = ''
             df['outros_detalhes'] = ''
         
+        if table == 'all':
+            df = pd.DataFrame(list(items))
+        
         if table == 'await':
             # Transformar os resultados em DataFrame
             # df = pd.DataFrame(rows, columns=[col[0] for col in cursor.description])            
@@ -327,7 +330,6 @@ def export_items_to_excel(request, client_id, table):
                 df['enviado_em'] = pd.to_datetime(df['enviado_em']).apply(lambda x: (x + brasilia_offset).replace(tzinfo=None) if pd.notnull(x) else x)
         
         else:
-            df = pd.DataFrame(list(items))
             df.columns = [
                 'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
                 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',

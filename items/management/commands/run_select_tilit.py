@@ -174,6 +174,8 @@ def convert_df_client_to_df_otx_version(df_client, initial_log):
     df_final['pis_aliquota'] = df_final['pis_aliquota'].fillna(99)
     df_final['cofins_aliquota'] = df_final['cofins_aliquota'].fillna(99)
     df_final['naturezareceita'] = df_final['naturezareceita'].fillna(0)
+    # Substituir valores não numéricos por NaN e então preencher com 0
+    df_final['naturezareceita'] = pd.to_numeric(df_final['naturezareceita'], errors='coerce').fillna(0)
     
     # Preencher valores None (NaN) nas colunas 'ncm' e 'cest' com string vazia ''
     df_final['ncm'] = df_final['ncm'].fillna('')
