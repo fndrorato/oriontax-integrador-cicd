@@ -15,6 +15,10 @@ urlpatterns = [
     
     path('login/', LoginView.as_view(), name='api-login'),
     # Recebe o arquivo que será enviado através do extrator do XML
-    path('upload-zip/', UploadZipView.as_view(), name='upload-zip'),    
+    path('upload-zip/', UploadZipView.as_view(), name='upload-zip'),
+    path('process-xml/', views.ProcessZipView.as_view(), name='upload-zip-xml'),
+    path('generate-group-csv/<str:code>', views.GenerateCSVGroup.as_view(), name='generate-reg0000-csv'),
+    path('generate-detail-csv/<str:code>', views.GenerateCSVDetail.as_view(), name='generate-reg0000d-csv'),
+    
 ]
 
