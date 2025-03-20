@@ -288,8 +288,7 @@ class ProcessZipView(APIView):
                 {"error": f"Erro ao deletar o pedido: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-    
+ 
     def post(self, request, *args, **kwargs):
         arquivos_zip = request.FILES.getlist('file')  # Pega todos os arquivos ZIP enviados
         arquivo_id = request.data.get('arquivo_id')
@@ -364,14 +363,15 @@ class ProcessZipView(APIView):
                 raise ValueError("Nó 'emit' não encontrado no XML.")
 
             dest = root.find('.//dest', namespaces=ns)
-            if dest is None:
-                logger.warning("Nó 'dest' não encontrado no XML.")
+            # if dest is None:
+            #     logger.warning("Nó 'dest' não encontrado no XML.")
 
             total = root.find('.//total', namespaces=ns)
             if total is None:
                 raise ValueError("Nó 'total' não encontrado no XML.")
 
             # Cria o objeto SalesPedido
+            chave_nfe = safe_node_text(inf_prot, './/chNFe', namespaces=ns)
             pedido = SalesPedido(
                 arquivo_id=arquivo_id,
                 chNFe=safe_node_text(inf_prot, './/chNFe', namespaces=ns),
@@ -456,6 +456,7 @@ class ProcessZipView(APIView):
 
                 detalhe = SalesDetalhe(
                     pedido=pedido,
+                    chNFe=chave_nfe,
                     nItem=safe_int(det.attrib['nItem']),
                     cProd=safe_node_text(prod, './/cProd', ns),
                     xProd=safe_node_text(prod, './/xProd', ns),

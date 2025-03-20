@@ -174,6 +174,7 @@ class SalesPedido(models.Model):
 class SalesDetalhe(models.Model):
     """Tabela SalesDetalhe (itens da NF-e)."""
     pedido = models.ForeignKey(SalesPedido, on_delete=models.CASCADE, related_name="itens")
+    chNFe = models.CharField(max_length=50, blank=True, null=True)  # Chave da NF-e
     nItem = models.IntegerField()
     cProd = models.CharField(max_length=50)
     xProd = models.CharField(max_length=255)

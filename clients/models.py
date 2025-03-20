@@ -13,7 +13,7 @@ class Cities(models.Model):
 
     def __str__(self):
         return self.nome
-    
+
 class Client(models.Model):
     DATA_SENT_CHOICES = [
         ('5', '5'),
@@ -22,7 +22,13 @@ class Client(models.Model):
         ('20', '20'),
         ('25', '25'),
         ('30', '30'),
-    ]  
+    ]
+
+    DATA_STATUS_CHOICES = [
+        ('1', 'Ativo'),
+        ('2', 'Inativo'),        
+        ('3', 'Suspenso'),
+    ]
 
     name = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=18, blank=True, null=True, default='', verbose_name="CNPJ")
@@ -39,6 +45,7 @@ class Client(models.Model):
     contact = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
+    client_status = models.CharField(max_length=2, choices=DATA_STATUS_CHOICES, blank=True, null=True, default=1)
     day_sent = models.CharField(max_length=2, choices=DATA_SENT_CHOICES, blank=True, null=True)    
     first_load_date = models.DateField(blank=True, null=True, verbose_name="Data Primeira Carga")
     connection_route = models.CharField(max_length=255, verbose_name="Rota da Conexão", blank=True, null=True, default=None)
@@ -50,6 +57,8 @@ class Client(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     user_created = models.ForeignKey(User, related_name='clients_created', on_delete=models.SET_NULL, null=True, blank=True)
     user_updated = models.ForeignKey(User, related_name='clients_updated', on_delete=models.SET_NULL, null=True, blank=True)    
+    last_date_get = models.DateField(blank=True, null=True, verbose_name="Último Recebimento")
+    last_date_send = models.DateField(blank=True, null=True, verbose_name="Último Envio")
 
     def __str__(self):
         return self.name  
@@ -74,8 +83,22 @@ class Store(models.Model):
         return self.corporate_name   
     
 class LogIntegration(models.Model):
+    DATA_OPTION_CHOICES = [
+        ('1', 'Dados Recebidos'),
+        ('2', 'Dados Enviados'),
+    ]
+
+    DATA_METHOD_INTEGRATION_CHOICES = [
+        ('1', 'API'),
+        ('2', 'FTP'),
+        ('3', 'SFTP'),
+        ('4', 'Manual'),
+    ]    
+    
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
     result_integration = models.TextField()
+    data_option = models.CharField(max_length=2, choices=DATA_OPTION_CHOICES, blank=True, null=True)
+    method_integration = models.CharField(max_length=2, choices=DATA_METHOD_INTEGRATION_CHOICES, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
 

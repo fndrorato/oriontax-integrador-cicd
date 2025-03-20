@@ -11,7 +11,7 @@ class ClientForm(forms.ModelForm):
         fields = ['name', 'num_stores', 'date_contract', 'date_send', 'economic_benefit', 'erp', 
                   'accounting', 'commercial_responsible', 'owner', 'email', 'contact', 'user', 'is_active', 
                   'day_sent', 'first_load_date', 'connection_route', 'port_route', 'user_route', 'password_route', 
-                  'database_route', 'cnpj']
+                  'database_route', 'cnpj', 'client_status', 'last_date_get', 'last_date_send']
 
     def __init__(self, *args, **kwargs):
         super(ClientForm, self).__init__(*args, **kwargs)
@@ -21,6 +21,7 @@ class ClientForm(forms.ModelForm):
         analysts_group = Group.objects.get(name='analista')
         self.fields['user'].queryset = User.objects.filter(groups=analysts_group)      
         self.fields['day_sent'].choices = Client.DATA_SENT_CHOICES
+        self.fields['client_status'].choices = Client.DATA_STATUS_CHOICES
         # Define o campo password_route como um campo de senha
         self.fields['password_route'].widget = forms.PasswordInput(attrs={
             'class': 'form-control',
