@@ -119,7 +119,6 @@ class HomeView(TemplateView):
                 'method_integration': client.get_method_integration_display(),
             })
            
-            
         context['total_stores'] = total_stores
 
         context['media_items'] = 0  # Definindo um valor padrão
