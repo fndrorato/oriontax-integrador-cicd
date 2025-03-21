@@ -29,6 +29,13 @@ class Client(models.Model):
         ('2', 'Inativo'),        
         ('3', 'Suspenso'),
     ]
+    
+    DATA_METHOD_INTEGRATION_CHOICES = [
+        ('1', 'API'),
+        ('2', 'FTP'),
+        ('3', 'SFTP'),
+        ('4', 'Manual'),
+    ]       
 
     name = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=18, blank=True, null=True, default='', verbose_name="CNPJ")
@@ -57,8 +64,9 @@ class Client(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     user_created = models.ForeignKey(User, related_name='clients_created', on_delete=models.SET_NULL, null=True, blank=True)
     user_updated = models.ForeignKey(User, related_name='clients_updated', on_delete=models.SET_NULL, null=True, blank=True)    
-    last_date_get = models.DateField(blank=True, null=True, verbose_name="Último Recebimento")
-    last_date_send = models.DateField(blank=True, null=True, verbose_name="Último Envio")
+    last_date_get = models.DateTimeField(blank=True, null=True, verbose_name="Último Recebimento")
+    last_date_send = models.DateTimeField(blank=True, null=True, verbose_name="Último Envio")
+    method_integration = models.CharField(max_length=2, choices=DATA_METHOD_INTEGRATION_CHOICES, blank=True, null=True)
 
     def __str__(self):
         return self.name  

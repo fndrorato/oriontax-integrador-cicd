@@ -110,14 +110,54 @@
         <div class="col-lg-12">
             <!-- Hover table card start -->
             <div class="card">
-                <div class="card-header">
-                    <h5>Cadastros</h5>
-                </div>
-                <div class="card-block table-border-style">
-                    <div class="table-responsive">
-                        <div id="myGrid" class="ag-theme-alpine my-custom-theme" style="height: 800px; width: 100%;"></div>
+                <div class="card-block">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="product-edit">
+                                <ul class="nav nav-tabs nav-justified md-tabs " id="client-tabs" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-toggle="tab" href="#dashboard" role="tab">
+                                            <div class="f-20">
+                                                <i class="icofont icofont-dashboard-web"></i>
+                                            </div>
+                                            Dashboard</a>
+                                        <div class="slide"></div>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#sync-stores" role="tab">
+                                            <div class="f-20">
+                                                <i class="icofont icofont-cloud-refresh"></i>
+                                            </div>
+                                            Painel Sincronizações
+                                        </a>
+                                        <div class="slide"></div>
+                                    </li>                                                                                                                                                          
+                                </ul>
+                                <!-- Tab panes -->
+                                <div class="tab-content">
+                                    <!-- Inicio Tab Dashboard -->
+                                    <div class="tab-pane active" id="dashboard" role="tabpanel">                                
+                                        <div class="card-block table-border-style">
+                                            <div class="table-responsive">
+                                                <div id="myGrid" class="ag-theme-alpine my-custom-theme" style="height: 800px; width: 100%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Fim Tab Dashboard -->
+                                    <!-- Inicio Tab sync-stores -->
+                                    <div class="tab-pane" id="sync-stores" role="tabpanel">                                
+                                        <div class="card-block table-border-style">
+                                            <div class="table-responsive">
+                                                <div id="gridSyncStores" class="ag-theme-alpine my-custom-theme" style="height: 800px; width: 100%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Fim Tab sync-stores -->
+                                </div>   
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </div>                              
             </div>
             <!-- Hover table card end -->
         </div>
@@ -126,28 +166,46 @@
 
 {% block anotherjs %}
 <script>
-    var rowData = {{ clients_json|safe }};
+    var rowDataDashboard = {{ clients_json|safe }};
+    var rowDataSyncStores = {{ clients_json_sync|safe }};
 
     const columnDefs = [
         { 
             headerName: "Cliente", 
+            headerClass: 'small-header',
             field: "client_name", 
             filter: true, 
             sortable: true, 
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },            
             cellRenderer: (params) => `<a href="/clientes/${params.data.client_id}/update/">${params.value}</a>` 
         },
-        { headerName: "ERP", field: "erp_name", filter: true, sortable: true },
-        { headerName: "Analista", field: "analyst", filter: true, sortable: true },
         { 
-            headerName: "Lojas", 
-            field: "store_count", 
-            filter: "agNumberColumnFilter", 
-            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
-            sortable: true, 
-            cellClass: 'text-center',
-            width: 60,
-            minWidth: 50,
-            maxWidth: 70,
+            headerName: "ERP", 
+            field: "erp_name", 
+            headerClass: 'small-header',
+            filter: true, 
+            sortable: true,
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },              
+            width: 80,
+            minWidth: 70,
+            maxWidth: 120,           
+        },
+        { 
+            headerName: "Analista", 
+            headerClass: 'small-header',
+            field: "analyst", 
+            filter: true, 
+            sortable: true,
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },              
+            width: 95,
+            minWidth: 90,
+            maxWidth: 120,            
         },
         { 
             headerName: "Cadastrados", 
@@ -159,9 +217,24 @@
             width: 90,
             minWidth: 80,
             maxWidth: 100,            
-
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },  
         },
-        { headerName: "Novos", field: "produtos_novos_pendentes", filter: true, sortable: true, cellClass: 'text-center' },
+        { 
+            headerName: "Novos", 
+            field: "produtos_novos_pendentes", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 70,
+            minWidth: 50,
+            maxWidth: 70, 
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },                         
+        },
         { 
             headerName: "Nomes Diferentes", 
             field: "produtos_com_descricao_divergente", 
@@ -169,8 +242,12 @@
             valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
             sortable: true, 
             cellClass: 'text-center',
-            width: 110,
-
+            width: 100,
+            minWidth: 90,
+            maxWidth: 120,
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },              
         },
         { 
             headerName: "Com Divergência", 
@@ -181,7 +258,10 @@
             cellClass: 'text-center',
             width: 90,
             minWidth: 80,
-            maxWidth: 100,
+            maxWidth: 110,
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },              
         },
         { 
             headerName: "Pendentes", 
@@ -193,6 +273,9 @@
             width: 90,
             minWidth: 80,
             maxWidth: 100,
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },              
         },
         { 
             headerName: "Aguardando Sinc.", 
@@ -201,9 +284,12 @@
             valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
             sortable: true, 
             cellClass: 'text-center',
-            width: 100,
+            width: 90,
             minWidth: 80,
-            maxWidth: 110,
+            maxWidth: 100,
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },              
         },
         { 
             headerName: "Ação", 
@@ -226,7 +312,10 @@
                     </a>
                 `;
             },
-            floatingFilter: false // Desativa o floating filter para esta coluna
+            floatingFilter: false,
+            width: 110,
+            minWidth: 100,
+            maxWidth: 120,            
         }
     ];    
 
@@ -234,7 +323,7 @@
   
     const gridOptions = {
         columnDefs: columnDefs,
-        rowData: rowData,
+        rowData: rowDataDashboard,
         pagination: true,
         paginationPageSize: 50, 
         defaultColDef: {
@@ -294,6 +383,144 @@
             filters: "Filtros"
         }        
     };
+
+    const syncColumnDefs = [
+        { 
+            headerName: "Cliente", 
+            field: "client_name", 
+            filter: true, 
+            sortable: true, 
+            cellRenderer: (params) => `<a href="/clientes/${params.data.client_id}/update/">${params.value}</a>` 
+        },
+        { headerName: "ERP", field: "erp_name", filter: true, sortable: true },
+        { headerName: "Analista", field: "analyst", filter: true, sortable: true },
+        { 
+            headerName: "Última Data Recebimento", 
+            field: "last_date_get", 
+            filter: 'agDateColumnFilter', // Usando o filtro de data
+            valueFormatter: (params) => {
+                if (params.value) {
+                    // Tentando parsear a string de data manualmente
+                    const [day, month, year, hour, minute, second] = params.value.split(/[\s/:]+/);
+                    const formattedDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+        
+                    // Retorna a data formatada no padrão brasileiro
+                    return formattedDate.toLocaleString('pt-BR', {
+                        timeZone: 'UTC', // Ajuste de fuso horário, se necessário
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                    });
+                }
+                return ''; // Retorna uma string vazia caso não tenha valor
+            },
+            sortable: true, 
+            cellClass: 'text-center',
+        },
+        { 
+            headerName: "Última Data Envio", 
+            field: "last_date_send", 
+            filter: 'agDateColumnFilter', // Usando o filtro de data
+            valueFormatter: (params) => {
+                if (params.value) {
+                    // Tentando parsear a string de data manualmente
+                    const [day, month, year, hour, minute, second] = params.value.split(/[\s/:]+/);
+                    const formattedDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+        
+                    // Retorna a data formatada no padrão brasileiro
+                    return formattedDate.toLocaleString('pt-BR', {
+                        timeZone: 'UTC', // Ajuste de fuso horário, se necessário
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                    });
+                }
+                return ''; // Retorna uma string vazia caso não tenha valor
+            },
+            sortable: true, 
+            cellClass: 'text-center',
+
+        },
+        { headerName: "Método Integração", field: "method_integration", filter: true, sortable: true },
+    ];    
+
+    let syncGridApi;
+  
+    const syncGridOptions = {
+        columnDefs: syncColumnDefs,
+        rowData: rowDataSyncStores,
+        pagination: true,
+        paginationPageSize: 50, 
+        defaultColDef: {
+            filter: true,
+            floatingFilter: true,
+        },               
+        onColumnResized: (params) => {
+            console.log(params);
+        },
+        autoSizeStrategy: {
+            type: "fitGridWidth",
+            defaultMinWidth: 100,
+            columnLimits: [
+              {
+                colId: "client_name",
+                minWidth: 900,
+              },
+            ],
+          },
+        localeText: {
+            // Traduções principais
+            page: "Página",
+            more: "Mais",
+            to: "para",
+            of: "de",
+            next: "Próximo",
+            last: "Último",
+            first: "Primeiro",
+            previous: "Anterior",
+            loadingOoo: "Carregando...",
+            pageSize: "Itens por Página",
+            
+            // Filtros
+            equals: "Igual a",
+            notEqual: "Diferente de",
+            lessThan: "Menor que",
+            greaterThan: "Maior que",
+            lessThanOrEqual: "Menor ou igual a",
+            greaterThanOrEqual: "Maior ou igual a",
+            inRange: "Entre",
+            contains: "Contém",
+            notContains: "Não contém",
+            startsWith: "Começa com",
+            endsWith: "Termina com",
+            blanks: "(Vazios)",
+            notBlanks: "(Não vazios)",            
+    
+            // Outros
+            noRowsToShow: "Nenhum registro encontrado",
+            filterOoo: "Filtrar...",
+            applyFilter: "Aplicar",
+            resetFilter: "Redefinir",
+            andCondition: "E",
+            orCondition: "OU",
+            searchOoo: "Buscar...",
+            selectAll: "Selecionar tudo",
+            blanks: "(Vazios)",
+            loadingOoo: "Carregando...",
+            pinColumn: "Fixar Coluna",
+            autosizeThisColumn: "Ajustar esta coluna",
+            autosizeAllColumns: "Ajustar todas as colunas",
+            group: "Grupo",
+            columns: "Colunas",
+            filters: "Filtros"
+        }        
+    };    
   
     function autoSizeAll(skipHeader) {
         const allColumnIds = [];
@@ -303,11 +530,20 @@
     
         gridApi.autoSizeColumns(allColumnIds, skipHeader);
     }
+
+    function sizeToFit() {
+        syncGridApi.sizeColumnsToFit({
+          defaultMinWidth: 100,
+          columnLimits: [{ key: "client_name", minWidth: 900 }],
+        });
+      }    
   
     document.addEventListener("DOMContentLoaded", () => {
         const gridDiv = document.querySelector("#myGrid");
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
+        const syncGridDiv = document.querySelector("#gridSyncStores");
+        syncGridApi = agGrid.createGrid(syncGridDiv, syncGridOptions);
     });
 
 

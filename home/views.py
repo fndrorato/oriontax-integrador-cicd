@@ -42,6 +42,7 @@ class HomeView(TemplateView):
         
             
         clients_with_item_count = []
+        clients_json_sync = []
         total_items = 0
         total_stores = 0
         total_imported_itens = 0       
@@ -103,6 +104,22 @@ class HomeView(TemplateView):
                 'produtos_com_divergencia': imported_itens_count_diver,
                 'produtos_aguardando_sync': itens_await_sync,
             })
+            
+            # Aqui vamos buscar os dados para o novo JSON
+            last_date_get = client.last_date_get.strftime('%d/%m/%Y %H:%M:%S') if client.last_date_get else None
+            last_date_send = client.last_date_send.strftime('%d/%m/%Y %H:%M:%S') if client.last_date_send else None
+            
+            clients_json_sync.append({
+                'client_id': client.id,
+                'client_name': client.name,
+                'erp_name': client.erp.name,
+                'analyst': custom_full_name(client.user.get_full_name()),
+                'last_date_get': last_date_get,
+                'last_date_send': last_date_send,
+                'method_integration': client.get_method_integration_display(),
+            })
+           
+            
         context['total_stores'] = total_stores
 
         context['media_items'] = 0  # Definindo um valor padrão
@@ -115,6 +132,8 @@ class HomeView(TemplateView):
         context['clients'] = clients_with_item_count
         context['total_imported_itens'] = total_imported_itens
         context['clients_json'] = mark_safe(json.dumps(clients_with_item_count))
+        context['clients_json_sync'] = mark_safe(json.dumps(clients_json_sync))
+        
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
