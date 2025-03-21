@@ -169,6 +169,53 @@
     var rowDataDashboard = {{ clients_json|safe }};
     var rowDataSyncStores = {{ clients_json_sync|safe }};
 
+    const localeText = {
+        page: "Página",
+        more: "Mais",
+        to: "para",
+        of: "de",
+        next: "Próximo",
+        last: "Último",
+        first: "Primeiro",
+        previous: "Anterior",
+        loadingOoo: "Carregando...",
+        pageSize: "Itens por Página",
+    
+        // Filtros
+        equals: "Igual a",
+        notEqual: "Diferente de",
+        lessThan: "Menor que",
+        greaterThan: "Maior que",
+        lessThanOrEqual: "Menor ou igual a",
+        greaterThanOrEqual: "Maior ou igual a",
+        inRange: "Entre",
+        before: "Antes de",
+        after: "Depois de",
+        contains: "Contém",
+        notContains: "Não contém",
+        startsWith: "Começa com",
+        endsWith: "Termina com",
+        blanks: "(Vazios)",
+        notBlanks: "(Não vazios)",    
+    
+        // Outros
+        noRowsToShow: "Nenhum registro encontrado",
+        filterOoo: "Filtrar...",
+        applyFilter: "Aplicar",
+        resetFilter: "Redefinir",
+        andCondition: "E",
+        orCondition: "OU",
+        searchOoo: "Buscar...",
+        selectAll: "Selecionar tudo",
+        loadingOoo: "Carregando...",
+        pinColumn: "Fixar Coluna",
+        autosizeThisColumn: "Ajustar esta coluna",
+        autosizeAllColumns: "Ajustar todas as colunas",
+        group: "Grupo",
+        columns: "Colunas",
+        filters: "Filtros"
+    };    
+
     const columnDefs = [
         { 
             headerName: "Cliente", 
@@ -336,52 +383,7 @@
         autoSizeStrategy: {
             type: "fitCellContents",
         },
-        localeText: {
-            // Traduções principais
-            page: "Página",
-            more: "Mais",
-            to: "para",
-            of: "de",
-            next: "Próximo",
-            last: "Último",
-            first: "Primeiro",
-            previous: "Anterior",
-            loadingOoo: "Carregando...",
-            pageSize: "Itens por Página",
-            
-            // Filtros
-            equals: "Igual a",
-            notEqual: "Diferente de",
-            lessThan: "Menor que",
-            greaterThan: "Maior que",
-            lessThanOrEqual: "Menor ou igual a",
-            greaterThanOrEqual: "Maior ou igual a",
-            inRange: "Entre",
-            contains: "Contém",
-            notContains: "Não contém",
-            startsWith: "Começa com",
-            endsWith: "Termina com",
-            blanks: "(Vazios)",
-            notBlanks: "(Não vazios)",            
-    
-            // Outros
-            noRowsToShow: "Nenhum registro encontrado",
-            filterOoo: "Filtrar...",
-            applyFilter: "Aplicar",
-            resetFilter: "Redefinir",
-            andCondition: "E",
-            orCondition: "OU",
-            searchOoo: "Buscar...",
-            selectAll: "Selecionar tudo",
-            blanks: "(Vazios)",
-            loadingOoo: "Carregando...",
-            pinColumn: "Fixar Coluna",
-            autosizeThisColumn: "Ajustar esta coluna",
-            autosizeAllColumns: "Ajustar todas as colunas",
-            group: "Grupo",
-            columns: "Colunas",
-            filters: "Filtros"
-        }        
+        localeText: localeText,       
     };
 
     const syncColumnDefs = [
@@ -473,53 +475,8 @@
                 minWidth: 900,
               },
             ],
-          },
-        localeText: {
-            // Traduções principais
-            page: "Página",
-            more: "Mais",
-            to: "para",
-            of: "de",
-            next: "Próximo",
-            last: "Último",
-            first: "Primeiro",
-            previous: "Anterior",
-            loadingOoo: "Carregando...",
-            pageSize: "Itens por Página",
-            
-            // Filtros
-            equals: "Igual a",
-            notEqual: "Diferente de",
-            lessThan: "Menor que",
-            greaterThan: "Maior que",
-            lessThanOrEqual: "Menor ou igual a",
-            greaterThanOrEqual: "Maior ou igual a",
-            inRange: "Entre",
-            contains: "Contém",
-            notContains: "Não contém",
-            startsWith: "Começa com",
-            endsWith: "Termina com",
-            blanks: "(Vazios)",
-            notBlanks: "(Não vazios)",            
-    
-            // Outros
-            noRowsToShow: "Nenhum registro encontrado",
-            filterOoo: "Filtrar...",
-            applyFilter: "Aplicar",
-            resetFilter: "Redefinir",
-            andCondition: "E",
-            orCondition: "OU",
-            searchOoo: "Buscar...",
-            selectAll: "Selecionar tudo",
-            blanks: "(Vazios)",
-            loadingOoo: "Carregando...",
-            pinColumn: "Fixar Coluna",
-            autosizeThisColumn: "Ajustar esta coluna",
-            autosizeAllColumns: "Ajustar todas as colunas",
-            group: "Grupo",
-            columns: "Colunas",
-            filters: "Filtros"
-        }        
+        },
+        localeText: localeText,        
     };    
   
     function autoSizeAll(skipHeader) {
