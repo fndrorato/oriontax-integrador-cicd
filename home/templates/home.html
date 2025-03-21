@@ -2,6 +2,31 @@
 {% load custom_filters %}
 {% load humanize %}
 
+{% block customcss %}
+    <!-- Inclua os arquivos CSS e JS do AG Grid -->
+
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+    <style>
+        .my-custom-theme {
+            --ag-header-background-color: #f9fafb !important;
+            --ag-header-foreground-color: #919191 !important;
+            --ag-odd-row-background-color: #f9fafb !important;
+            --ag-border-color: transparent !important;
+        }
+        
+        .my-custom-theme .ag-root {
+            background-color: white !important;
+            color: rgb(46, 55, 66) !important;
+        }
+        
+        .my-custom-theme .ag-header {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+        }
+        
+    </style>    
+{% endblock customcss %}
+
 
 {% block title %}
     <h4>Dashboard OrionTax</h4>
@@ -90,62 +115,7 @@
                 </div>
                 <div class="card-block table-border-style">
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Cliente</th>
-                                    <th>ERP</th>
-                                    <th>Analista</th>
-                                    <th class="text-center">Lojas</th>
-                                    <th class="text-center">Cadastrados</th>
-                                    <th class="text-center">Novos</th>
-                                    <th class="text-center">Nomes Diferentes</th>
-                                    <th class="text-center">Com Divergência</th>
-                                    <th class="text-center">Pendentes</th>
-                                    <th class="text-center">Aguardando Sinc.</th>
-                                    <th class="text-center">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for client_info in clients %}
-                                    <tr>
-                                        <th scope="row">{{ forloop.counter }}</th>
-                                        <td>
-                                            <a href="{% url 'client_update' client_info.client.pk %}">
-                                                {{ client_info.client.name }}
-                                            </a>
-                                        </td>
-                                        <td>{{ client_info.client.erp.name }}</td>
-                                        <td>{{ client_info.client.user.get_full_name|custom_full_name }}</td>
-                                        <td class="text-center">{{ client_info.store_count }}</td>
-                                        <td class="text-center">{{ client_info.item_count|intcomma }}</td>
-                                        <td class="text-center">{{ client_info.produtos_novos_pendentes|intcomma }}</td>
-                                        <td class="text-center">{{ client_info.produtos_com_descricao_divergente|intcomma }}</td>
-                                        <td class="text-center">{{ client_info.produtos_com_divergencia|intcomma }}</td>
-                                        <td class="text-center">{{ client_info.imported_itens_count|intcomma }}</td>
-                                        <td class="text-center">{{ client_info.produtos_aguardando_sync|intcomma }}</td>
-                                        <td class="text-center">
-                                            {% if client_info.imported_itens_count > 0 %}
-                                                <a href="{% url 'imported_item_list' client_id=client_info.client.id %}" type="button" class="btn btn-danger btn-mini waves-effect waves-light text-white">
-                                                    <i class="icofont icofont-exclamation-tringle" style="font-size: 1.5em;"></i>
-                                                    
-                                                </a>    
-                                            {% else %}
-                                                <a href="{% url 'imported_item_list' client_id=client_info.client.id %}" type="button" class="btn btn-outline-danger btn-mini waves-effect waves-light text-black">
-                                                    <i class="icofont icofont-exclamation-tringle" style="font-size: 1.5em;"></i>          
-                                                </a>                                  
-                                            {% endif %}
-
-                                            <a href="{% url 'item_list' client_id=client_info.client.id %}" type="button" class="btn btn-primary btn-mini waves-effect waves-light text-white">
-                                                <i class="icofont icofont-eye-alt" style="font-size: 1.5em;"></i>
-                                            </a>
-                                                                                        
-                                        </td>
-                                    </tr>
-                                {% endfor %}                                
-                            </tbody>
-                        </table>
+                        <div id="myGrid" class="ag-theme-alpine my-custom-theme" style="height: 800px; width: 100%;"></div>
                     </div>
                 </div>
             </div>
@@ -153,4 +123,195 @@
         </div>
     </div>
 {% endblock content %}
+
+{% block anotherjs %}
+<script>
+    var rowData = {{ clients_json|safe }};
+
+    const columnDefs = [
+        { 
+            headerName: "Cliente", 
+            field: "client_name", 
+            filter: true, 
+            sortable: true, 
+            cellRenderer: (params) => `<a href="/clientes/${params.data.client_id}/update/">${params.value}</a>` 
+        },
+        { headerName: "ERP", field: "erp_name", filter: true, sortable: true },
+        { headerName: "Analista", field: "analyst", filter: true, sortable: true },
+        { 
+            headerName: "Lojas", 
+            field: "store_count", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 60,
+            minWidth: 50,
+            maxWidth: 70,
+        },
+        { 
+            headerName: "Cadastrados", 
+            field: "item_count", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 90,
+            minWidth: 80,
+            maxWidth: 100,            
+
+        },
+        { headerName: "Novos", field: "produtos_novos_pendentes", filter: true, sortable: true, cellClass: 'text-center' },
+        { 
+            headerName: "Nomes Diferentes", 
+            field: "produtos_com_descricao_divergente", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 110,
+
+        },
+        { 
+            headerName: "Com Divergência", 
+            field: "produtos_com_divergencia", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 90,
+            minWidth: 80,
+            maxWidth: 100,
+        },
+        { 
+            headerName: "Pendentes", 
+            field: "pendentes", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 90,
+            minWidth: 80,
+            maxWidth: 100,
+        },
+        { 
+            headerName: "Aguardando Sinc.", 
+            field: "produtos_aguardando_sync", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 100,
+            minWidth: 80,
+            maxWidth: 110,
+        },
+        { 
+            headerName: "Ação", 
+            field: "client_id", 
+            filter: false, 
+            sortable: false, 
+            cellClass: 'text-center', 
+            cellRenderer: function(params) {
+                // let itensPendentes = params.data.pendentes.replace(/\./g, ''); // Removendo separador de milhares para garantir que seja numérico
+                let itensPendentes = params.data.pendentes;
+
+                let dangerClass = itensPendentes > 0 ? "btn-danger text-white" : "btn-outline-danger text-black";
+
+                return `
+                    <a href="/clientes/items-pendentes-novos/${params.value}/" class="btn ${dangerClass} btn-mini">
+                        <i class="icofont icofont-exclamation-tringle" style="font-size: 1.5em;"></i>
+                    </a>
+                    <a href="/clientes/items/${params.value}/" class="btn btn-primary btn-mini">
+                        <i class="icofont icofont-eye-alt" style="font-size: 1.5em;"></i>
+                    </a>
+                `;
+            },
+            floatingFilter: false // Desativa o floating filter para esta coluna
+        }
+    ];    
+
+    let gridApi;
+  
+    const gridOptions = {
+        columnDefs: columnDefs,
+        rowData: rowData,
+        pagination: true,
+        paginationPageSize: 50, 
+        defaultColDef: {
+            filter: true,
+            floatingFilter: true,
+        },               
+        onColumnResized: (params) => {
+            console.log(params);
+        },
+        autoSizeStrategy: {
+            type: "fitCellContents",
+        },
+        localeText: {
+            // Traduções principais
+            page: "Página",
+            more: "Mais",
+            to: "para",
+            of: "de",
+            next: "Próximo",
+            last: "Último",
+            first: "Primeiro",
+            previous: "Anterior",
+            loadingOoo: "Carregando...",
+            pageSize: "Itens por Página",
+            
+            // Filtros
+            equals: "Igual a",
+            notEqual: "Diferente de",
+            lessThan: "Menor que",
+            greaterThan: "Maior que",
+            lessThanOrEqual: "Menor ou igual a",
+            greaterThanOrEqual: "Maior ou igual a",
+            inRange: "Entre",
+            contains: "Contém",
+            notContains: "Não contém",
+            startsWith: "Começa com",
+            endsWith: "Termina com",
+            blanks: "(Vazios)",
+            notBlanks: "(Não vazios)",            
+    
+            // Outros
+            noRowsToShow: "Nenhum registro encontrado",
+            filterOoo: "Filtrar...",
+            applyFilter: "Aplicar",
+            resetFilter: "Redefinir",
+            andCondition: "E",
+            orCondition: "OU",
+            searchOoo: "Buscar...",
+            selectAll: "Selecionar tudo",
+            blanks: "(Vazios)",
+            loadingOoo: "Carregando...",
+            pinColumn: "Fixar Coluna",
+            autosizeThisColumn: "Ajustar esta coluna",
+            autosizeAllColumns: "Ajustar todas as colunas",
+            group: "Grupo",
+            columns: "Colunas",
+            filters: "Filtros"
+        }        
+    };
+  
+    function autoSizeAll(skipHeader) {
+        const allColumnIds = [];
+        gridApi.getColumns().forEach((column) => {
+            allColumnIds.push(column.getId());
+        });
+    
+        gridApi.autoSizeColumns(allColumnIds, skipHeader);
+    }
+  
+    document.addEventListener("DOMContentLoaded", () => {
+        const gridDiv = document.querySelector("#myGrid");
+        gridApi = agGrid.createGrid(gridDiv, gridOptions);
+
+    });
+
+
+    
+</script>
+{% endblock anotherjs %}
 

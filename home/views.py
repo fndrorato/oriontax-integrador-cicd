@@ -1,9 +1,12 @@
+import json
 from django.urls import reverse
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.contrib.humanize.templatetags.humanize import intcomma
 from django.utils.decorators import method_decorator
-from datetime import datetime, timezone
+from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
+from datetime import datetime, timezone
 from django.views.generic import TemplateView, ListView
 from django.core.paginator import Paginator  # Importando o Paginator
 from django.db.models import Q, Value, CharField, F, Subquery, OuterRef
@@ -13,6 +16,17 @@ from items.models import Item, ImportedItem
 from rolepermissions.decorators import has_role_decorator
 from rolepermissions.checkers import has_role
 
+
+def custom_full_name(name):
+    # Divide o nome em palavras
+    words = name.split()
+    
+    # Verifica se há mais de 3 palavras
+    if len(words) <= 3:
+        return name
+
+    return f"{words[0]} {words[1]} {words[-1]}"
+
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class HomeView(TemplateView):
     template_name = 'home.html'
@@ -20,16 +34,17 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         user = self.request.user        
         context = super().get_context_data(**kwargs)
-        
+
         if has_role(user, 'analista'):
-            clients = Client.objects.filter(user_id=user.id).order_by('name')
+            clients = Client.objects.filter(user_id=user.id).exclude(id=4).order_by('name')
         else:
-            clients = Client.objects.all().order_by('name')
+            clients = Client.objects.exclude(id=4).order_by('name')
+        
             
         clients_with_item_count = []
         total_items = 0
         total_stores = 0
-        total_imported_itens = 0
+        total_imported_itens = 0       
 
         for client in clients:
             item_count = Item.objects.filter(client=client).count()
@@ -75,24 +90,31 @@ class HomeView(TemplateView):
             total_items += item_count
             total_stores += store_count
             clients_with_item_count.append({
-                'client': client,
+                'id': client.id,
+                'client_id': client.id,
+                'client_name': client.name,
+                'erp_name': client.erp.name,
+                'analyst': custom_full_name(client.user.get_full_name()),
                 'item_count': item_count,
                 'store_count': store_count,
-                'imported_itens_count': imported_itens_count,
+                'pendentes': imported_itens_count,
                 'produtos_novos_pendentes': imported_itens_count_news,
-                'produtos_com_descricao_divergente': imported_itens_count_with_description,                
+                'produtos_com_descricao_divergente': imported_itens_count_with_description,
                 'produtos_com_divergencia': imported_itens_count_diver,
                 'produtos_aguardando_sync': itens_await_sync,
             })
         context['total_stores'] = total_stores
+
+        context['media_items'] = 0  # Definindo um valor padrão
         
         if clients.count() > 0:
             context['media_items'] = round(total_items / clients.count(),1)
         else:
             context['media_items'] = 0
-            
+
         context['clients'] = clients_with_item_count
         context['total_imported_itens'] = total_imported_itens
+        context['clients_json'] = mark_safe(json.dumps(clients_with_item_count))
         return context
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
