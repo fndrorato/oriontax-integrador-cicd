@@ -110,5 +110,12 @@ class LogIntegration(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
 
+class Syncing(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.RESTRICT)
+    option = models.CharField(max_length=10) # get ou send
+    status = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 auditlog.register(Client)
 auditlog.register(Store)

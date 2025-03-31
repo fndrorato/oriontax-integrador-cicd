@@ -122,9 +122,9 @@ class ClientUpdateView(UpdateView):
         context['store_form'] = StoreForm() 
         
         # Obtendo o log das integrações para esse cliente
-        logs = LogIntegration.objects.filter(client_id=client_id)
+        logs = LogIntegration.objects.filter(client_id=client_id).order_by("created_at")
         context['logs'] = logs
-        
+
         return context   
     
     def form_valid(self, form):
