@@ -5,13 +5,14 @@ import subprocess  # Importar subprocess para executar o script Python
 import os
 import re
 import uuid
+import threading
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.core.management import call_command
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 from erp.models import ERP
-from .models import Client, Store, Cities, LogIntegration
+from .models import Client, Store, Cities, LogIntegration, Syncing
 from .forms import ClientForm, StoreForm
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
@@ -341,25 +342,48 @@ class RunSelectView(View):
             elif client.erp.name == 'TILLIT':
                 script_execute = 'run_select_tilit.py'
             elif client.erp.name == 'MAC Sistemas':
-                script_execute = 'run_update_macsistemas.py'             
+                script_execute = 'run_select_macsistemas.py'             
             else:
                 return JsonResponse({'status': 'warning', 'message': 'O sistema desse cliente não está configurado a sincronização.'})
-            # Obter o caminho completo para o script run_select.py
-            script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', script_execute)
             
-            # Obter o caminho do interpretador Python atual
-            python_executable = sys.executable
-            
-            # Executar o script como um subprocesso
-            # result = subprocess.run(['python', script_path, '--client_id', str(client_id)])
-            result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
+            # Registrar no banco o início do processo
+            log = Syncing.objects.create(
+                client=client,
+                option="get",
+                status="processing"
+            )
 
-            if result.returncode == 0:  # Código de saída 0 indica sucesso
-                return JsonResponse({'status': 'success', 'message': 'Script executed successfully'})
-            else:
-                return JsonResponse({'status': 'error', 'message': 'Error executing script'})
+            # Função para rodar o script em background
+            def run_script():
+                # Obter o caminho completo para o script run_select.py
+                script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', script_execute)
+                
+                # Obter o caminho do interpretador Python atual
+                # python_executable = sys.executable
+                if os.name == 'nt':  # Windows
+                    python_executable = os.path.join(settings.BASE_DIR, 'venv', 'Scripts', 'python.exe')
+                else:  # Linux/Mac
+                    python_executable = os.path.join(settings.BASE_DIR, 'venv', 'bin', 'python')
+                    
+                result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
+                
+                # Atualizar o status após a execução
+                if result.returncode == 0:
+                    log.status = "success"
+                    log.message = "Dados recebidos com sucesso."
+                else:
+                    log.status = "error"
+                    log.message = "Erro ao executar a sincronização."
+
+                log.save()
+
+            # Iniciar a thread para rodar o script sem travar a requisição
+            thread = threading.Thread(target=run_script)
+            thread.start()
+
+            return JsonResponse({'status': 'processing', 'message': 'Sincronização iniciada.', 'sync_id': log.id})
+        
         except Exception as e:
-            print(f"Error: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)})
         
 class RunUpdateView(View):
@@ -379,29 +403,68 @@ class RunUpdateView(View):
             else:
                 return JsonResponse({'status': 'warning', 'message': 'O sistema desse cliente não está configurado a sincronização.'})
             
-            # Obter o caminho completo para o script run_select.py
-            script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', script_execute)
+            # Registrar no banco o início do processo
+            log = Syncing.objects.create(
+                client=client,
+                option="send",
+                status="processing"
+            )
             
-            # Obter o caminho do interpretador Python atual
-            python_executable = sys.executable
-            
-            # Executar o script como um subprocesso
-            # result = subprocess.run(['python', script_path, '--client_id', str(client_id)])
-            result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
+            def run_script():
+                # Obter o caminho completo para o script run_select.py
+                script_path = os.path.join(settings.BASE_DIR, 'items', 'management', 'commands', script_execute)
+                
+                # Obter o caminho do interpretador Python atual
+                python_executable = sys.executable
+                
+                # Executar o script como um subprocesso
+                result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])              
 
-            if result.returncode == 0:  # Código de saída 0 indica sucesso
-                return JsonResponse({'status': 'success', 'message': 'Dados enviados com sucesso.'})
-            else:
-                if result.returncode == 2:
-                    return JsonResponse({'status': 'warning', 'message': 'Nenhum produto para ser sincronizado.'})
-                elif result.returncode == 3:
-                    return JsonResponse({'status': 'error', 'message': 'Erro ao executar a atualização.'})
-                elif result.returncode == 4:
-                    return JsonResponse({'status': 'error', 'message': 'Nao foi possível estabelecer conexão com o cliente.'})
+                if result.returncode == 0:  # Código de saída 0 indica sucesso
+                    # return JsonResponse({'status': 'success', 'message': 'Dados enviados com sucesso.'})
+                    log.status = "success"
                 else:
-                    return JsonResponse({'status': 'error', 'message': 'Ocorreu um erro ao executar a sincronização'})
+                    if result.returncode == 2:
+                        # return JsonResponse({'status': 'warning', 'message': 'Nenhum produto para ser sincronizado.'})
+                        log.status = "warning"
+                        log.message = "Nenhum produto para ser sincronizado."
+                    elif result.returncode == 3:
+                        # return JsonResponse({'status': 'error', 'message': 'Erro ao executar a atualização.'})
+                        log.status = "error"
+                        log.message = "Erro ao executar a atualização."
+                    elif result.returncode == 4:
+                        # return JsonResponse({'status': 'error', 'message': 'Nao foi possível estabelecer conexão com o cliente.'})
+                        log.status = "error"
+                        log.message = "Nao foi possível estabelecer conexão com o cliente."
+                    else:
+                        # return JsonResponse({'status': 'error', 'message': 'Ocorreu um erro ao executar a sincronização'})
+                        log.status = "error"
+                        log.message = "Ocorreu um erro ao executar a sincronização."
+
+                    log.save()
+
+            # Iniciar a thread para rodar o script sem travar a requisição
+            thread = threading.Thread(target=run_script)
+            thread.start()
             
+            return JsonResponse({'status': 'processing', 'message': 'Sincronização iniciada.', 'sync_id': log.id})
+                
         except Exception as e:
             print(f"Error: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)})        
-             
+
+class CheckSyncStatusView(View):
+    def get(self, request, client_id, sync_id):
+        log = Syncing.objects.filter(client_id=client_id, id=sync_id).first()
+        print(log)
+        if log:
+            if log.status == "processing":
+                return JsonResponse({'status': 'processing', 'message': 'Sincronização em andamento...'})
+            elif log.status == "success":
+                return JsonResponse({'status': 'success', 'message': 'Sincronização concluída com sucesso.'})
+            elif log.status == "warning":
+                return JsonResponse({'status': 'warning', 'message': log.message})
+            else:
+                return JsonResponse({'status': 'error', 'message': log.message})
+        else:
+            return JsonResponse({'status': 'unknown', 'message': 'Nenhum registro de sincronização encontrado.'})

@@ -114,8 +114,10 @@ class Syncing(models.Model):
     client = models.ForeignKey(Client, on_delete=models.RESTRICT)
     option = models.CharField(max_length=10) # get ou send
     status = models.CharField(max_length=20)
+    message = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
 auditlog.register(Client)
 auditlog.register(Store)
