@@ -1077,7 +1077,25 @@
                     swal('Erro!', 'Erro ao iniciar a sincronização.', 'error');
                     $('#loader-load-data').hide();
                 });
-        }        
+        }   
+        
+        function runUpdate(clientId) {
+            $('#loader-sent-data').show();
+            fetch(`/clientes/executar-atualizacoes/${clientId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'processing') {
+                    checkSyncStatus(clientId, data.sync_id, 'loader-sent-data');  // Iniciar monitoramento do status
+                } else {
+                    swal('Erro!', data.message, 'error');
+                    $('#loader-sent-data').hide();
+                }
+            })
+            .catch(error => {
+                swal('Erro!', 'Erro ao iniciar a sincronização.', 'error');
+                $('#loader-sent-data').hide();
+            });            
+        }         
 
         // Função para executar a sincronização
         /*
@@ -1113,23 +1131,7 @@
         }
         */
 
-        function runUpdate(clientId) {
-            $('#loader-sent-data').show();
-            fetch(`/clientes/executar-atualizacoes/${clientId}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'processing') {
-                    checkSyncStatus(clientId, data.sync_id, 'loader-sent-data');  // Iniciar monitoramento do status
-                } else {
-                    swal('Erro!', data.message, 'error');
-                    $('#loader-sent-data').hide();
-                }
-            })
-            .catch(error => {
-                swal('Erro!', 'Erro ao iniciar a sincronização.', 'error');
-                $('#loader-sent-data').hide();
-            });            
-        }         
+                
         
         /*
         function runUpdate(clientId) {

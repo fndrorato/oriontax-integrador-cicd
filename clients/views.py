@@ -456,7 +456,6 @@ class RunUpdateView(View):
 class CheckSyncStatusView(View):
     def get(self, request, client_id, sync_id):
         log = Syncing.objects.filter(client_id=client_id, id=sync_id).first()
-        print(log)
         if log:
             if log.status == "processing":
                 return JsonResponse({'status': 'processing', 'message': 'Sincronização em andamento...'})
