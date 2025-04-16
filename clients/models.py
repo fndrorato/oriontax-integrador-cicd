@@ -30,6 +30,12 @@ class Client(models.Model):
         ('3', 'Suspenso'),
     ]
     
+    DATA_TYPE_COMPANY_CHOICES = [
+        ('1', 'Simples Nacional'),
+        ('2', 'Lucro Presumido'),        
+        ('3', 'Lucro Real'),
+    ]    
+    
     DATA_METHOD_INTEGRATION_CHOICES = [
         ('1', 'API'),
         ('2', 'FTP'),
@@ -40,6 +46,7 @@ class Client(models.Model):
     name = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=18, blank=True, null=True, default='', verbose_name="CNPJ")
     token = models.UUIDField(default=uuid.uuid4, unique=True, blank=True, null=True)
+    type_company = models.CharField(max_length=2, choices=DATA_TYPE_COMPANY_CHOICES, blank=True, null=True, default=3)
     num_stores = models.IntegerField()
     date_contract = models.DateField()
     date_send = models.DateField(blank=True, null=True)

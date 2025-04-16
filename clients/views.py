@@ -1,4 +1,4 @@
-import logging,time
+import logging, time
 import pandas as pd
 import sys
 import subprocess  # Importar subprocess para executar o script Python
@@ -26,6 +26,7 @@ from rolepermissions.checkers import has_role
 from .utils import validateSysmo
 from django.db.models import F
 
+logger = logging.getLogger(__name__)
 
 @login_required(login_url='login')
 @has_role_decorator(['administrador', 'gerente'])
@@ -418,7 +419,9 @@ class RunUpdateView(View):
                 python_executable = sys.executable
                 
                 # Executar o script como um subprocesso
-                result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])              
+                result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
+                
+                print(result)
 
                 if result.returncode == 0:  # Código de saída 0 indica sucesso
                     # return JsonResponse({'status': 'success', 'message': 'Dados enviados com sucesso.'})
@@ -441,7 +444,7 @@ class RunUpdateView(View):
                         log.status = "error"
                         log.message = "Ocorreu um erro ao executar a sincronização."
 
-                    log.save()
+                log.save()
 
             # Iniciar a thread para rodar o script sem travar a requisição
             thread = threading.Thread(target=run_script)
@@ -454,16 +457,25 @@ class RunUpdateView(View):
             return JsonResponse({'status': 'error', 'message': str(e)})        
 
 class CheckSyncStatusView(View):
+
     def get(self, request, client_id, sync_id):
-        log = Syncing.objects.filter(client_id=client_id, id=sync_id).first()
-        if log:
-            if log.status == "processing":
-                return JsonResponse({'status': 'processing', 'message': 'Sincronização em andamento...'})
-            elif log.status == "success":
-                return JsonResponse({'status': 'success', 'message': 'Sincronização concluída com sucesso.'})
-            elif log.status == "warning":
-                return JsonResponse({'status': 'warning', 'message': log.message})
+        try:
+            logger.info(f"Verificando status de sincronização: client_id={client_id}, sync_id={sync_id}")
+            
+            log = Syncing.objects.filter(client_id=client_id, id=sync_id).first()
+
+            if log:
+                if log.status == "processing":
+                    return JsonResponse({'status': 'processing', 'message': 'Sincronização em andamento...'})
+                elif log.status == "success":
+                    return JsonResponse({'status': 'success', 'message': 'Sincronização concluída com sucesso.'})
+                elif log.status == "warning":
+                    return JsonResponse({'status': 'warning', 'message': log.message})
+                else:
+                    return JsonResponse({'status': 'error', 'message': log.message})
             else:
-                return JsonResponse({'status': 'error', 'message': log.message})
-        else:
-            return JsonResponse({'status': 'unknown', 'message': 'Nenhum registro de sincronização encontrado.'})
+                return JsonResponse({'status': 'unknown', 'message': 'Nenhum registro de sincronização encontrado.'})
+
+        except Exception as e:
+            logger.exception("Erro ao verificar status de sincronização")
+            return JsonResponse({'status': 'error', 'message': 'Erro interno ao verificar o status'}, status=500)

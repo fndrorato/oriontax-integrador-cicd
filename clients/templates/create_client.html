@@ -115,8 +115,8 @@
                                         </div>   
                                         
                                         <div class="row">
-                                            <div class="col-md-6">
-                                                <label class="col-sm-6 col-lg-4 col-form-label">Sistema Utilizado</label>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-6 col-lg-4 col-form-label">Sistema</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.erp.errors }}</span>
                                                     <div class="input-group">
@@ -124,7 +124,7 @@
                                                     </div>
                                                 </div>                                                  
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
                                                 <label class="col-sm-6 col-lg-4 col-form-label">Contabilidade</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.accounting.errors }}</span>
@@ -133,6 +133,15 @@
                                                     </div>
                                                 </div>                                                
                                             </div>
+                                            <div class="col-md-4">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Classificação Fiscal</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.type_company.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.type_company|add_class:"form-control"}}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                            
                                         </div>    
                                         
                                         <div class="row">

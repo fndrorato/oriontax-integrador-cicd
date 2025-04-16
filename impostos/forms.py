@@ -49,11 +49,19 @@ class PisCofinsCstForm(forms.ModelForm):
         widget=forms.NumberInput(attrs={
             'step': '0.01'
         })
-    )    
+    )  
+    
+    type_company = forms.ChoiceField(
+        choices=PisCofinsCst.DATA_TYPE_COMPANY_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        label='Classificação Fiscal'
+    )      
 
     class Meta:
         model = PisCofinsCst
-        fields = ['code', 'pis_aliquota', 'cofins_aliquota', 'description']   
+        fields = ['code', 'pis_aliquota', 'cofins_aliquota', 'description', 'type_company']   
         
 class NaturezaReceitaForm(forms.ModelForm):
     piscofins_cst = forms.ModelChoiceField(queryset=PisCofinsCst.objects.all(), empty_label="Selecione um CST")

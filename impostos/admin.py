@@ -31,8 +31,8 @@ class ProtegeAdmin(admin.ModelAdmin):
     search_fields = ('code', 'description')
 
 class PisCofinsCstAdmin(admin.ModelAdmin):
-    list_display = ('code', 'pis_aliquota', 'description', 'cofins_aliquota')
-    search_fields = ('code',)
+    list_display = ('code', 'pis_aliquota', 'description', 'cofins_aliquota', 'type_company')
+    search_fields = ('code', 'type_company', )
 
 class NaturezaReceitaAdmin(admin.ModelAdmin):
     list_display = ('code', 'description', 'ncm', 'piscofins_cst', 'category')

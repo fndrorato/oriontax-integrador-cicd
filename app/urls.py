@@ -20,3 +20,5 @@ urlpatterns = [
     path('search/', SearchResultsView.as_view(), name='search'),
     path('ajax/cities/', CitySearchView.as_view(), name='city_search'),    
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

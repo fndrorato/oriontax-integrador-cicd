@@ -65,12 +65,21 @@ class Protege(models.Model):
 
     def __str__(self):
         return str(self.code)       
-
+  
 class PisCofinsCst(models.Model):
+    DATA_TYPE_COMPANY_CHOICES = [
+        ('1', 'Simples Nacional'),
+        ('2', 'Lucro Presumido'),        
+        ('3', 'Lucro Real'),
+    ]
+
     code = models.CharField(max_length=4, primary_key=True)
+    type_company = models.CharField(max_length=1, choices=DATA_TYPE_COMPANY_CHOICES, default='3')
     description = models.CharField(max_length=255, null=True, blank=True)
     pis_aliquota = models.FloatField(default=0)
     cofins_aliquota = models.FloatField()
+    pis_aliquota_company_2 = models.FloatField(default=0)
+    cofins_aliquota_company_2 = models.FloatField(default=0)    
 
     def __str__(self):
         return f"{self.code} - {self.description}"      
@@ -97,8 +106,6 @@ class NaturezaReceita(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['code', 'piscofins_cst'], name='unique_code_piscofins_cst')
         ]
-
-
 
 auditlog.register(Cfop)
 auditlog.register(IcmsCst)

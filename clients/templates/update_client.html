@@ -195,7 +195,7 @@
                                         
                                         <div class="row">
                                             <div class="col-md-4">
-                                                <label class="col-sm-6 col-lg-4 col-form-label">Sistema Utilizado</label>
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Sistema Utilizado</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.erp.errors }}</span>
                                                     <div class="input-group">
@@ -227,7 +227,7 @@
                                         </div>    
                                         
                                         <div class="row">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="col-sm-12 col-lg-12 col-form-label">Comercial Responsável</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.commercial_responsible.errors }}</span>
@@ -236,7 +236,7 @@
                                                     </div>
                                                 </div>                                                  
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="col-sm-12 col-lg-12 col-form-label">Proprietário</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.owner.errors }}</span>
@@ -245,7 +245,7 @@
                                                     </div>
                                                 </div>                                                
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="col-sm-12 col-lg-12 col-form-label">CNPJ Principal</label>
                                                 <div class="col-sm-8 col-lg-12">
                                                     <span class="messages text-danger">{{ form.cnpj.errors }}</span>
@@ -253,7 +253,16 @@
                                                         {{ form.cnpj|add_class:"form-control"|attr:"placeholder:00.000.000/0000-00" }}
                                                     </div>
                                                 </div>                                                
-                                            </div>                                            
+                                            </div> 
+                                            <div class="col-md-3">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Classificação Fiscal</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.type_company.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.type_company|add_class:"form-control"}}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                                                                         
                                         </div>   
 
                                         <div class="row">

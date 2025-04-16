@@ -1988,7 +1988,6 @@ class XLSXUploadDivergentView(View):
                         'elapsed_time': elapsed_time
                     }, status=400)                 
                 
-                
             except Exception as e:
                 self.logger.error(f"Erro ao ler o arquivo Excel: {e}")
                 return JsonResponse({'error': f"Erro ao ler o arquivo Excel: {e}"}, status=400)
@@ -2142,7 +2141,15 @@ class XLSXUploadDivergentView(View):
 
                 codigos = df['codigo'].tolist()  
                 existing_items = {item.code: item for item in Item.objects.filter(client=client, code__in=df['codigo'])}
-                pis_cofins_cst_instances = {obj.code: obj for obj in PisCofinsCst.objects.filter(code__in=df['piscofins_cst'])}
+                # versão antes de filtrar por LUCRO REAL, PRESUMIDO...
+                # pis_cofins_cst_instances = {obj.code: obj for obj in PisCofinsCst.objects.filter(code__in=df['piscofins_cst'])}
+                pis_cofins_cst_instances = {
+                    obj.code: obj
+                    for obj in PisCofinsCst.objects.filter(
+                        code__in=df['piscofins_cst'],
+                        type_company=client.type_company
+                    )
+                }                
                 
                 items_to_create = []
                 items_to_update = []
@@ -2160,9 +2167,13 @@ class XLSXUploadDivergentView(View):
                             if not piscofins_cst:
                                 raise ObjectDoesNotExist(f"PisCofinsCst com código {piscofins_cst_code} não encontrado")
 
-                            pis_aliquota = piscofins_cst.pis_aliquota
-                            cofins_aliquota = piscofins_cst.cofins_aliquota
-                            
+                            if client.type_company == '3':
+                                pis_aliquota = piscofins_cst.pis_aliquota
+                                cofins_aliquota = piscofins_cst.cofins_aliquota
+                            else:
+                                pis_aliquota = piscofins_cst.pis_aliquota_company_2
+                                cofins_aliquota = piscofins_cst.cofins_aliquota_company_2
+                                                            
                             natureza_receita_id = get_natureza_receita_id(row['naturezareceita'], piscofins_cst_code)
                             if not natureza_receita_id and row['naturezareceita'] != None:
                                 raise ValueError(f"NaturezaReceita com código {row['naturezareceita']} e PisCofinsCst {piscofins_cst_code} não encontrado")

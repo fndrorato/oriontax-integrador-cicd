@@ -514,6 +514,7 @@ class PisCofinsCstDetailView(DetailView):
             'description': piscofinscst.description,
             'pis_aliquota': piscofinscst.pis_aliquota,
             'cofins_aliquota': piscofinscst.cofins_aliquota,
+            'type_company': piscofinscst.type_company,
         }
         return JsonResponse(data)  
     
