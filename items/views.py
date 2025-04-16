@@ -642,7 +642,27 @@ class ImportedItemListViewNewItem(ListView):
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
         context['protege_choices'] = Protege.objects.all()
-        context['piscofins_choices'] = PisCofinsCst.objects.all()
+        # context['piscofins_choices'] = PisCofinsCst.objects.all()
+        piscofins_qs = PisCofinsCst.objects.all()
+        type_company = client.type_company
+
+        piscofins_custom = []
+        for item in piscofins_qs:
+            # Se empresa é do tipo 2, substitui os valores
+            if type_company == '2':
+                pis_aliquota = item.pis_aliquota_company_2 if item.pis_aliquota_company_2 is not None else item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota_company_2 if item.cofins_aliquota_company_2 is not None else item.cofins_aliquota
+            else:
+                pis_aliquota = item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota
+
+            piscofins_custom.append({
+                'code': item.code,
+                'pis_aliquota': pis_aliquota,
+                'cofins_aliquota': cofins_aliquota,
+            })
+
+        context['piscofins_choices'] = piscofins_custom        
         context['naturezareceita_choices'] = NaturezaReceita.objects.all()
         context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
         icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
@@ -740,7 +760,25 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
         context['protege_choices'] = Protege.objects.all()
-        context['piscofins_choices'] = PisCofinsCst.objects.all()
+        piscofins_qs = PisCofinsCst.objects.all()
+        type_company = client.type_company
+
+        piscofins_custom = []
+        for item in piscofins_qs:
+            # Se empresa é do tipo 2, substitui os valores
+            if type_company == '2':
+                pis_aliquota = item.pis_aliquota_company_2 if item.pis_aliquota_company_2 is not None else item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota_company_2 if item.cofins_aliquota_company_2 is not None else item.cofins_aliquota
+            else:
+                pis_aliquota = item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota
+
+            piscofins_custom.append({
+                'code': item.code,
+                'pis_aliquota': pis_aliquota,
+                'cofins_aliquota': cofins_aliquota,
+            })
+        context['piscofins_choices'] = piscofins_custom
         context['naturezareceita_choices'] = NaturezaReceita.objects.all()
         context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
         icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
@@ -935,6 +973,7 @@ def save_bulk_imported_item(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.POST.get('items', '[]'))
+            print('entrou aqui')
             
             # Validate each item and collect errors if any
             # Lista para armazenar todos os itens
@@ -974,6 +1013,7 @@ def save_bulk_imported_item(request):
             client_id_unicos = set()
             codes_unicos = set()
             fix_item_unicos = set()
+            print('100')
 
             # Itera sobre cada item na lista de itens
             for item in items_list:
@@ -990,7 +1030,7 @@ def save_bulk_imported_item(request):
                     # Lida com a exceção se client_id não puder ser convertido para inteiro
                     print(f"ValueError: {e} for client_id {item['client_id']} in item {item}")
 
-
+            print('101')
             # Converter os conjuntos em listas, se necessário
             client_id_unicos = list(client_id_unicos)
             codes_unicos = list(codes_unicos)  
@@ -1038,16 +1078,21 @@ def save_bulk_imported_item(request):
                     piscofins_cst_code = piscofins_cst
                                         
                     # Verificar se o client_id é válido
+                    print('102')
                     
                     client = get_object_or_404(Client, id=client_id)  
                     cfop = get_object_or_404(Cfop, cfop=cfop_code)          
                     icms_cst = get_object_or_404(IcmsCst, code=icms_cst_code)
                     icms_aliquota = get_object_or_404(IcmsAliquota, code=icms_aliquota_code)
                     protege = get_object_or_404(Protege, code=protege)
+                    print('103', piscofins_cst)
                     piscofins_cst = get_object_or_404(PisCofinsCst, code=piscofins_cst)
+                    print('104')
                     
                     if cbenef_code:
                         cbenef_instance = get_object_or_404(CBENEF, code=cbenef_code)
+                    
+                    print('105')
                     
                     if naturezareceita_id:
                         naturezareceita_instance = get_object_or_404(NaturezaReceita, id=naturezareceita_id)                    
@@ -1055,9 +1100,10 @@ def save_bulk_imported_item(request):
                     else:
                         naturezareceita_code = 0
                     
+                    print('106')
                     user = request.user
                     current_time = timezone.now()  
-                    
+                    print('104')
 
                     if tipo_produto == '1':
                         variavel_oriontax = {
@@ -1644,7 +1690,27 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
         context['protege_choices'] = Protege.objects.all()
-        context['piscofins_choices'] = PisCofinsCst.objects.all()
+        # context['piscofins_choices'] = PisCofinsCst.objects.all()
+        piscofins_qs = PisCofinsCst.objects.all()
+        type_company = client.type_company
+
+        piscofins_custom = []
+        for item in piscofins_qs:
+            # Se empresa é do tipo 2, substitui os valores
+            if type_company == '2':
+                pis_aliquota = item.pis_aliquota_company_2 if item.pis_aliquota_company_2 is not None else item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota_company_2 if item.cofins_aliquota_company_2 is not None else item.cofins_aliquota
+            else:
+                pis_aliquota = item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota
+
+            piscofins_custom.append({
+                'code': item.code,
+                'pis_aliquota': pis_aliquota,
+                'cofins_aliquota': cofins_aliquota,
+            })
+
+        context['piscofins_choices'] = piscofins_custom   
         context['naturezareceita_choices'] = NaturezaReceita.objects.all()
         context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
         icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
@@ -1821,7 +1887,26 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
         context['protege_choices'] = Protege.objects.all()
-        context['piscofins_choices'] = PisCofinsCst.objects.all()
+        piscofins_qs = PisCofinsCst.objects.all()
+        type_company = client.type_company
+
+        piscofins_custom = []
+        for item in piscofins_qs:
+            # Se empresa é do tipo 2, substitui os valores
+            if type_company == '2':
+                pis_aliquota = item.pis_aliquota_company_2 if item.pis_aliquota_company_2 is not None else item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota_company_2 if item.cofins_aliquota_company_2 is not None else item.cofins_aliquota
+            else:
+                pis_aliquota = item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota
+
+            piscofins_custom.append({
+                'code': item.code,
+                'pis_aliquota': pis_aliquota,
+                'cofins_aliquota': cofins_aliquota,
+            })
+
+        context['piscofins_choices'] = piscofins_custom  
         context['naturezareceita_choices'] = NaturezaReceita.objects.all()
         context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
         icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
@@ -2146,8 +2231,7 @@ class XLSXUploadDivergentView(View):
                 pis_cofins_cst_instances = {
                     obj.code: obj
                     for obj in PisCofinsCst.objects.filter(
-                        code__in=df['piscofins_cst'],
-                        type_company=client.type_company
+                        code__in=df['piscofins_cst']
                     )
                 }                
                 
