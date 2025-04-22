@@ -1274,7 +1274,7 @@ class XLSXUploadView(View):
                     'cest': str, 
                     'barcode': str, 
                     'naturezareceita': str,
-                    'tipo_produto': str,  # Adicionar tipo_produto
+                    'tipo_produto': str,
                 })
 
                 # Verificação das colunas obrigatórias
@@ -1423,8 +1423,12 @@ class XLSXUploadView(View):
                             if not piscofins_cst:
                                 raise ObjectDoesNotExist(f"PisCofinsCst com código {piscofins_cst_code} não encontrado")
 
-                            pis_aliquota = piscofins_cst.pis_aliquota
-                            cofins_aliquota = piscofins_cst.cofins_aliquota
+                            if client.type_company == '3':
+                                pis_aliquota = piscofins_cst.pis_aliquota
+                                cofins_aliquota = piscofins_cst.cofins_aliquota
+                            else:
+                                pis_aliquota = piscofins_cst.pis_aliquota_company_2
+                                cofins_aliquota = piscofins_cst.cofins_aliquota_company_2
                             
                             natureza_receita_id = get_natureza_receita_id(row['naturezareceita'], piscofins_cst_code)
                             if not natureza_receita_id and row['naturezareceita'] != None:
