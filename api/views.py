@@ -709,3 +709,33 @@ class GenerateCSVDetail(APIView):
             'file_url': file_url, 
             'processing_time_seconds': processing_time
         }, status=200)
+
+class ProcessSPED(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        start_time = time.time()
+
+        # Aqui seria o processamento dos arquivos ZIP
+        # (Por enquanto estamos simulando)
+
+        processing_time = round(time.time() - start_time, 2)
+        return Response({
+            'message': 'Todos os arquivos ZIP foram processados com sucesso.',
+            'processing_time_seconds': processing_time
+        }, status=200)
+
+class SaveFilesDefinitely(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        start_time = time.time()
+
+        # Aqui seria o salvamento definitivo dos arquivos
+        # (Por enquanto estamos simulando também)
+
+        processing_time = round(time.time() - start_time, 2)
+        return Response({
+            'message': 'Arquivos salvos definitivamente.',
+            'processing_time_seconds': processing_time
+        }, status=200)

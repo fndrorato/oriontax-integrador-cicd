@@ -81,9 +81,20 @@ def get_clients():
         password_route=''
     )
 
-def convert_df_client_to_df_otx_version(df_client, initial_log):
-    # Caminhos dos arquivos CSV
-    path_icms = os.path.join(current_dir, 'relations', 'tilit_icms.csv')
+def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
+    # Diretório atual
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Nome do arquivo específico do cliente
+    client_filename = f'tilit_icms_{client_id}.csv'
+    default_filename = 'tilit_icms.csv'
+
+    # Caminho do arquivo
+    client_path = os.path.join(current_dir, 'relations', client_filename)
+    default_path = os.path.join(current_dir, 'relations', default_filename)
+
+    # Verifica se o arquivo do cliente existe
+    path_icms = client_path if os.path.exists(client_path) else default_path
     
     # Recuperar todos os dados do modelo
     pis_cofins_data = PisCofinsCst.objects.all().values()  # Use .values() para obter um dicionário
@@ -376,10 +387,11 @@ if __name__ == "__main__":
             if args.client_id:
                 sys.exit(1)  # Sair com código de erro 1             
         else:
+
+            # converter df_client par versão OrionTAX
+            df_client_converted, initial_log = convert_df_client_to_df_otx_version(df_client, initial_log, client_id)
             print('Tudo processado corretamente. Saindo...')
             sys.exit(1)
-            # converter df_client par versão OrionTAX
-            df_client_converted, initial_log = convert_df_client_to_df_otx_version(df_client, initial_log)
             
             if not isinstance(df_client_converted, pd.DataFrame) and df_client_converted == 0:
                 # Encontrou alguma linha do ICMS que não tem relação

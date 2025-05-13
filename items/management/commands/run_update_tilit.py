@@ -41,9 +41,20 @@ def get_clients():
         password_route=''
     )  
 
-def convert_df_otx_version_to_df_client(df_client):
-    # Caminhos dos arquivos CSV
-    path_icms = os.path.join(current_dir, 'relations', 'tilit_icms.csv')
+def convert_df_otx_version_to_df_client(df_client, client_id):
+    # Diretório atual
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Nome do arquivo específico do cliente
+    client_filename = f'tilit_icms_{client_id}.csv'
+    default_filename = 'tilit_icms.csv'
+
+    # Caminho do arquivo
+    client_path = os.path.join(current_dir, 'relations', client_filename)
+    default_path = os.path.join(current_dir, 'relations', default_filename)
+
+    # Verifica se o arquivo do cliente existe
+    path_icms = client_path if os.path.exists(client_path) else default_path
 
     # Leitura dos arquivos CSV em DataFrames
     df_icms = pd.read_csv(path_icms, delimiter=';', dtype={'icms_cst': str})
@@ -305,7 +316,7 @@ if __name__ == "__main__":
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             initial_log += f'[{timestamp}] - Iniciando conversão  dos dados para o cliente: {client.name} \n'
             items_df_original = items_df
-            items_df = convert_df_otx_version_to_df_client(items_df)  
+            items_df = convert_df_otx_version_to_df_client(items_df, client_id)  
 
             try:
                 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
