@@ -154,6 +154,7 @@ class ClientItemView(APIView):
         initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Verificando se há atualizações para o cliente: {client.name}... executando API\n"  
  
         items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2])
+        total_items = items_queryset.count()
         
         current_time = timezone.now()
         num_updated = Item.objects.filter(
@@ -168,6 +169,8 @@ class ClientItemView(APIView):
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens aguardando validação.\n"
         else:
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"
+
+        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Total de itens retornados {total_items} para o cliente através da API.\n"
 
         save_imported_logs(client.id, initial_log)        
         
