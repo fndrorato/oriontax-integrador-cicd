@@ -24,7 +24,7 @@ from django.conf import settings
 from django.db.models import F
 from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
-from clients.utils import validateSysmo, save_imported_logs
+from clients.utils import validateSysmo, save_imported_logs, update_client_data_get
 from items.models import Item
 
 
@@ -180,6 +180,7 @@ if __name__ == "__main__":
             try:
                 # Chama a função de validação
                 validation_result = validateSysmo(client_id, items_df, df_client, initial_log)
+                update_client_data_get(client_id, '4')
                         
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client_name}: {e}\n"

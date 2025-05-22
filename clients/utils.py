@@ -12,6 +12,35 @@ from decimal import Decimal
 
 logger = logging.getLogger(__name__)  # Obtenha um logger
 
+def update_client_data_send(client_id=None, method_integration=None):
+    if client_id:
+        try:
+            current_time = timezone.now()
+            client = Client.objects.get(id=client_id)
+            client.last_date_send = current_time
+            client.method_integration = method_integration
+            client.save()
+            print(f"Úlima data de envio atualizado com sucesso para o cliente {client.name}.")
+        except Client.DoesNotExist:
+            print(f"Cliente com ID {client_id} não encontrado.")
+    else:
+        print(f'Nenhum ID de cliente fornecido para atualização.')
+
+def update_client_data_get(client_id=None, method_integration=None):
+    if client_id:
+        try:
+            current_time = timezone.now()
+            client = Client.objects.get(id=client_id)
+            client.last_date_get = current_time
+            client.method_integration = method_integration
+            client.save()
+            print(f"Úlima data de recebimento atualizado com sucesso para o cliente {client.name}.")
+        except Client.DoesNotExist:
+            print(f"Cliente com ID {client_id} não encontrado.")
+    else:
+        print(f'Nenhum ID de cliente fornecido para atualização.')
+
+
 def generate_and_update_client_tokens(client_id=None):
     if client_id:
         try:

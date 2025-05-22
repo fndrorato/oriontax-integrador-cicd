@@ -36,9 +36,9 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         if has_role(user, 'analista'):
-            clients = Client.objects.filter(user_id=user.id).exclude(id=4).order_by('name')
+            clients = Client.objects.filter(user_id=user.id, client_status='1').exclude(id=4).order_by('name')
         else:
-            clients = Client.objects.exclude(id=4).order_by('name')
+            clients = Client.objects.filter(client_status='1').exclude(id=4).order_by('name')
         
             
         clients_with_item_count = []

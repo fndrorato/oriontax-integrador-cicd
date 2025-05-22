@@ -26,7 +26,7 @@ from django.conf import settings
 from django.db.models import F, Q
 from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
-from clients.utils import save_imported_logs
+from clients.utils import save_imported_logs, update_client_data_send
 from items.models import Item
 from erp.models import AccessDropbox
 
@@ -355,7 +355,8 @@ if __name__ == "__main__":
                         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"
                         print("Nenhum item foi atualizado.")
 
-                    save_imported_logs(client_id, initial_log)
+                    save_imported_logs(client_id, initial_log)   
+                    update_client_data_send(client_id, '4')
                     if args.client_id:
                         sys.exit(0)  # Sair com código de sucesso
                         

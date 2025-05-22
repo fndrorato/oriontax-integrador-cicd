@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from clients.models import Client
-from clients.utils import validateSelect, save_imported_logs
+from clients.utils import validateSelect, save_imported_logs, update_client_data_get, update_client_data_send
 from items.models import Item, ImportedItem
 from api.authentication import ClientTokenAuthentication, IsAuthenticatedClient
 from api.serializers import ItemModelSerializer, ItemImportedModelSerializer
@@ -141,6 +141,8 @@ class ImportItemView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Finalizando recepção através da API\n"
+            save_imported_logs(client.id, initial_log)
+            update_client_data_get(client.id, '1')
             return Response({"message": "Dados recebidos e processados com sucesso."}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -154,7 +156,6 @@ class ClientItemView(APIView):
         initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Verificando se há atualizações para o cliente: {client.name}... executando API\n"  
  
         items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2])
-        total_items = items_queryset.count()
         
         current_time = timezone.now()
         num_updated = Item.objects.filter(
@@ -168,13 +169,13 @@ class ClientItemView(APIView):
         if num_updated > 0:
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens aguardando validação.\n"
         else:
-            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"
-
-        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Total de itens retornados {total_items} para o cliente através da API.\n"
-
-        save_imported_logs(client.id, initial_log)        
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"      
         
         serializer = ItemModelSerializer(items_queryset, many=True)
+        total_items = len(serializer.data)
+        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Total de itens retornados {total_items} para o cliente através da API.\n"
+        save_imported_logs(client.id, initial_log) 
+        update_client_data_send(client.id, '1')        
         return Response(serializer.data, status=status.HTTP_200_OK)  
     
 class ClientOneItemView(APIView):

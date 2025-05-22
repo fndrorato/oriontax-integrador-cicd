@@ -28,7 +28,7 @@ from django.db import models
 from django.db.models import F
 from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
-from clients.utils import validateSelect, save_imported_logs
+from clients.utils import validateSelect, save_imported_logs, update_client_data_get
 from items.models import Item
 from erp.models import AccessDropbox
 from impostos.models import PisCofinsCst
@@ -390,8 +390,6 @@ if __name__ == "__main__":
 
             # converter df_client par versão OrionTAX
             df_client_converted, initial_log = convert_df_client_to_df_otx_version(df_client, initial_log, client_id)
-            print('Tudo processado corretamente. Saindo...')
-            sys.exit(1)
             
             if not isinstance(df_client_converted, pd.DataFrame) and df_client_converted == 0:
                 # Encontrou alguma linha do ICMS que não tem relação
@@ -425,6 +423,7 @@ if __name__ == "__main__":
             try:
                 # Chama a função de validação
                 validation_result = validateSelect(client_id, items_df, df_client_converted, initial_log)
+                update_client_data_get(client_id, '4')
                         
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client_name}: {e}\n"

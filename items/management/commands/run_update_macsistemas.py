@@ -24,7 +24,7 @@ from django.conf import settings
 from django.db.models import F, Q
 from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
-from clients.utils import save_imported_logs
+from clients.utils import save_imported_logs, update_client_data_send
 from items.models import Item
 
 

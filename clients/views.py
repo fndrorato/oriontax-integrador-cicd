@@ -394,6 +394,7 @@ class RunUpdateView(View):
         if not client.connection_route:
             return JsonResponse({'status': 'warning', 'message': 'Este cliente não possui uma rota configurada para sincronizar dados.'})
         
+        print(f'Exxecutando o sistema de sincronização...{client.erp.name}')
         try:
             if client.erp.name == 'SYSMO':
                 script_execute = 'run_update_sysmo.py'
@@ -403,6 +404,8 @@ class RunUpdateView(View):
                 script_execute = 'run_update_macsistemas.py'             
             else:
                 return JsonResponse({'status': 'warning', 'message': 'O sistema desse cliente não está configurado a sincronização.'})
+            
+            print('Registrnaod o log syncing...')
             
             # Registrar no banco o início do processo
             log = Syncing.objects.create(
@@ -446,6 +449,7 @@ class RunUpdateView(View):
 
                 log.save()
 
+            print('Iniciando a thread para rodar o script sem travar a requisição...')
             # Iniciar a thread para rodar o script sem travar a requisição
             thread = threading.Thread(target=run_script)
             thread.start()
@@ -461,10 +465,11 @@ class CheckSyncStatusView(View):
     def get(self, request, client_id, sync_id):
         try:
             logger.info(f"Verificando status de sincronização: client_id={client_id}, sync_id={sync_id}")
-            
+            print(f"Verificando status de sincronização: client_id={client_id}, sync_id={sync_id}")
             log = Syncing.objects.filter(client_id=client_id, id=sync_id).first()
 
             if log:
+                print('Log encontrado:', log)
                 if log.status == "processing":
                     return JsonResponse({'status': 'processing', 'message': 'Sincronização em andamento...'})
                 elif log.status == "success":
@@ -474,8 +479,10 @@ class CheckSyncStatusView(View):
                 else:
                     return JsonResponse({'status': 'error', 'message': log.message})
             else:
+                print('Nenhum registro de sincronização encontrado.')
                 return JsonResponse({'status': 'unknown', 'message': 'Nenhum registro de sincronização encontrado.'})
 
         except Exception as e:
+            print('Erro ao verificar status de sincronização:', str(e))
             logger.exception("Erro ao verificar status de sincronização")
             return JsonResponse({'status': 'error', 'message': 'Erro interno ao verificar o status'}, status=500)
