@@ -6,11 +6,69 @@ from datetime import datetime
 from django.db import transaction
 from items.models import ImportedItem, Item
 from .models import Client, LogIntegration
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils import timezone
 from decimal import Decimal
+from notifications.models import Notification
+
 
 logger = logging.getLogger(__name__)  # Obtenha um logger
+User = get_user_model()
+
+def create_notification(user, message, **kwargs):
+    """
+    Cria uma nova notificação com tratamento de erros
+    
+    Args:
+        user: User instance or user ID
+        message: Texto da mensagem (obrigatório)
+        
+    Kwargs:
+        title: Título da notificação
+        notification_type: Tipo da notificação (default: 'info')
+        action_url: URL para ação
+        reference: Referência interna
+        icon: Classe do ícone
+        
+    Returns:
+        Notification object
+        
+    Raises:
+        ValueError: Se parâmetros inválidos forem fornecidos
+    """
+    # Validação básica
+    if not message:
+        raise ValueError("A mensagem da notificação é obrigatória")
+    
+    # Resolve o usuário
+    if isinstance(user, int):
+        try:
+            user = User.objects.get(id=user)
+        except User.DoesNotExist:
+            raise ValueError("Usuário não encontrado")
+    elif not isinstance(user, User):
+        raise ValueError("O parâmetro 'user' deve ser uma instância de User ou um ID")
+    
+    # Valida o tipo de notificação
+    valid_types = dict(Notification.NotificationType.choices).keys()
+    notification_type = kwargs.get('notification_type', 'info')
+    if notification_type not in valid_types:
+        raise ValueError(f"Tipo de notificação inválido. Opções válidas: {', '.join(valid_types)}")
+    
+    # Cria a notificação
+    try:
+        return Notification.objects.create(
+            user=user,
+            message=message,
+            title=kwargs.get('title'),
+            notification_type=notification_type,
+            action_url=kwargs.get('action_url'),
+            reference=kwargs.get('reference'),
+            icon=kwargs.get('icon', 'fa fa-bell')
+        )
+    except Exception as e:
+        raise ValueError(f"Erro ao criar notificação: {str(e)}")
 
 def update_client_data_send(client_id=None, method_integration=None):
     if client_id:
@@ -39,7 +97,6 @@ def update_client_data_get(client_id=None, method_integration=None):
             print(f"Cliente com ID {client_id} não encontrado.")
     else:
         print(f'Nenhum ID de cliente fornecido para atualização.')
-
 
 def generate_and_update_client_tokens(client_id=None):
     if client_id:

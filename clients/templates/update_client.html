@@ -1043,6 +1043,9 @@
         }   
 
         function checkSyncStatus(clientId, syncId, loader) {
+            swal('Informação!', 'Dados sendo processados, em breve receberá a notificação.', 'success');
+            $(`#${loader}`).hide();
+            /*
             let interval = setInterval(() => {
                 fetch(`/clientes/status-sincronizacao/${clientId}/${syncId}/`)
                     .then(response => response.json())
@@ -1067,7 +1070,8 @@
                         swal('Erro!', 'Erro ao verificar status.', 'error');
                         $(`#${loader}`).hide();
                     });
-            }, 10000);  // Verifica a cada 5 segundos
+            }, 10000); 
+            */ 
         }
 
         function runSelect(clientId) {

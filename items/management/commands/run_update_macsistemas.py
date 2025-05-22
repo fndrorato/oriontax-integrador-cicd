@@ -24,8 +24,9 @@ from django.conf import settings
 from django.db.models import F, Q
 from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
-from clients.utils import save_imported_logs, update_client_data_send
+from clients.utils import save_imported_logs, update_client_data_send, create_notification
 from items.models import Item
+from django.contrib.auth import get_user_model
 
 
 def get_clients():
@@ -349,12 +350,28 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Process data for a specific client.')
     parser.add_argument('--client_id', type=int, help='The ID of the client to process')
+    parser.add_argument('--user_id', type=int, help='The ID of the Django user executing the command (optional)')
     args = parser.parse_args()
 
     if args.client_id:
         clients = Client.objects.filter(pk=args.client_id)  # Filter by client_id
     else:
         clients = get_clients()
+
+    # Carregar usuário, se fornecido
+    if args.user_id:
+        User = get_user_model()
+        try:
+            user = User.objects.get(pk=args.user_id)
+            user_id = user.id
+        except User.DoesNotExist:
+            print(f"⚠️ Usuário com ID {args.user_id} não encontrado.")
+            user = None
+            user_id = None
+    else:
+        print("ℹ️ Nenhum usuário fornecido. Executando como processo do sistema.")
+        user = None   
+        user_id = None  
        
     # clients = get_clients()
     initial_log = ''
@@ -416,6 +433,14 @@ if __name__ == "__main__":
             initial_log += f'[{timestamp}] - Não há atualizações para o cliente: {client.name} \n'        
             print(f"Não há atualizações para o cliente: {client.name}")
             save_imported_logs(client_id, initial_log) 
+            message = f"Não há atualizações para o cliente {client_name} em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} "
+            title = f"{client_name} - Não há atualizações"
+            create_notification(
+                user=user_id,
+                title=title,
+                message=message,
+                notification_type='warning',
+            )                  
             if args.client_id:
                 sys.exit(2)  # Sair com código de erro 1 
         else:               
@@ -434,6 +459,14 @@ if __name__ == "__main__":
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
                 print(f"Erro ao conectar ao cliente {client_name}: {e}") 
                 save_imported_logs(client_id, initial_log) 
+                message = f"Erro ao conectar ao cliente {client_name} em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} "
+                title = f"{client_name} - Erro ao conectar"
+                create_notification(
+                    user=user_id,
+                    title=title,
+                    message=message,
+                    notification_type='danger',
+                )                   
                 if args.client_id:
                     sys.exit(1)  # Sair com código de erro 1 
             print('Resultado do UPDATE:', result)
@@ -463,6 +496,15 @@ if __name__ == "__main__":
                         print("Nenhum item foi atualizado.")
 
                     save_imported_logs(client_id, initial_log)
+                    update_client_data_send(client_id, '4')
+                    message = f"Dados enviados em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} ao cliente {client_name}"
+                    title = f"{client_name} - Dados enviados com sucesso"
+                    create_notification(
+                        user=user_id,
+                        title=title,
+                        message=message,
+                        notification_type='success',
+                    )                     
                     if args.client_id:
                         sys.exit(0)  # Sair com código de sucesso
                         
@@ -470,6 +512,14 @@ if __name__ == "__main__":
                     initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Ocorreu um erro durante a atualização dos itens: {e}\n"
                     print(f"Ocorreu um erro durante a atualização dos itens: {e}")                
                     save_imported_logs(client_id, initial_log) 
+                    message = f"Ocorreu um erro durante a atualização em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} do cliente {client_name}"
+                    title = f"{client_name} - Erro ao receber dados"
+                    create_notification(
+                        user=user_id,
+                        title=title,
+                        message=message,
+                        notification_type='danger',
+                    )                     
                     if args.client_id: 
                         sys.exit(1)  # Sair com código de erro 1        
             else:
@@ -478,9 +528,33 @@ if __name__ == "__main__":
                 print(f"Ocorreu um erro ao inserir as validações")  
                 if args.client_id:
                     if mensagem_resultante == 3:
+                        message = f"Erro ao executar a atualização em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} do cliente {client_name}"
+                        title = f"{client_name} - Erro ao atualizar"
+                        create_notification(
+                            user=user_id,
+                            title=title,
+                            message=message,
+                            notification_type='danger',
+                        )                            
                         sys.exit(3)
                     elif mensagem_resultante == 4:
+                        message = f"Nao foi possível estabelecer conexão em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} com o cliente {client_name}"
+                        title = f"{client_name} - Erro ao atualizar"
+                        create_notification(
+                            user=user_id,
+                            title=title,
+                            message=message,
+                            notification_type='danger',
+                        )                          
                         sys.exit(4)
                     else:
+                        message = f"Ocorreu um erro ao executar a sincronização em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} com o cliente {client_name}"
+                        title = f"{client_name} - Erro ao sincronizar"
+                        create_notification(
+                            user=user_id,
+                            title=title,
+                            message=message,
+                            notification_type='danger',
+                        )                         
                         sys.exit(1)  # Sair com código de erro 1                       
                        

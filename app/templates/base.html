@@ -99,30 +99,27 @@
                             </li>
                         </ul>
                         <ul class="nav-right">
-                            {% comment %} <li class="header-notification">
+
+                            <li class="header-notification">
                                 <div class="dropdown-primary dropdown">
-                                    <div class="dropdown-toggle" data-toggle="dropdown">
-                                        <i class="feather icon-bell"></i>
-                                        <span class="badge bg-c-pink">5</span>
+                                    <div class="dropdown-toggle" data-toggle="dropdown" id="icon-bell-notification-zero" style="display: none;">
+                                        <i class="feather icon-bell mt-2" style="font-size: 24px;"></i>
+                                    </div>                                    
+                                    <div class="dropdown-toggle" data-toggle="dropdown" id="icon-bell-notification" style="display: block;">
+                                        <i class="feather icon-bell mt-2" style="font-size: 24px;"></i>
+                                        <span class="badge bg-c-pink" id="notification-count" style="display: none !important;">0</span>
                                     </div>
-                                    <ul class="show-notification notification-view dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut">
-                                        <li>
-                                            <h6>Notificações</h6>
-                                            <label class="label label-danger">Novas</label>
+                                    <ul class="show-notification notification-view dropdown-menu" data-dropdown-in="fadeIn" data-dropdown-out="fadeOut" id="notification-list">
+                                        <li class="d-flex justify-content-between align-items-center px-3">
+                                            <h6 class="m-0" id="title-header-notification">Notificações</h6>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="marcarTodasComoLidas()" id="btn-check-all">Marcar todas como lidas</button>
                                         </li>
-                                        <li>
-                                            <div class="media">
-                                                <img class="d-flex align-self-center img-radius" src="{% static 'assets/images/avatar-4.jpg' %}" alt="Generic placeholder image">
-                                                <div class="media-body">
-                                                    <h5 class="notification-user">Nome</h5>
-                                                    <p class="notification-msg">mensagem</p>
-                                                    <span class="notification-time">tempo</span>
-                                                </div>
-                                            </div>
-                                        </li>
+                                        <!-- Notificações serão inseridas aqui -->
                                     </ul>
                                 </div>
-                            </li> {% endcomment %}
+                            </li>
+
+                            
                             <li class="user-profile header-notification">
                                 <div class="dropdown-primary dropdown">
                                     <div class="dropdown-toggle" data-toggle="dropdown">
@@ -281,7 +278,98 @@
     <script src="{% static 'assets/js/menu/menu-hori-fixed.js' %}?{% now "U" %}"></script>
     <script src="{% static 'assets/js/jquery.mCustomScrollbar.concat.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'assets/js/script.js' %}?{% now "U" %}"></script>
+    <script>
+        function carregarNotificacoes() {
+            const tipoParaIcone = {
+                info: 'feather icon-info text-primary',
+                warning: 'feather icon-alert-triangle text-warning',
+                danger: 'feather icon-x-circle text-danger',
+                success: 'feather icon-check-circle text-success',
+                system: 'feather icon-settings text-secondary'
+            };
+            
 
+            fetch("{% url 'notificacoes_json' %}")
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('notification-count');
+                const lista = document.getElementById('notification-list');
+                const bellIcon = document.getElementById('icon-bell-notification');
+                const bellIconZero = document.getElementById('icon-bell-notification-zero');
+                const titleHeader = document.getElementById('title-header-notification');
+                const btnCheckAll = document.getElementById('btn-check-all');
+        
+                // Atualiza contador e visibilidade do badge
+                if (data.total > 0) {
+                    badge.textContent = data.total;
+                    badge.style.display = 'inline-block';
+                    bellIcon.style.display = 'block';
+                    bellIconZero.style.display = 'none';
+                    titleHeader.textContent = `Notificações (${data.total})`;
+                    btnCheckAll.style.display = 'block';
+                } else {
+                    badge.textContent = '';
+                    badge.style.display = 'none';
+                    bellIcon.style.display = 'none';
+                    bellIconZero.style.display = 'block';
+                    titleHeader.textContent = 'Não há notificações';
+                    btnCheckAll.style.display = 'none';
+                }
+        
+                // Remove antigas (mantém o primeiro li com o botão)
+                const children = [...lista.children].slice(1);
+                children.forEach(child => child.remove());
+        
+                // Adiciona notificações
+                data.notificacoes.forEach(n => {
+                    const iconeClasse = tipoParaIcone[n.type] || 'fa fa-bell text-muted'; // fallback
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="media d-flex justify-content-between align-items-start p-2">
+                            <div class="d-flex">
+                                <i class="${iconeClasse} d-flex align-self-center img-radius" style="font-size:22px; margin-right: 10px;"></i>
+                                <div class="media-body">
+                                    <h5 class="notification-user mb-0">${n.title || 'Notificação'}</h5>
+                                    <p class="notification-msg mb-1">${n.message}</p>
+                                    <span class="notification-time">${n.created_at}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-light" onclick="marcarLida(${n.id}, this)" title="Marcar como lida">✓</button>
+                            </div>
+                        </div>
+                    `;
+                    lista.appendChild(li);
+                });
+                
+            });
+        }
+        
+        function marcarLida(id, btn) {
+
+            fetch(`/notifications/read/${id}/`, {
+                method: 'POST'
+            }).then(() => {
+                btn.innerHTML = '✔️'; // troca botão por check
+                btn.disabled = true;
+                carregarNotificacoes(); // atualiza badge
+            });
+        }
+        
+        function marcarTodasComoLidas() {
+            fetch(`/notifications/read/all/`, {
+                method: 'POST'
+            }).then(() => {
+                carregarNotificacoes();
+            });
+        }
+        
+        // Start
+        setInterval(carregarNotificacoes, 30000);
+        document.addEventListener("DOMContentLoaded", carregarNotificacoes);
+        </script>
+        
+        
 </body>
 
 </html>

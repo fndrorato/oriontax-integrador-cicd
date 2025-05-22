@@ -24,8 +24,11 @@ from django.conf import settings
 from django.db.models import F
 from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
-from clients.utils import validateSysmo, save_imported_logs, update_client_data_get
+from clients.utils import (
+    validateSysmo, save_imported_logs, update_client_data_get, create_notification
+)
 from items.models import Item
+from django.contrib.auth import get_user_model
 
 
 def get_clients():
@@ -122,12 +125,28 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Process data for a specific client.')
     parser.add_argument('--client_id', type=int, help='The ID of the client to process')
+    parser.add_argument('--user_id', type=int, help='The ID of the Django user executing the command (optional)')
     args = parser.parse_args()
 
     if args.client_id:
         clients = Client.objects.filter(pk=args.client_id)  # Filter by client_id
     else:
         clients = get_clients()
+        
+    # Carregar usuário, se fornecido
+    if args.user_id:
+        User = get_user_model()
+        try:
+            user = User.objects.get(pk=args.user_id)
+            user_id = user.id
+        except User.DoesNotExist:
+            print(f"⚠️ Usuário com ID {args.user_id} não encontrado.")
+            user = None
+            user_id = None
+    else:
+        print("ℹ️ Nenhum usuário fornecido. Executando como processo do sistema.")
+        user = None   
+        user_id = None     
        
     # clients = get_clients()
     initial_log = ''
@@ -181,10 +200,24 @@ if __name__ == "__main__":
                 # Chama a função de validação
                 validation_result = validateSysmo(client_id, items_df, df_client, initial_log)
                 update_client_data_get(client_id, '4')
+                message = f"Dados recebidos em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} do cliente {client_name}"
+                create_notification(
+                    user=user_id,
+                    title="{client_name} - Dados recebidos com sucesso",
+                    message=message,
+                    notification_type='success',
+                )                
                         
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client_name}: {e}\n"
                 save_imported_logs(client_id, initial_log)
+                message = f"Erro ao receber dados em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} do cliente {client_name}"
+                create_notification(
+                    user=user_id,
+                    title="{client_name} - Erro ao receber dados",
+                    message=message,
+                    notification_type='danger',
+                )
                 print(f"Erro ao validar as comparações do cliente {client_name}: {e}")  
                 if args.client_id:
                     sys.exit(1)  # Sair com código de erro 1                       

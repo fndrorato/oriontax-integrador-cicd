@@ -16,6 +16,7 @@ urlpatterns = [
     path('', include('impostos.urls')),
     path('', include('tasks.urls')),
     path('', include('accountings.urls')),
+    path('', include('notifications.urls')),
     path('', HomeView.as_view(), name='home'),
     path('search/', SearchResultsView.as_view(), name='search'),
     path('ajax/cities/', CitySearchView.as_view(), name='city_search'),    

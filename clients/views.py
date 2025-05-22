@@ -366,7 +366,12 @@ class RunSelectView(View):
                 else:  # Linux/Mac
                     python_executable = os.path.join(settings.BASE_DIR, 'venv', 'bin', 'python')
                     
-                result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
+                result = subprocess.run([
+                    python_executable,
+                    script_path,
+                    '--client_id', str(client_id),
+                    '--user_id', str(request.user.id)
+                ])
                 
                 # Atualizar o status após a execução
                 if result.returncode == 0:
@@ -405,8 +410,6 @@ class RunUpdateView(View):
             else:
                 return JsonResponse({'status': 'warning', 'message': 'O sistema desse cliente não está configurado a sincronização.'})
             
-            print('Registrnaod o log syncing...')
-            
             # Registrar no banco o início do processo
             log = Syncing.objects.create(
                 client=client,
@@ -422,9 +425,12 @@ class RunUpdateView(View):
                 python_executable = sys.executable
                 
                 # Executar o script como um subprocesso
-                result = subprocess.run([python_executable, script_path, '--client_id', str(client_id)])
-                
-                print(result)
+                result = subprocess.run([
+                    python_executable,
+                    script_path,
+                    '--client_id', str(client_id),
+                    '--user_id', str(request.user.id)
+                ])                
 
                 if result.returncode == 0:  # Código de saída 0 indica sucesso
                     # return JsonResponse({'status': 'success', 'message': 'Dados enviados com sucesso.'})

@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'auditlog',
     'api',
     'sales',
+    'notifications',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
