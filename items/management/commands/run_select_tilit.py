@@ -12,7 +12,6 @@ from utils import (
     refresh_access_token, 
     get_access_token_with_auth_code, 
 )
-from django.contrib.auth import get_user_model
 
 
 # Get the absolute path to the directory containing this file (run_select.py)
@@ -37,6 +36,7 @@ from clients.utils import (
     validateSelect, save_imported_logs, update_client_data_get,
     create_notification )
 from items.models import Item
+from django.contrib.auth import get_user_model
 from erp.models import AccessDropbox
 from impostos.models import PisCofinsCst
     

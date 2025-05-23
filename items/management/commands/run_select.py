@@ -168,7 +168,15 @@ if __name__ == "__main__":
         except Exception as e:  # Catch any unexpected exceptions
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
             print(f"Erro ao conectar ao cliente {client_name}: {e}") 
-            save_imported_logs(client_id, initial_log) 
+            save_imported_logs(client_id, initial_log)
+            message = f"Erro ao conectar ao cliente {client_name} em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} "
+            title = f"{client_name} - Erro ao conectar"
+            create_notification(
+                user=user_id,
+                title=title,
+                message=message,
+                notification_type='danger',
+            )             
             if args.client_id:
                 sys.exit(1)  # Sair com código de erro 1 
                     
