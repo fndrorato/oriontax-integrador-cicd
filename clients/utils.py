@@ -129,6 +129,7 @@ def save_imported_logs(client_id, log_result):
     log_integration.save()    
     
 def delete_imported_items(client_id):
+    return {'message': f'Do nothing', 'status': 'done'}
     try:
         # Obtenha a instância do cliente
         client_instance = Client.objects.get(id=client_id)
@@ -140,6 +141,75 @@ def delete_imported_items(client_id):
     except Client.DoesNotExist:
         return {'message': f'Erro ao deletar itens: {e}', 'status': 'error'}
 
+# def insert_new_items(client_id, df, status_id, batch_size=5000):
+#     client_instance = Client.objects.get(id=client_id)
+#     current_time = timezone.now()
+
+#     for i in range(0, len(df), batch_size):
+#         try:
+#             with transaction.atomic():
+#                 batch = df.iloc[i: i + batch_size]
+#                 new_items_list = [
+#                     ImportedItem(
+#                         client=client_instance,
+#                         code=row['code'],
+#                         barcode=row['barcode'],
+#                         description=row['description'],
+#                         ncm=row['ncm'],
+#                         cest=row['cest'],
+#                         cfop=row['cfop'],
+#                         icms_cst=row['icms_cst'],
+#                         icms_aliquota=row['icms_aliquota'],
+#                         icms_aliquota_reduzida=row['icms_aliquota_reduzida'],
+#                         protege=row['protege'],
+#                         cbenef=row['cbenef'],
+#                         piscofins_cst=row['piscofins_cst'],
+#                         pis_aliquota=row['pis_aliquota'],
+#                         cofins_aliquota=row['cofins_aliquota'],
+#                         naturezareceita=row['naturezareceita'],
+#                         sequencial=row['sequencial'],
+#                         estado_origem=row['estado_origem'],
+#                         estado_destino=row['estado_destino'],
+#                         divergent_columns=row['divergent_columns'],
+#                         created_at=current_time,
+#                         status_item=status_id
+#                     )
+#                     for _, row in batch.iterrows()
+#                 ]   
+
+#                 ImportedItem.objects.bulk_create(new_items_list)
+
+#                 if status_id == 1:
+#                     # Atualizar itens no modelo Item
+#                     imported_items_dict = { (item.code, item.client_id): item for item in new_items_list }
+#                     items_to_update = Item.objects.filter(
+#                         client_id=client_id,
+#                         code__in=[item.code for item in new_items_list]
+#                     )
+#                     for item in items_to_update:
+#                         imported_item = imported_items_dict.get((item.code, item.client_id))
+#                         if imported_item:
+#                             if not item.sequencial:
+#                                 item.sequencial = imported_item.sequencial
+#                             if not item.estado_origem:
+#                                 item.estado_origem = imported_item.estado_origem
+#                             if not item.estado_destino:
+#                                 item.estado_destino = imported_item.estado_destino                            
+#                     Item.objects.bulk_update(items_to_update, ['sequencial', 'estado_origem', 'estado_destino'])
+
+#                 print(f'Lote {i // batch_size + 1} de {len(df) // batch_size + 1} inserido e atualizado com sucesso')
+
+#         except ValueError as ve:
+#             logger.error(f"Erro ao converter valor para float: {ve}")
+#             return {'message': f"Erro ao converter valor para float. Verifique os logs para mais detalhes.", 'status': 'error'}
+
+#         except Exception as e:
+#             logger.error(f"Erro ao inserir/atualizar lote (iniciando em índice {i}): {e}")
+#             return {'message': f"Erro ao inserir/atualizar lote de itens. Verifique os logs para mais detalhes.", 'status': 'error'}
+
+#     return {'message': 'Todos os itens foram inseridos e atualizados com sucesso', 'status': 'success'}
+
+
 def insert_new_items(client_id, df, status_id, batch_size=5000):
     client_instance = Client.objects.get(id=client_id)
     current_time = timezone.now()
@@ -147,47 +217,80 @@ def insert_new_items(client_id, df, status_id, batch_size=5000):
     for i in range(0, len(df), batch_size):
         try:
             with transaction.atomic():
-                batch = df.iloc[i: i + batch_size]
-                new_items_list = [
-                    ImportedItem(
-                        client=client_instance,
-                        code=row['code'],
-                        barcode=row['barcode'],
-                        description=row['description'],
-                        ncm=row['ncm'],
-                        cest=row['cest'],
-                        cfop=row['cfop'],
-                        icms_cst=row['icms_cst'],
-                        icms_aliquota=row['icms_aliquota'],
-                        icms_aliquota_reduzida=row['icms_aliquota_reduzida'],
-                        protege=row['protege'],
-                        cbenef=row['cbenef'],
-                        piscofins_cst=row['piscofins_cst'],
-                        pis_aliquota=row['pis_aliquota'],
-                        cofins_aliquota=row['cofins_aliquota'],
-                        naturezareceita=row['naturezareceita'],
-                        sequencial=row['sequencial'],
-                        estado_origem=row['estado_origem'],
-                        estado_destino=row['estado_destino'],
-                        divergent_columns=row['divergent_columns'],
-                        created_at=current_time,
-                        status_item=status_id
+                batch = df.iloc[i:i + batch_size]
+
+                # Chaves únicas a considerar
+                incoming_keys = set((row['code'], client_id) for _, row in batch.iterrows())
+
+                # Buscar registros existentes
+                existing_items = ImportedItem.objects.filter(
+                    client_id=client_id,
+                    code__in=[code for code, _ in incoming_keys]
+                )
+                existing_keys = set((item.code, item.client_id) for item in existing_items)
+
+                items_to_create = []
+                items_to_update = []
+
+                for _, row in batch.iterrows():
+                    key = (row['code'], client_id)
+
+                    item_data = {
+                        'client': client_instance,
+                        'code': row['code'],
+                        'barcode': row['barcode'],
+                        'description': row['description'],
+                        'ncm': row['ncm'],
+                        'cest': row['cest'],
+                        'cfop': row['cfop'],
+                        'icms_cst': row['icms_cst'],
+                        'icms_aliquota': row['icms_aliquota'],
+                        'icms_aliquota_reduzida': row['icms_aliquota_reduzida'],
+                        'protege': row['protege'],
+                        'cbenef': row['cbenef'],
+                        'piscofins_cst': row['piscofins_cst'],
+                        'pis_aliquota': row['pis_aliquota'],
+                        'cofins_aliquota': row['cofins_aliquota'],
+                        'naturezareceita': row['naturezareceita'],
+                        'sequencial': row['sequencial'],
+                        'estado_origem': row['estado_origem'],
+                        'estado_destino': row['estado_destino'],
+                        'divergent_columns': row['divergent_columns'],
+                        'created_at': current_time,
+                        'status_item': status_id
+                    }
+
+                    if key in existing_keys:
+                        # Atualizar registro existente
+                        item = next(e for e in existing_items if e.code == row['code'])
+                        for field, value in item_data.items():
+                            setattr(item, field, value)
+                        items_to_update.append(item)
+                    else:
+                        items_to_create.append(ImportedItem(**item_data))
+
+                if items_to_create:
+                    ImportedItem.objects.bulk_create(items_to_create)
+
+                if items_to_update:
+                    ImportedItem.objects.bulk_update(
+                        items_to_update,
+                        fields=list(item_data.keys())
                     )
-                    for _, row in batch.iterrows()
-                ]
-                # for index, row in batch.iterrows():
-                #     print(row)     
 
-                ImportedItem.objects.bulk_create(new_items_list)
-
+                # Atualizar campos do modelo Item se status_id == 1
                 if status_id == 1:
-                    # Atualizar itens no modelo Item
-                    imported_items_dict = { (item.code, item.client_id): item for item in new_items_list }
-                    items_to_update = Item.objects.filter(
+                    all_processed_items = items_to_create + items_to_update
+                    imported_items_dict = {
+                        (item.code, item.client_id): item for item in all_processed_items
+                    }
+
+                    items_to_update_in_item_model = Item.objects.filter(
                         client_id=client_id,
-                        code__in=[item.code for item in new_items_list]
+                        code__in=[item.code for item in all_processed_items]
                     )
-                    for item in items_to_update:
+
+                    for item in items_to_update_in_item_model:
                         imported_item = imported_items_dict.get((item.code, item.client_id))
                         if imported_item:
                             if not item.sequencial:
@@ -195,10 +298,15 @@ def insert_new_items(client_id, df, status_id, batch_size=5000):
                             if not item.estado_origem:
                                 item.estado_origem = imported_item.estado_origem
                             if not item.estado_destino:
-                                item.estado_destino = imported_item.estado_destino                            
-                    Item.objects.bulk_update(items_to_update, ['sequencial', 'estado_origem', 'estado_destino'])
+                                item.estado_destino = imported_item.estado_destino
 
-                print(f'Lote {i // batch_size + 1} de {len(df) // batch_size + 1} inserido e atualizado com sucesso')
+                    Item.objects.bulk_update(
+                        items_to_update_in_item_model,
+                        ['sequencial', 'estado_origem', 'estado_destino']
+                    )
+
+                print(f'Lote {i // batch_size + 1} de {len(df) // batch_size + 1} processado: '
+                      f'{len(items_to_create)} criados, {len(items_to_update)} atualizados')
 
         except ValueError as ve:
             logger.error(f"Erro ao converter valor para float: {ve}")
@@ -209,7 +317,6 @@ def insert_new_items(client_id, df, status_id, batch_size=5000):
             return {'message': f"Erro ao inserir/atualizar lote de itens. Verifique os logs para mais detalhes.", 'status': 'error'}
 
     return {'message': 'Todos os itens foram inseridos e atualizados com sucesso', 'status': 'success'}
-
 
 def validateSysmo(client_id, items_df, df, initial_log=None):
     """

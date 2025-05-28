@@ -94,6 +94,9 @@ class ImportedItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)    
 
     def __str__(self):
-        return self.description    
+        return self.description
+
+    class Meta:
+        unique_together = ('client', 'code')    
     
 auditlog.register(Item, mapping_fields={'history':'Histórico', 'updated_at':'Última Atualização', 'created_at':'Criado Em', 'description':'Descrição', 'barcode':'Cód. Barras',  'code':'Codigo', 'other_information':'outras informações', 'type_product':'Tipo Produto'})
