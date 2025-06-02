@@ -128,17 +128,20 @@ def save_imported_logs(client_id, log_result):
     # Salva a nova instância no banco de dados
     log_integration.save()    
     
-def delete_imported_items(client_id):
-    return {'message': f'Do nothing', 'status': 'done'}
+def delete_imported_items(client_id, codes_to_delete):
+    
     try:
-        # Obtenha a instância do cliente
         client_instance = Client.objects.get(id=client_id)
-        
-        # Filtre e delete todos os ImportedItems associados a este cliente
-        ImportedItem.objects.filter(client=client_instance).delete()
-        
-        print(f"Todos os itens do cliente com ID {client_id} foram deletados com sucesso.")
-    except Client.DoesNotExist:
+
+        # Deletar apenas os códigos presentes em codes_to_update
+        ImportedItem.objects.filter(
+            client=client_instance,
+            code__in=codes_to_delete
+        ).delete()
+
+        print(f"Itens com códigos específicos do cliente ID {client_id} foram deletados com sucesso.")
+
+    except Client.DoesNotExist as e:
         return {'message': f'Erro ao deletar itens: {e}', 'status': 'error'}
 
 # def insert_new_items(client_id, df, status_id, batch_size=5000):
@@ -234,6 +237,9 @@ def insert_new_items(client_id, df, status_id, batch_size=5000):
 
                 for _, row in batch.iterrows():
                     key = (row['code'], client_id)
+                    
+                    if str(row['code']) == '784881':
+                        print(row.to_dict())
 
                     item_data = {
                         'client': client_instance,
@@ -642,7 +648,7 @@ def validateSysmo(client_id, items_df, df, initial_log=None):
     ## 3 - GRAVANDO NA TABELA DE ITENS IMPORTADOS
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Deletando itens importados antigos \n'        
-    delete_result = delete_imported_items(client_id)
+    delete_result = delete_imported_items(client_id, codes_to_update)
     if delete_result and delete_result.get('status') == 'error':
         return delete_result
     
@@ -858,9 +864,10 @@ def validateSelect(client_id, items_df, df, initial_log=None):
         lambda x: str(int(x)).zfill(3) if len(str(int(x))) == 1 and int(x) != 0 else str(int(x))
     )
     
-    
     # Filtrar os dados
-    test_df = merged_df[merged_df['code'] == '2674'][['code', 'naturezareceita_df', 'naturezareceita_items_df']]
+    print('merged df')
+    print(merged_df[merged_df['code'] == '784881'])
+    test_df = merged_df[merged_df['code'] == '784881'][['code', 'naturezareceita_df', 'naturezareceita_items_df']]
 
     # Verificar se há pelo menos uma linha antes de acessar
     if not test_df.empty:
@@ -926,6 +933,8 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     print('XX-items NAO divergentes')
     df_items_not_divergent = merged_df[~divergence_mask]
     # 1. Extrair os códigos
+    print('DF NOT DIVERGENT')
+    print(df_items_not_divergent[df_items_not_divergent['code'] == '784881'])
     codes_to_update = df_items_not_divergent['code'].unique().tolist()
     # Contagem de itens a serem atualizados
     num_to_update = Item.objects.filter(
@@ -933,6 +942,12 @@ def validateSelect(client_id, items_df, df, initial_log=None):
         status_item=2, 
         client_id=client_id
     ).count()
+
+    if '784881' in codes_to_update:
+        print("Código 784881 está presente em codes_to_update")
+    else:
+        print("Código 784881 **NÃO** está presente em codes_to_update")
+
 
     print(f"Número de itens que serão atualizados: {num_to_update}")    
     
@@ -945,7 +960,7 @@ def validateSelect(client_id, items_df, df, initial_log=None):
         status_item=3,
         sync_validate_at=current_time
     )
-
+    
     df_items_divergent = merged_df[divergence_mask]
     # Ordenar colunas do df_items_divergent, exceto a primeira coluna
     first_column = df_items_divergent.columns[0]
@@ -966,7 +981,7 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     ## 3 - GRAVANDO NA TABELA DE ITENS IMPORTADOS
     timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     result_integration += f'[{timestamp}] - Deletando itens importados antigos \n'        
-    delete_result = delete_imported_items(client_id)
+    delete_result = delete_imported_items(client_id, codes_to_update)
     if delete_result and delete_result.get('status') == 'error':
         return delete_result
     
@@ -1026,6 +1041,7 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     #     .astype('Int64')  # Mantém valores como inteiros sem erro em NaN
     # )        
     print('15-inserindo os itens com divergencia')  
+    print(df_items_divergent[df_items_divergent['code'] == '784881'])
 
     try:
         insert_result = insert_new_items(client_id, df_items_divergent, 1)

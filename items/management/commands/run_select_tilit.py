@@ -101,7 +101,9 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
     default_path = os.path.join(current_dir, 'relations', default_filename)
 
     # Verifica se o arquivo do cliente existe
+    print('verificando path')
     path_icms = client_path if os.path.exists(client_path) else default_path
+    print('passou pelo path')
     
     # Recuperar todos os dados do modelo
     pis_cofins_data = PisCofinsCst.objects.all().values()  # Use .values() para obter um dicionário
@@ -114,6 +116,7 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
     df_icms = pd.read_csv(path_icms, delimiter=';', dtype={'cst': str})
     df_pis_cofins['piscofins_cst_id'] = df_pis_cofins['code']
 
+    print('ira converter para os tipos corretos')
     # Converter colunas para os tipos corretos
     df_icms['icms_aliquota_reduzida'] = pd.to_numeric(df_icms['icms_aliquota_reduzida'], errors='coerce').astype(float)
 
@@ -129,10 +132,15 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
     
     # Verificar quais itens não encontraram correspondência (valores NaN em 'icms')
     itens_nao_encontrados = df_merged[df_merged['icms'].isna()]
+    print('ira verificar items nao encontrados')
+    itens_nao_encontrados.head(10)  # Exibir os primeiros 10 itens não encontrados para depuração
+    itens_nao_encontrados.info()
     # Verificar se existem itens não encontrados
     if not itens_nao_encontrados.empty:
+        print('00001')
         # Obter os valores únicos da coluna ICMS dos itens não encontrados
         icms_nao_encontrados = itens_nao_encontrados['ICMS'].unique()
+        print('00002')
         # Adicionar ao log a mensagem com os valores únicos da coluna ICMS
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - As seguintes alíquotas não foram encontradas: {', '.join(map(str, icms_nao_encontrados))}\n"
         
@@ -140,17 +148,21 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
         # df_merged = df_merged.dropna(subset=['icms'])
         return 0, initial_log
     else:
+        print('00003')
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Todos os itens encontraram correspondência.\n"
  
+    print('iniciando print df_final')
     df_final = df_merged.merge(df_pis_cofins, left_on='PIS', right_on='code', how='left')
     # Remover a coluna 'code' do DataFrame df_final
     df_final = df_final.drop(columns=['code', 'PIS', 'ICMS', 'icms'])
     # Adicionar novas colunas com valores vazios (NaN)
+    print('adicionando noovos campos')
     df_final['protege'] = 0
     df_final['sequencial'] = 0
     df_final['estado_origem'] = ''
     df_final['estado_destino'] = ''    
     # Renomear colunas
+    print('renomeando as colunas')
     df_final = df_final.rename(columns={
         'PRODUTO': 'code',
         'BARRAS': 'barcode',
@@ -163,6 +175,7 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
         'NATUREZARECEITAPIS': 'naturezareceita'
     })    
     # Definindo a nova ordem das colunas
+    print('definindo as ordens')
     nova_ordem = [
         'code',
         'description',
@@ -188,17 +201,18 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
     df_final = df_final[nova_ordem]
 
     # Preencher valores NaN nas colunas piscofins_cst_id, pis_aliquota_id e cofins_aliquota_id
+    print('Preencher valores NaN')
     df_final['piscofins_cst'] = df_final['piscofins_cst'].fillna('00')
     df_final['pis_aliquota'] = df_final['pis_aliquota'].fillna(99)
     df_final['cofins_aliquota'] = df_final['cofins_aliquota'].fillna(99)
     df_final['naturezareceita'] = df_final['naturezareceita'].fillna(0)
     # Substituir valores não numéricos por NaN e então preencher com 0
     df_final['naturezareceita'] = pd.to_numeric(df_final['naturezareceita'], errors='coerce').fillna(0)
-    
+    print('NCM E CEST')
     # Preencher valores None (NaN) nas colunas 'ncm' e 'cest' com string vazia ''
     df_final['ncm'] = df_final['ncm'].fillna('')
     df_final['cest'] = df_final['cest'].fillna('')           
-    
+    print('CFOP E ICMS CST')
     # Converte 'cfop' e 'icms_cst' para inteiros
     df_final['cfop'] = df_final['cfop'].astype('Int64')
     df_final['icms_cst'] = df_final['icms_cst'].astype('Int64')
@@ -210,7 +224,7 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
     
     pd.set_option('display.max_columns', None)
     # print(df_final.head())
-    # print(df_final.info())
+    print(df_final.info())
     # df_final.to_csv('nome_do_arquivo.csv', sep='|', index=False)    
     return df_final, initial_log    
 
@@ -428,6 +442,7 @@ if __name__ == "__main__":
         else:
 
             # converter df_client par versão OrionTAX
+            print('vai iniciar a conversao de dados')
             df_client_converted, initial_log = convert_df_client_to_df_otx_version(df_client, initial_log, client_id)
             
             if not isinstance(df_client_converted, pd.DataFrame) and df_client_converted == 0:
