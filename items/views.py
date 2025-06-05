@@ -1589,7 +1589,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         
         # Subquery para obter os dados da base de itens correspondentes
         items_subquery = Item.objects.filter(
-            client=client, code=OuterRef('code'), status_item=3
+            client=client, code=OuterRef('code'), status_item__in=[1,2,3]
         ).annotate(
             piscofins_cst_code=F('piscofins_cst__code')
         ).values(
