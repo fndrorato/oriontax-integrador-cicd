@@ -272,6 +272,7 @@ def export_items_to_excel(request, client_id, table):
         # Adicionar a renomeação de type_product para tipo_produto
         new_column_names['type_product'] = 'tipo_produto'
         new_column_names['other_information'] = 'outros_detalhes'
+        new_column_names['client__name'] = 'Cliente'
 
         # Renomear as colunas do DataFrame
         df = df.rename(columns=new_column_names)    
@@ -279,6 +280,7 @@ def export_items_to_excel(request, client_id, table):
     else:
         items = []
     
+    print(table)
     if table != 'divergent' and table != 'desc_divergent':
         print('Table1...:', table)
         count = items.count()
@@ -2004,6 +2006,7 @@ class XLSXUploadDivergentView(View):
     def post(self, request, client_id):
         start_time = time.time()
         user = self.request.user
+        print(f'Cliente ID:{client_id}')
         
         if has_role(user, 'analista'):
             client = get_object_or_404(Client, id=client_id, user_id=user)
@@ -2050,6 +2053,7 @@ class XLSXUploadDivergentView(View):
                     return x                
 
                 # 1. Remover colunas específicas
+                print(df.columns)
                 columns_to_remove = [col for col in df.columns if col.endswith('_cliente')]
                 columns_to_remove.append('Cliente')  
                 df = df.drop(columns=columns_to_remove)
@@ -2080,9 +2084,9 @@ class XLSXUploadDivergentView(View):
             except Exception as e:
                 self.logger.error(f"Erro ao ler o arquivo Excel: {e}")
                 return JsonResponse({'error': f"Erro ao ler o arquivo Excel: {e}"}, status=400)
-            
+
+
             try:
-                print('caiu aqui1')
                 valid_cfops = set(Cfop.objects.values_list('cfop', flat=True))
                 valid_icms_csts = set(IcmsCst.objects.values_list('code', flat=True))
                 valid_icms_aliquotas = set(IcmsAliquota.objects.values_list('code', flat=True))
