@@ -238,7 +238,7 @@ def connect_and_query(host, token, client_name, initial_log):
     # SHARED_LINK_URL = 'https://www.dropbox.com/scl/fo/yclr9n5nf3igro23ayufj/AFAYQQxEjL8-D7JbuGzKSfY?rlkey=s7p50hr27tskudfwnb0twbfcx&st=es9a30u4&dl=0'
     
     SHARED_LINK_URL = host
-    SHARED_LINK_URL = 'https://www.dropbox.com/scl/fo/2hnc28dnfmq4ra19ysa10/AJvuLMvKH_UOEdT_3ieRGC0?rlkey=k5u81q8iiwohm6yf0wz05f2zj&dl=0'
+    # SHARED_LINK_URL = 'https://www.dropbox.com/scl/fo/2hnc28dnfmq4ra19ysa10/AJvuLMvKH_UOEdT_3ieRGC0?rlkey=k5u81q8iiwohm6yf0wz05f2zj&dl=0'
     try:
         # Conectar à API do Dropbox
         dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)

@@ -1771,6 +1771,8 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             'cofins_aliquota', 'naturezareceita'
         )
         
+        print(f"Quantidade retornada no imported_items_queryset: {imported_items_queryset.count()}")
+        
         # Separar filtros baseados nos parâmetros GET
         base_filters = {key[5:]: value for key, value in filters.items() if key.startswith('base-')}
         cliente_filters = {key[8:]: value for key, value in filters.items() if key.startswith('cliente-')}
@@ -1788,9 +1790,11 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             origem=Value('Base', output_field=CharField()),
             piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
         ).order_by('description')
+        print(f"Quantidade retornada no items_queryset: {items_queryset.count()}")
+        print(f"Quantidade retornada no imported_items_queryset: {imported_items_queryset.count()}")
         # Subquery para obter os dados da base de itens correspondentes
         items_subquery = Item.objects.filter(
-            client=client, code=OuterRef('code'), status_item=3
+            client=client, code=OuterRef('code'), status_item__in=[1,2,3]
         ).annotate(
             piscofins_cst_code=F('piscofins_cst__code')
         ).values(
@@ -1798,7 +1802,8 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             'icms_aliquota__code', 'icms_aliquota_reduzida', 'protege__code',
             'cbenef__code', 'piscofins_cst_code', 'pis_aliquota', 'cofins_aliquota',
             'naturezareceita__code', 'type_product'
-        )        
+        )   
+        # print(f"Quantidade retornada no items_subquery: {items_subquery.count()}")     
         
         # Aplicar filtros ao items_queryset
         for key, value in base_filters.items():
@@ -1806,7 +1811,7 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
                 items_subquery = items_subquery.filter(Q(**{f'{key}__icontains': value}))
             else:
                 items_subquery = items_subquery.filter(Q(**{key: value}))            
-
+        # print(f"Quantidade retornada no items_subquery2..: {items_subquery.count()}")   
         # Combinar os querysets usando um left outer join
         combined_queryset = imported_items_queryset.annotate(
             barcode_base=Subquery(items_subquery.values('barcode')[:1]),
@@ -1828,7 +1833,9 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             description_cliente=F('description')
         ).filter(
             ~Q(description_base=F('description_cliente'))
-        ).order_by('description', 'origem')       
+        ).order_by('description', 'origem')     
+        
+        print(f"Quantidade retornada no combined_queryset..: {combined_queryset.count()}")   
         
         # Reorganizar e renomear colunas adicionando sufixo _cliente, exceto para 'code' e 'client__name'
         combined_queryset = combined_queryset.values(
