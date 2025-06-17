@@ -87,38 +87,54 @@ class UpdateButcheryView(LoginRequiredMixin, View):
             'available_cuts': user_cuts,
             'cuts_json': cuts_json,
         }
-        print(context)
+
         return render(request, self.template_name, context)
 
-    def post(self, request, pk):
-        master = get_object_or_404(ButcheryMaster, pk=pk, user=request.user)
-        master.arroba_price_nf = request.POST.get('arroba_price_nf')
-        master.invoice_weight = request.POST.get('invoice_weight')
-        master.cost_per_kg = request.POST.get('cost_per_kg')
+    def post(self, request):
+        master_id = request.POST.get('master_id')
+        master = get_object_or_404(ButcheryMaster, pk=master_id, user=request.user)
+
+        # Atualiza campos principais
+        master.arroba_price_nf = request.POST.get('arroba_price_nf', '').replace('R$', '').replace('.', '').replace(',', '.').strip() or 0
+        master.invoice_weight = request.POST.get('invoice_weight') or 0
+        master.cost_per_kg = request.POST.get('cost_per_kg', '').replace('R$', '').replace('.', '').replace(',', '.').strip() or 0
         master.save()
 
-        # Apaga os detalhes antigos do usuário
-        ButcheryDetail.objects.filter(user_meat_cut__user=request.user).delete()
+        # Remove detalhes antigos
+        master.details.all().delete()
 
-        # Processa os cortes enviados
+        # Insere os novos detalhes
         index = 0
         while True:
-            name = request.POST.get(f'cuts[{index}][name]')
+            user_meat_cut_id = request.POST.get(f'cuts[{index}][user_meat_cut_id]')
+            cut_class = request.POST.get(f'cuts[{index}][cut_class]')
             weight = request.POST.get(f'cuts[{index}][weight]')
-            price = request.POST.get(f'cuts[{index}][selling_price]')
+            selling_price = request.POST.get(f'cuts[{index}][selling_price]', '').replace('R$', '').replace('.', '').replace(',', '.').strip()
 
-            if name is None:
-                break  # termina o loop quando não há mais entradas
+            if user_meat_cut_id is None:
+                break
 
-            user_cut, _ = UserMeatCut.objects.get_or_create(user=request.user, meat_cut=name)
+            if not all([user_meat_cut_id, cut_class, weight, selling_price]):
+                index += 1
+                continue  # pula se algum campo obrigatório estiver faltando
+
+            try:
+                user_cut = UserMeatCut.objects.get(pk=user_meat_cut_id, user=request.user)
+            except UserMeatCut.DoesNotExist:
+                index += 1
+                continue  # ignora se o corte não existir ou não for do usuário
 
             ButcheryDetail.objects.create(
+                butchery=master,
                 user_meat_cut=user_cut,
-                selling_price=price,
+                cut_class=cut_class,
+                weight=weight,
+                selling_price=selling_price
             )
+
             index += 1
 
-        return redirect('update_butchery', pk=master.pk)
+        return redirect('update_butchery')
 
 class CreateMeatCutView(LoginRequiredMixin, View):
     def post(self, request):

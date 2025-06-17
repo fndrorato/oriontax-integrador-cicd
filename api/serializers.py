@@ -84,8 +84,21 @@ class ItemModelSerializer(serializers.ModelSerializer):
     
         
 class ItemImportedModelSerializer(serializers.ModelSerializer):
+    percentual_redbcde = serializers.FloatField(required=False, allow_null=True)
+
     class Meta:
         model = ImportedItem
         exclude = ['client']
+
+    def validate(self, data):
+        percentual = data.get('percentual_redbcde')
+        if percentual is not None:
+            aliquota = data.get('icms_aliquota', 0)
+            if aliquota == 0:
+                data['icms_aliquota_reduzida'] = 0
+            else:
+                data['icms_aliquota_reduzida'] = round(aliquota * (1 - percentual / 100), 2)
+        return data
+
 
                 

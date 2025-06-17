@@ -1,5 +1,19 @@
 import requests
 
+
+def calcular_icms_aliquota_reduzida(aliquota_id, redbcde):
+    """
+    Calcula o valor da ICMS Alíquota Reduzida a partir do REDBCDE e da alíquota cheia.
+
+    :param aliquota_id: Alíquota cheia (ex: 18 para 18%)
+    :param redbcde: Percentual de redução da base de cálculo (ex: 33.33 para 33,33%)
+    :return: Valor da alíquota reduzida (ex: 12.00)
+    """
+    if aliquota_id == 0:
+        return 0  # evitar divisão por zero
+
+    return round(aliquota_id * (1 - redbcde / 100), 2)
+
 def get_access_token_with_auth_code(client_id, client_secret, code):
     """
     Usa o código de autorização (authorization_code) para obter o access_token e o refresh_token.

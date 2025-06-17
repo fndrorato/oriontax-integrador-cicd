@@ -24,6 +24,16 @@
   .remove-row {
     cursor: pointer;
   }
+  .money-input {
+    text-align: right;
+  }
+  .percentage-input {
+    text-align: right;
+  }
+  .weight-input {
+    text-align: right;
+  }
+    
 </style>
 {% endblock customcss %}
 
@@ -37,24 +47,24 @@
   {% csrf_token %}
   <div class="card">
     <div class="card-block">
-
+      <input type="hidden" name="master_id" value="{{ master.id }}">
       <!-- Dados do Master -->
       <div class="row mb-4">
         <div class="col-md-3">
           <label class="form-label">Preço da Arroba (NF)</label>
-          <input type="text" class="form-control" name="arroba_price_nf" value="{{ master.arroba_price_nf }}">
+          <input type="text" class="form-control money-input" name="arroba_price_nf" value="{{ master.arroba_price_nf }}">
         </div>
         <div class="col-md-3">
           <label class="form-label">Peso da Nota Fiscal</label>
-          <input type="number" step="0.01" class="form-control" name="invoice_weight" value="{{ master.invoice_weight }}">
+          <input type="number" step="0.001" class="form-control weight-input" name="invoice_weight" value="{{ master.invoice_weight|stringformat:"0.3f"|cut:"," }}">
         </div>
         <div class="col-md-3">
           <label class="form-label">Custo por KG</label>
-          <input type="text" class="form-control" name="cost_per_kg" value="{{ master.cost_per_kg }}">
+          <input type="text" class="form-control money-input" name="cost_per_kg" value="{{ master.cost_per_kg }}">
         </div>
         <div class="col-md-3">
           <label class="form-label">Custo Total</label>
-          <input type="text" class="form-control" name="total_cost" value="" readonly="true">
+          <input type="text" class="form-control money-input" name="total_cost" value="" readonly="true">
         </div>        
       </div>
 
@@ -92,7 +102,7 @@
                 </select>                  
               </td>
               <td>
-                <input type="number" step="0.001" class="form-control" name="cuts[{{ forloop.counter0 }}][weight]" id="weight_{{ forloop.counter0 }}" value="{{ detail.weight|default:'' }}">
+                <input type="number" step="0.001" class="form-control weight-input" name="cuts[{{ forloop.counter0 }}][weight]" id="weight_{{ forloop.counter0 }}" value="{{ detail.weight|stringformat:'0.3f' }}">
               </td>
               <td>
                 <input type="text" class="form-control percentage-input" name="cuts[{{ forloop.counter0 }}][contribuition_percent]" id="contribuition_percent_{{ forloop.counter0 }}" readonly>
@@ -183,7 +193,10 @@
 
 
 {% block anotherjs %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
+    <!-- sweet alert js -->
+    <script type="text/javascript" src="{% static 'bower_components/sweetalert/js/sweetalert.min.js' %}"></script>
+
 <script>
   // Moeda R$
   function formatMoneyInputs() {
@@ -260,7 +273,7 @@
             </select>
           </td>
           <td>
-            <input type="number" step="0.001" class="form-control" name="cuts[${index}][weight]" id="weight_${index}">
+            <input type="number" step="0.001" class="form-control weight-input" name="cuts[${index}][weight]" id="weight_${index}">
           </td>
           <td>
             <input type="text" class="form-control percentage-input" name="cuts[${index}][contribuition_percent]" id="contribuition_percent_${index}" readonly>
@@ -289,6 +302,8 @@
       `;
 
       table.insertAdjacentHTML('beforeend', newRow);
+      // Reaplica Cleave.js nos novos campos de moeda
+      formatMoneyInputs();      
     });
 
     // Remover linha
@@ -415,6 +430,79 @@
   }
   
   setInterval(updateTotals, 2000); // ou chame em eventos onChange/onInput dos inputs relevantes
+
+  document.querySelector('form.form-material').addEventListener('submit', function (e) {
+    // Evita envio imediato
+    e.preventDefault();
+  
+    let isValid = true;
+    const messages = [];
+  
+    const form = e.target;
+    const cutIds = new Set();
+    const rows = document.querySelectorAll('#meat-cuts-table tbody tr');
+  
+    const invoiceWeight = parseFloat(document.querySelector('input[name="invoice_weight"]').value.replace(',', '.'));
+    const costPerKg = parseCurrency(document.querySelector('input[name="cost_per_kg"]').value);
+  
+    // Validação do peso da nota e custo por kg
+    if (!invoiceWeight || invoiceWeight <= 0) {
+      isValid = false;
+      messages.push('O campo "Peso da Nota Fiscal" é obrigatório e deve ser maior que zero.');
+    }
+  
+    if (!costPerKg || costPerKg <= 0) {
+      isValid = false;
+      messages.push('O campo "Custo por KG" é obrigatório e deve ser maior que zero.');
+    }
+  
+    rows.forEach((row, index) => {
+      const cutSelect = row.querySelector(`select[name="cuts[${index}][user_meat_cut_id]"]`);
+      const cutValue = cutSelect?.value;
+      const cutClass = row.querySelector(`select[name="cuts[${index}][cut_class]"]`)?.value;
+      const weight = row.querySelector(`input[name="cuts[${index}][weight]"]`)?.value;
+      const sellingPrice = row.querySelector(`input[name="cuts[${index}][selling_price]"]`)?.value;
+  
+      // Verifica cortes duplicados
+      if (cutValue) {
+        if (cutIds.has(cutValue)) {
+          isValid = false;
+          messages.push(`Corte duplicado na linha ${index + 1}.`);
+        } else {
+          cutIds.add(cutValue);
+        }
+      } else {
+        isValid = false;
+        messages.push(`Selecione um corte na linha ${index + 1}.`);
+      }
+  
+      // Verifica cut_class
+      if (!cutClass) {
+        isValid = false;
+        messages.push(`Selecione o tipo do corte (1ª ou 2ª) na linha ${index + 1}.`);
+      }
+  
+      // Verifica peso
+      if (!weight || parseFloat(weight.replace(',', '.')) <= 0) {
+        isValid = false;
+        messages.push(`Informe um peso válido na linha ${index + 1}.`);
+      }
+  
+      // Verifica preço de venda
+      if (!sellingPrice || parseCurrency(sellingPrice) <= 0) {
+        isValid = false;
+        messages.push(`Informe um preço de venda válido na linha ${index + 1}.`);
+      }
+    });
+  
+    if (!isValid) {
+      swal("Erro de Validação", messages.join('\n'), "warning");
+      return;
+    }
+  
+    // Se passou em todas as validações, envia o formulário
+    form.submit();
+  });
     
   
 </script>

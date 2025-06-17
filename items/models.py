@@ -32,6 +32,7 @@ class Item(models.Model):
     icms_cst = models.ForeignKey(IcmsCst, on_delete=models.RESTRICT)
     icms_aliquota = models.ForeignKey(IcmsAliquota, on_delete=models.RESTRICT)
     icms_aliquota_reduzida = models.CharField(max_length=3)
+    percentual_redbcde = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, default=0.00)
     protege = models.ForeignKey(Protege, on_delete=models.RESTRICT, null=True, blank=True)
     cbenef = models.ForeignKey(CBENEF, on_delete=models.RESTRICT, null=True, blank=True)
     piscofins_cst = models.ForeignKey(PisCofinsCst, related_name='piscofins_cst_items', on_delete=models.RESTRICT)
@@ -80,6 +81,7 @@ class ImportedItem(models.Model):
     icms_cst = models.IntegerField(null=True, blank=True, default=0)
     icms_aliquota = models.IntegerField(null=True, blank=True, default=0)
     icms_aliquota_reduzida = models.IntegerField(null=True, blank=True, default=0)
+    percentual_redbcde = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, default=0.00)
     protege = models.IntegerField(null=True, blank=True, default=0)
     cbenef = models.CharField(max_length=255, null=True, blank=True, default='')
     piscofins_cst = models.IntegerField(null=True, blank=True, default=0)
@@ -96,7 +98,7 @@ class ImportedItem(models.Model):
     def __str__(self):
         return self.description
 
-    class Meta:
-        unique_together = ('client', 'code')    
+    # class Meta:
+    #     unique_together = ('client', 'code')    
     
 auditlog.register(Item, mapping_fields={'history':'Histórico', 'updated_at':'Última Atualização', 'created_at':'Criado Em', 'description':'Descrição', 'barcode':'Cód. Barras',  'code':'Codigo', 'other_information':'outras informações', 'type_product':'Tipo Produto'})

@@ -20,7 +20,12 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from clients.models import Client
-from clients.utils import validateSelect, save_imported_logs, update_client_data_get, update_client_data_send
+from clients.utils import (
+    validateSelect, 
+    save_imported_logs, 
+    update_client_data_get, 
+    update_client_data_send
+)
 from items.models import Item, ImportedItem
 from api.authentication import ClientTokenAuthentication, IsAuthenticatedClient
 from api.serializers import ItemModelSerializer, ItemImportedModelSerializer
@@ -60,6 +65,7 @@ class ImportItemView(APIView):
                 'pis_aliquota': data.get('pis_aliquota'),
                 'cofins_aliquota': data.get('cofins_aliquota'),
                 'naturezareceita': data.get('natureza_receita'),
+                'percentual_redbcde': data.get('percentual_redbcde'),
             }
 
         # Renomeia os campos em todos os itens da lista
@@ -92,10 +98,6 @@ class ImportItemView(APIView):
             
             # Criando o nome do arquivo dinâmico (sem a extensão)
             file_base_name = f"{client.id}_{timestamp}"
-            
-            # Caminho completo para o arquivo CSV
-            # csv_file_path = os.path.join(save_dir, f"{file_base_name}.csv")
-            # df_json_recebido.to_csv(csv_file_path, sep=';', index=False)
             
             # Caminho completo para o arquivo JSON
             json_file_path = os.path.join(save_dir, f"{file_base_name}.json")
