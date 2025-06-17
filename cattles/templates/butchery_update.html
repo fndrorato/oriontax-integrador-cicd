@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="mb-3">Atualizar Tabela do Açougue</h4>
+
+  <form method="post">
+    {% csrf_token %}
+    
+    <!-- Topo: Dados do Master -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <label class="form-label">Preço da Arroba (NF)</label>
+        <input type="number" step="0.01" class="form-control" name="arroba_price_nf" value="{{ master.arroba_price_nf }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Peso da Nota Fiscal</label>
+        <input type="number" step="0.01" class="form-control" name="invoice_weight" value="{{ master.invoice_weight }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Custo por KG</label>
+        <input type="number" step="0.01" class="form-control" name="cost_per_kg" value="{{ master.cost_per_kg }}">
+      </div>
+    </div>
+
+    <!-- Detalhes dos Cortes -->
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped" id="meat-cuts-table">
+        <thead class="table-success">
+          <tr>
+            <th>Nome do Corte</th>
+            <th>Peso (kg)</th>
+            <th>Preço de Venda</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for detail in details %}
+          <tr>
+            <td>
+              <input type="text" class="form-control meat-cut-input" name="cuts[{{ forloop.counter0 }}][name]" value="{{ detail.user_meat_cut.meat_cut }}">
+              <input type="hidden" name="cuts[{{ forloop.counter0 }}][id]" value="{{ detail.id }}">
+            </td>
+            <td>
+              <input type="number" step="0.01" class="form-control" name="cuts[{{ forloop.counter0 }}][weight]" value="{{ detail.weight }}">
+            </td>
+            <td>
+              <input type="number" step="0.01" class="form-control" name="cuts[{{ forloop.counter0 }}][selling_price]" value="{{ detail.selling_price }}">
+            </td>
+            <td>
+              <button type="button" class="btn btn-danger btn-sm remove-row">Remover</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-success btn-sm" id="add-row">+ Adicionar Corte</button>
+      <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#addCutModal">Cadastrar novo corte</button>
+    </div>
+
+    <div class="text-end mt-4">
+      <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+    </div>
+  </form>
+</div>
+
+<!-- Modal: Novo corte -->
+<div class="modal fade" id="addCutModal" tabindex="-1" aria-labelledby="addCutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{% url 'create_meatcut' %}">
+      {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCutModalLabel">Cadastrar Novo Corte</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nome do Corte</label>
+            <input type="text" name="name" class="form-control" required>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="active" checked>
+            <label class="form-check-label">Ativo</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Salvar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Adiciona nova linha
+    document.getElementById('add-row').addEventListener('click', function () {
+      const table = document.querySelector('#meat-cuts-table tbody');
+      const index = table.rows.length;
+      const newRow = `
+        <tr>
+          <td><input type="text" class="form-control meat-cut-input" name="cuts[${index}][name]" list="cut-options"></td>
+          <td><input type="number" step="0.01" class="form-control" name="cuts[${index}][weight]"></td>
+          <td><input type="number" step="0.01" class="form-control" name="cuts[${index}][selling_price]"></td>
+          <td><button type="button" class="btn btn-danger btn-sm remove-row">Remover</button></td>
+        </tr>
+      `;
+      table.insertAdjacentHTML('beforeend', newRow);
+    });
+
+    // Remover linha
+    document.addEventListener('click', function (e) {
+      if (e.target.classList.contains('remove-row')) {
+        e.target.closest('tr').remove();
+      }
+    });
+
+    // Autocomplete
+    const cutsList = {{ cuts_json|safe }}; // Certifique-se de que isso seja uma lista JSON válida
+    document.addEventListener('input', function (e) {
+      if (e.target.classList.contains('meat-cut-input')) {
+        e.target.setAttribute('list', 'cut-options');
+      }
+    });
+
+    // Submissão do formulário do modal
+    document.querySelector('#addCutModal form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const data = new FormData(form);
+
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: data,
+        headers: {
+          'X-CSRFToken': data.get('csrfmiddlewaretoken'),
+        }
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Adiciona o novo corte no datalist
+        const datalist = document.getElementById('cut-options');
+        const option = document.createElement('option');
+        option.value = result.name;
+        datalist.appendChild(option);
+
+        // Fecha o modal
+        form.reset();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addCutModal'));
+        modal.hide();
+      } else {
+        alert(result.error || 'Erro ao salvar corte.');
+      }
+    });
+  });
+</script>
+
+
+<datalist id="cut-options">
+  {% for cut in available_cuts %}
+    <option value="{{ cut.name }}">
+  {% endfor %}
+</datalist>
+{% endblock %}

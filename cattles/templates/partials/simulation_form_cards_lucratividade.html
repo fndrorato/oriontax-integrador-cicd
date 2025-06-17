@@ -1,0 +1,172 @@
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-receipt fa-2x text-dark" data-toggle="tooltip" title="Alíquotas e encargos tributários (ICMS, créditos, fundos)"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">ICMS e Encargos</h6>
+                    <div class="row mt-2">
+                        {{ form.icms_debit_value }}
+                        {{ form.icms_credit_value }}     
+                        {{ form.granted_credit_value }} 
+                        {{ form.icms_loss_reversal_value }} 
+                        {{ form.protege_value }} 
+                        {{ form.fundeinfra_value }}
+                        <div class="col-md-4">
+                            <label for="id_icms_debit_producer">ICMS débito 12% - Produtor Rural</label>
+                            {{ form.icms_debit_producer }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="id_icms_debit_slaughterhouse">ICMS débito 12% - Frigorífico</label>
+                            {{ form.icms_debit_slaughterhouse }}
+                        </div>                        
+                        <div class="col-md-4">
+                            <label for="id_icms_credit_slaughterhouse">ICMS Crédito 12% - Frigorífico</label>
+                            {{ form.icms_credit_slaughterhouse }}
+                        </div>   
+                    </div>
+                    <div class="row mt-2">                       
+                        <div class="col-md-3">
+                            <label for="id_granted_credit_percent">Crédito outorgado (%)</label>
+                            {{ form.granted_credit_percent }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_icms_loss_reversal_percent">Estorno ICMS de perda (%)</label>
+                            {{ form.icms_loss_reversal_percent }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_protege_percent">Protege (%)</label>
+                            {{ form.protege_percent }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_fundeinfra_percent">Fundeinfra (%)</label>
+                            {{ form.fundeinfra_percent }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-file-invoice-dollar fa-2x text-dark" data-toggle="tooltip" title="Impostos Efetivos"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Imposto Efetivo</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <label for="id_tax_producer_real">Produtor Rural (R$)</label>
+                            {{ form.tax_producer_real }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_tax_producer_percent">Produtor Rural (%)</label>
+                            {{ form.tax_producer_percent }}
+                        </div>                        
+                        <div class="col-md-3">
+                            <label for="id_tax_slaughterhouse_real">Frigorífico (R$)</label>
+                            {{ form.tax_slaughterhouse_real }}
+                        </div>   
+                        <div class="col-md-3">
+                            <label for="id_tax_slaughterhouse_percent">Frigorífico (%)</label>
+                            {{ form.tax_slaughterhouse_percent }}
+                        </div>                         
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-chart-line fa-2x text-success" data-toggle="tooltip" title="Margem de Lucro Efetiva"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Margem de Lucro Efetiva</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <label for="id_profit_producer_real">Produtor Rural (R$)</label>
+                            {{ form.profit_producer_real }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_profit_producer_percent">Produtor Rural (%)</label>
+                            {{ form.profit_producer_percent }}
+                        </div>                        
+                        <div class="col-md-3">
+                            <label for="id_profit_slaughterhouse_real">Frigorífico (R$)</label>
+                            {{ form.profit_slaughterhouse_real }}
+                        </div>   
+                        <div class="col-md-3">
+                            <label for="id_profit_slaughterhouse_percent">Frigorífico (%)</label>
+                            {{ form.profit_slaughterhouse_percent }}
+                        </div>                         
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-check-circle fa-2x text-primary" data-toggle="tooltip" title="Melhor opção sugerida"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Melhor Opção Sugerida</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-12 text-center" id="melhor_opcao_container">
+                            <h4 id="melhor_opcao" class="font-weight-bold py-2">Frigorífico</h4>                            
+                        </div>                                                
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media highlight-card">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-piggy-bank fa-2x text-info" data-toggle="tooltip" title="Economia Potencial"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Economia Potencial</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <label for="id_economia_mensal">Mensal (R$)</label>
+                            {{ form.economia_mensal }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_economia_anual">Anual (R$)</label>
+                            {{ form.economia_anual }}
+                        </div>                        
+                        <div class="col-md-3">
+                            <label for="id_economia_arroba">Arroba</label>
+                            {{ form.economia_arroba }}
+                        </div>   
+                        <div class="col-md-3">
+                            <label for="id_economia_kg">Econimia (Kg)</label>
+                            {{ form.economia_kg }}
+                        </div>                         
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+

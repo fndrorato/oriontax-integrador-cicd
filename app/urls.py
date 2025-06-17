@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -17,6 +16,7 @@ urlpatterns = [
     path('', include('tasks.urls')),
     path('', include('accountings.urls')),
     path('', include('notifications.urls')),
+    path('', include('cattles.urls')),
     path('', HomeView.as_view(), name='home'),
     path('search/', SearchResultsView.as_view(), name='search'),
     path('ajax/cities/', CitySearchView.as_view(), name='city_search'),    

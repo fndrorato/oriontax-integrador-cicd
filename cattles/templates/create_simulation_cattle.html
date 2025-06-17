@@ -1,0 +1,862 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Matriz de Decisão</h4>
+    <span>Simulação de Compra do Gado</span>
+{% endblock title %}
+
+{% block customcss %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .list-view > li + li {
+            margin-top: 10px;
+        }
+        .list-view-media {
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            margin-bottom: 0 !important;
+        }
+        .media-body input,
+        .media-body select {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px 12px;
+            width: 100%;
+            font-size: 0.95rem;
+            background-color: #fdfdfd;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .media-body label {
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected]
+        {
+            background-color: #215c99 !important;
+        }
+         
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            background-color: #215c99 !important;
+            color: #fff;
+            padding: 8px 30px 8px 20px;
+        }
+        .highlight-card {
+            background-color: #e8f1fb !important;  /* azul claro suave */
+            border-left: 5px solid #215c99;
+        }
+        .economia-input {
+            background-color: #215c99 !important;
+            color: #fff !important;
+            border: 1px solid #215c99;
+        }        
+        
+      
+    </style>
+{% endblock customcss %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#">Simulações</a></li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<form method="post" action="" class="form-material">
+    {% csrf_token %}
+    <div class="card">
+        <div class="row card-block">
+            <div class="col-md-12">
+                <!-- Nav Tabs -->
+                <ul class="nav nav-tabs md-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#matriz" role="tab">MATRIZ DE DECISÃO: COMPRA DO GADO</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#simulador" role="tab">SIMULADOR DE LUCRATIVIDADE</a>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content card-block">
+                    <!-- Aba 1: Matriz -->
+                    <div class="tab-pane active" id="matriz" role="tabpanel">
+                        <ul class="list-view">
+                            {% include "partials/simulation_form_cards_matriz.html" %}
+                        </ul>
+                    </div>
+
+                    <!-- Aba 2: Simulador -->
+                    <div class="tab-pane" id="simulador" role="tabpanel">
+                        <ul class="list-view">
+                            {% include "partials/simulation_form_cards_lucratividade.html" %}
+                        </ul>
+                    </div>
+
+                    <!-- Descrição e botão -->
+                    <div class="form-group row align-items-center mt-4">
+                        <label for="id_simulation_description" class="col-md-3 col-form-label text-md-right font-weight-bold">
+                            Descrição da Simulação:
+                        </label>
+                        <div class="col-md-6">
+                            <input type="text" id="id_description" name="description"
+                                class="form-control" placeholder="Ex: Compra Julho - Gado PO">
+                        </div>
+                        <div class="col-md-3 text-right">
+                            <button type="submit" class="btn btn-primary">Salvar Simulação</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock content %}
+
+{% block anotherjs %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0"></script>
+<script>
+    $(document).ready(function () {
+        $('.select2').select2();
+
+        const percentOptions = {
+            suffixText: ' %',
+            decimalCharacter: ',',
+            digitGroupSeparator: '.',
+            decimalPlaces: 2
+        };
+
+        // AutoNumeric para percentuais
+        const yieldButcheredProducer = new AutoNumeric('#id_yield_butchered_cow_producer_percent', percentOptions);
+        const yieldButcheredSlaughterhouse = new AutoNumeric('#id_yield_butchered_cow_slaughterhouse_percent', percentOptions);
+        const yieldLive = new AutoNumeric('#id_yield_live_cow_pasture_producer_percent', percentOptions);
+
+        // AutoNumeric para números e valores
+        const volume = new AutoNumeric('#id_monthly_sales_volume_kg', {
+            currencySymbol: '',
+            decimalCharacter: ',',
+            digitGroupSeparator: '.',
+            decimalPlaces: 2
+        });
+
+        const totalVenda = new AutoNumeric('#id_total_sales_per_month', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',',
+            digitGroupSeparator: '.',
+            decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const precoMedio = new AutoNumeric('#id_average_price_per_kg', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',',
+            digitGroupSeparator: '.',
+            decimalPlaces: 2
+        });
+
+        const pesoFrigorificoKg = new AutoNumeric('#id_mean_weight_per_cow_slaughterhouse_kg', {
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
+        });
+
+        const pesoProdutorArroba = new AutoNumeric('#id_mean_weight_per_cow_producer_arroba', {
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const cowsMonthProducer = new AutoNumeric('#id_cows_per_month_producer', {
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const cowsMonthSlaughterhouse = new AutoNumeric('#id_cows_per_month_slaughterhouse', {
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const cowsWeekProducer = new AutoNumeric('#id_cows_per_week_producer', {
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const cowsWeekSlaughterhouse = new AutoNumeric('#id_cows_per_week_slaughterhouse', {
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const pricePerKgButcheredCowProducer = new AutoNumeric('#id_price_per_kg_butchered_cow_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });   
+        
+        const priceBrutoProducer = new AutoNumeric('#id_price_closed_per_arroba_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
+        });
+
+        const priceNetProducer = new AutoNumeric('#id_price_net_per_arroba_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const pricePerKgAfterButcheredCowProducer = new AutoNumeric('#id_price_per_kg_after_butchered_cow_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });   
+        
+        const pricePerKgButcheredCowSlaughterhouse = new AutoNumeric('#id_price_per_kg_butchered_cow_slaughterhouse', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
+        });
+        
+        const pricePerKgAfterButcheredCowSlaughterhouse = new AutoNumeric('#id_price_per_kg_after_butchered_cow_slaughterhouse', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const slaughterServicePerCowProducer = new AutoNumeric('#id_slaughter_service_per_cow_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
+        });
+
+        const slaughterServicePerCowSlaughterhouse = new AutoNumeric('#id_slaughter_service_per_cow_slaughterhouse', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
+        });     
+        
+        const freightProducerSlaughterhouseProducer = new AutoNumeric('#id_freight_producer_slaughterhouse_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
+        });     
+
+        const freightSlaughterhouseStoreProducer = new AutoNumeric('#id_freight_slaughterhouse_store_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
+        });  
+        
+        const freightSlaughterhouseStoreSlaughterhouse = new AutoNumeric('#id_freight_slaughterhouse_store_slaughterhouse', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
+        });  
+        
+        const totalValueProducer = new AutoNumeric('#id_total_value_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const commissionBuyer = new AutoNumeric('#id_commission_buyer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const totalValueSlaughterhouse = new AutoNumeric('#id_total_value_slaughterhouse', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });     
+        
+        const totalSlaughterCost = new AutoNumeric('#id_total_slaughter_cost', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });  
+
+        const profitGainComparison = new AutoNumeric('#id_profit_gain_comparison', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const icmsCredit = parseFloat($('#id_icms_credit_value').val().replace(',', '.')) || 0;
+        const icmsDebit = parseFloat($('#id_icms_debit_value').val().replace(',', '.')) || 0;
+
+        const icmsCreditoSlaughterhouse = new AutoNumeric('#id_icms_credit_slaughterhouse', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const icmsDebitoProdutor = new AutoNumeric('#id_icms_debit_producer', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });        
+
+        const protegeField = new AutoNumeric('#id_protege_percent', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });  
+        
+        const fundeinfraField = new AutoNumeric('#id_fundeinfra_percent', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });    
+        
+        const grantedCreditPercent = new AutoNumeric('#id_granted_credit_percent', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const taxProducerReal = new AutoNumeric('#id_tax_producer_real', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });  
+        
+        const taxProducerPercent = new AutoNumeric('#id_tax_producer_percent', percentOptions);  
+        
+        const icmsDebitoFrigorifico = new AutoNumeric('#id_icms_debit_slaughterhouse', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        }); 
+        
+        const icmsLossReversalPercent = new AutoNumeric('#id_icms_loss_reversal_percent', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });   
+         
+        const taxSlaughterhouseReal = new AutoNumeric('#id_tax_slaughterhouse_real', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });  
+        
+        const taxSlaughterhousePercent = new AutoNumeric('#id_tax_slaughterhouse_percent', percentOptions);
+
+        const profitProducerReal = new AutoNumeric('#id_profit_producer_real', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        }); 
+        
+        const profitProducerPercent = new AutoNumeric('#id_profit_producer_percent', percentOptions);
+
+        const profitSlaughterhouseReal = new AutoNumeric('#id_profit_slaughterhouse_real', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const profitSlaughterhousePercent = new AutoNumeric('#id_profit_slaughterhouse_percent', percentOptions);
+
+        const economiaMensal = new AutoNumeric('#id_economia_mensal', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        }); 
+        
+        const economiaAnual = new AutoNumeric('#id_economia_anual', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });     
+        
+        const economiaKg = new AutoNumeric('#id_economia_kg', {
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+
+        const economiaArroba = new AutoNumeric('#id_economia_arroba', {
+            decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
+            readOnly: true
+        });
+        
+        function calcularLucroComparativo() {
+            const j34 = totalValueSlaughterhouse.getNumber();
+            const h34 = totalValueProducer.getNumber();
+            const h32 = totalSlaughterCost.getNumber();
+            const h30 = commissionBuyer.getNumber();
+        
+            if (j34 > 0 && h34 >= 0 && h32 >= 0 && h30 >= 0) {
+                const resultado = (j34 - (h34 + h32)) - h30;
+                profitGainComparison.set(resultado);
+            } else {
+                profitGainComparison.set(0);
+            }
+        }        
+        
+        function calcularCustoTotalAbate() {
+            const t4 = $('#id_cow_weighing_location').val(); // 'campo' ou 'frigorifico'
+            const f6 = volume.getNumber(); // monthly_sales_volume_kg
+            const h13 = pesoProdutorArroba.getNumber(); // peso produtor arroba
+            const h25 = slaughterServicePerCowProducer.getNumber(); // serviço por vaca
+        
+            if (f6 > 0 && h13 > 0 && h25 > 0) {
+                const base = f6 * 1.35 * 2;
+        
+                let resultado;
+                if (t4 === 'campo') {
+                    resultado = ((base / 15) / h13) * h25;
+                } else {
+                    resultado = (base / h13) * h25;
+                }
+        
+                totalSlaughterCost.set(resultado);
+            } else {
+                totalSlaughterCost.set(0);
+            }
+        }        
+        
+        function calcularComissaoComprador() {
+            const total = totalValueProducer.getNumber();
+        
+            if (total > 0) {
+                const resultado = total * 0.01;
+                commissionBuyer.set(resultado);
+            } else {
+                commissionBuyer.set(0);
+            }
+        }   
+        
+        function calcularValorTotalFrigorifico() {
+            const f6 = volume.getNumber();
+            const j17 = yieldButcheredSlaughterhouse.getNumber() / 100;
+            const j22 = pricePerKgButcheredCowSlaughterhouse.getNumber();
+        
+            if (f6 > 0 && j17 > 0 && j22 > 0) {
+                const resultado = (f6 / j17) * j22;
+                totalValueSlaughterhouse.set(resultado);
+            } else {
+                totalValueSlaughterhouse.set(0);
+            }
+        }                
+
+        function calcularPesoProdutorArroba() {
+            const pesoKg = pesoFrigorificoKg.getNumber();
+            if (pesoKg > 0) {
+                const pesoArroba = pesoKg / 15;
+                pesoProdutorArroba.set(pesoArroba);
+                calcularQtdVacasMesProdutor();
+            } else {
+                pesoProdutorArroba.set(0);
+                calcularQtdVacasMesProdutor();
+            }
+        }
+
+        function calcularQtdVacasMesProdutor() {
+            const t4 = $('#id_cow_weighing_location').val();  // 'campo' ou 'frigorifico'
+            const f6 = volume.getNumber(); // monthly_sales_volume_kg
+            const j17 = yieldButcheredSlaughterhouse.getNumber() / 100;
+            const h16 = yieldLive.getNumber() / 100;
+            const h13 = pesoProdutorArroba.getNumber();
+
+            if (f6 > 0 && j17 > 0 && h16 > 0 && h13 > 0) {
+                let base = ((f6 / j17) / h16);
+                let resultado = (t4 === 'campo') ? (base / h13) : ((base / 15) / h13);
+
+                cowsMonthProducer.set(resultado);
+                cowsMonthSlaughterhouse.set(resultado);
+                cowsWeekProducer.set(resultado / 4);
+                cowsWeekSlaughterhouse.set(resultado / 4);
+            } else {
+                cowsMonthProducer.set(0);
+                cowsMonthSlaughterhouse.set(0);
+                cowsWeekProducer.set(0);
+                cowsWeekSlaughterhouse.set(0);
+            }
+        }
+
+        function calcularTotalVendaMes() {
+            const qtd = volume.getNumber();
+            const preco = precoMedio.getNumber();
+            if (qtd > 0 && preco > 0) {
+                totalVenda.set(qtd * preco);
+            } else {
+                totalVenda.set(0);
+            }
+        }
+        
+        function calcularPrecoLiquidoArrobaProdutor() {
+            const bruto = priceBrutoProducer.getNumber();
+            const rendimento = yieldLive.getNumber() / 100;
+        
+            if (bruto > 0 && rendimento >= 0) {
+                const liquido = bruto * (1 - rendimento);
+                priceNetProducer.set(liquido);
+            } else {
+                priceNetProducer.set(0);
+            }
+        }
+
+        function calcularPrecoPorKgVacaCasadaProdutor() {
+            const precoArroba = priceBrutoProducer.getNumber();
+        
+            if (precoArroba > 0) {
+                const precoKg = precoArroba / 15;
+                pricePerKgButcheredCowProducer.set(precoKg);
+            } else {
+                pricePerKgButcheredCowProducer.set(0);
+            }
+        }  
+        
+        function calcularPrecoKgDepoisVacaCasadaProdutor() {
+            const precoKgAntes = pricePerKgButcheredCowProducer.getNumber();
+            const rendimentoCasada = yieldButcheredProducer.getNumber() / 100;
+        
+            if (precoKgAntes > 0 && rendimentoCasada > 0) {
+                const precoFinal = precoKgAntes / rendimentoCasada;
+                pricePerKgAfterButcheredCowProducer.set(precoFinal);
+            } else {
+                pricePerKgAfterButcheredCowProducer.set(0);
+            }
+        }   
+        
+        function calcularPrecoKgDepoisVacaCasadaFrigorifico() {
+            const precoKg = pricePerKgButcheredCowSlaughterhouse.getNumber();
+            const rendimento = yieldButcheredSlaughterhouse.getNumber() / 100;
+        
+            if (precoKg > 0 && rendimento > 0) {
+                const resultado = precoKg / rendimento;
+                pricePerKgAfterButcheredCowSlaughterhouse.set(resultado);
+            } else {
+                pricePerKgAfterButcheredCowSlaughterhouse.set(0);
+            }
+        }
+
+        function calcularValorTotalProdutor() {
+            const h19 = priceBrutoProducer.getNumber(); // Preço fechado por arroba
+            const f6 = volume.getNumber();              // Volume de vendas (Kg/mês)
+            const h17 = yieldButcheredProducer.getNumber() / 100; // Rendimento (em decimal)
+        
+            if (h19 > 0 && f6 > 0 && h17 > 0) {
+                const resultado = (h19 / 15) * (f6 / h17);
+                totalValueProducer.set(resultado);
+            } else {
+                totalValueProducer.set(0);
+            }
+        }
+
+        function calcularIcmsDebitoProdutor() {
+            const f7 = totalVenda.getNumber(); // campo total_sales_per_month
+            const n7 = parseFloat($('#id_icms_debit_value').val().replace(',', '.')) / 100 || 0;
+        
+            const resultado = f7 * n7;          
+        
+            icmsDebitoProdutor.set(resultado);
+            icmsDebitoFrigorifico.set(resultado);
+        }
+
+        function calcularIcmsCreditoFrigorifico() {
+            const f6 = volume.getNumber();
+            const j17 = yieldButcheredSlaughterhouse.getNumber() / 100;
+            const j22 = pricePerKgButcheredCowSlaughterhouse.getNumber();
+            const n8 = icmsCredit / 100 || 0;
+        
+            const resultado = (j17 > 0) ? ((f6 / j17) * j22) * n8 : 0;
+        
+            icmsCreditoSlaughterhouse.set(resultado);
+        }
+
+        function calcularCreditoOutorgado() {
+            const f7 = totalVenda.getNumber();
+            const n10 = parseFloat($('#id_granted_credit_value').val().replace(',', '.')) / 100 || 0;
+        
+            const resultado = f7 * n10;
+        
+            grantedCreditPercent.set(resultado);
+        }
+
+        function calcularEstornoIcmsPerda() {
+            const r8 = icmsCreditoSlaughterhouse.getNumber();
+            const n11 = parseFloat($('#id_icms_loss_reversal_value').val().replace(',', '.')) / 100 || 0;
+            const resultado = r8 * n11;
+        
+            icmsLossReversalPercent.set(resultado);
+        }   
+        
+        function calcularProtegePercent() {
+            const f7 = totalVenda.getNumber();
+            const n13 = parseFloat($('#id_protege_value').val().replace(',', '.')) / 100 || 0;
+        
+            const resultado = f7 * n13;
+        
+            protegeField.set(resultado);
+        }
+
+        function calcularFundeinfraPercent() {
+            const h34 = totalValueProducer.getNumber();
+            const n14 = parseFloat($('#id_fundeinfra_value').val().replace(',', '.')) / 100 || 0;
+        
+            const resultado = h34 * n14;
+        
+            fundeinfraField.set(resultado);
+        } 
+        
+        function calcularImpostoEfetivoProdutorReal() {
+            const p7 = icmsDebitoProdutor.getNumber();
+            const p13 = protegeField.getNumber();
+            const p14 = fundeinfraField.getNumber();
+            const p10 = grantedCreditPercent.getNumber();
+        
+            if (p7 !== null && p13 !== null && p14 !== null && p10 !== null) {
+                const resultado = p7 + p13 + p14 - p10;
+                taxProducerReal.set(resultado);
+            } else {
+                taxProducerReal.set(0);
+            }
+        }
+
+        function calcularImpostoEfetivoProdutorPercent() {
+            const p16 = taxProducerReal.getNumber();
+            const f7 = totalVenda.getNumber();
+        
+            if (p16 > 0 && f7 > 0) {
+                const resultado = p16 / f7;
+                taxProducerPercent.set(resultado * 100);
+            } else {
+                taxProducerPercent.set(0);
+            }
+        }
+
+        function calcularImpostoEfetivoFrigorificoReal() {
+            const r7 = icmsDebitoFrigorifico.getNumber();
+            const r8 = icmsCreditoSlaughterhouse.getNumber();
+            const r11 = icmsLossReversalPercent.getNumber();
+        
+            if (r7 !== null && r8 !== null && r11 !== null) {
+                const resultado = r7 - r8 + r11;
+                taxSlaughterhouseReal.set(resultado);
+            } else {
+                taxSlaughterhouseReal.set(0);
+            }
+        }
+
+        function calcularImpostoEfetivoFrigorificoPercent() {
+            const r16 = taxSlaughterhouseReal.getNumber();
+            const f7 = totalVenda.getNumber();
+        
+            if (r16 > 0 && f7 > 0) {
+                const resultado = r16 / f7;
+                taxSlaughterhousePercent.set(resultado * 100);
+            } else {
+                taxSlaughterhousePercent.set(0);
+            }
+        }
+
+        function calcularLucroEfetivoProdutorReal() {
+            const f7 = totalVenda.getNumber();
+            const p16 = taxProducerReal.getNumber();
+            const h34 = totalValueProducer.getNumber();
+            const h27 = freightProducerSlaughterhouseProducer.getNumber();
+            const h28 = freightSlaughterhouseStoreProducer.getNumber();
+            const h32 = totalSlaughterCost.getNumber();
+            const h30 = commissionBuyer.getNumber();
+        
+            if ([f7, p16, h34, h27, h28, h32, h30].every(val => val !== null)) {
+                const resultado = f7 - p16 - h34 - h27 - h28 - h32 - h30;
+                profitProducerReal.set(resultado);
+            } else {
+                profitProducerReal.set(0);
+            }
+        }
+
+        function calcularLucroEfetivoProdutorPercent() {
+            const p19 = profitProducerReal.getNumber();
+            const f7 = totalVenda.getNumber();
+        
+            if (p19 !== null && f7 > 0) {
+                const resultado = p19 / f7;
+                profitProducerPercent.set(resultado * 100);
+            } else {
+                profitProducerPercent.set(0);
+            }
+        }
+
+        function calcularLucroEfetivoFrigorificoReal() {
+            const f7 = totalVenda.getNumber();
+            const r16 = taxSlaughterhouseReal.getNumber();
+            const j27 = freightSlaughterhouseStoreSlaughterhouse.getNumber();
+            const j34 = totalValueSlaughterhouse.getNumber();
+        
+            if ([f7, r16, j27, j34].every(val => val !== null)) {
+                const resultado = f7 - r16 - j27 - j34;
+                profitSlaughterhouseReal.set(resultado);
+            } else {
+                profitSlaughterhouseReal.set(0);
+            }
+        }
+        
+        function calcularLucroEfetivoFrigorificoPercent() {
+            const r19 = profitSlaughterhouseReal.getNumber();
+            const f7 = totalVenda.getNumber();
+        
+            if (r19 !== null && f7 > 0) {
+                const resultado = r19 / f7;
+                profitSlaughterhousePercent.set(resultado * 100);
+            } else {
+                profitSlaughterhousePercent.set(0);
+            }
+        }
+        
+        function definirMelhorOpcao() {
+            const P19 = profitProducerReal.getNumber();
+            const R19 = profitSlaughterhouseReal.getNumber();
+            const F6 = volume.getNumber();
+        
+            const container = $('#melhor_opcao_container');
+            const h4 = $('#melhor_opcao');
+        
+            if (P19 > R19) {
+                h4.text("Produtor Rural");
+                economiaMensal.set(P19 - R19);
+                economiaAnual.set((P19 - R19) * 12);
+        
+                container
+                    .removeClass('bg-primary bg-warning bg-success text-white text-dark')
+                    .addClass('bg-success text-white');
+                
+            } else {
+                h4.text("Frigorífico");
+                economiaMensal.set(R19 - P19);
+                economiaAnual.set((R19 - P19) * 12);                
+        
+                container
+                    .removeClass('bg-primary bg-warning bg-success text-white text-dark')
+                    .addClass('bg-warning text-dark');
+            }
+
+            if (F6 > 0) {
+                const economiaKgValue = economiaMensal.getNumber() / F6;
+                economiaKg.set(economiaKgValue);
+
+                const economiaArrobaValue = economiaKgValue * 15;
+                economiaArroba.set(economiaArrobaValue);
+            } else {
+                economiaKg.set(0);
+                economiaArroba.set(0);
+            }
+        }
+         
+
+        // Atualiza automaticamente ao alterar os campos envolvidos
+        $('#id_price_closed_per_arroba_producer, #id_yield_live_cow_pasture_producer_percent, #id_yield_butchered_cow_producer_percent')
+        .on('keyup change', function () {
+            calcularPrecoLiquidoArrobaProdutor();
+            calcularPrecoPorKgVacaCasadaProdutor();
+            calcularPrecoKgDepoisVacaCasadaProdutor();
+        });
+        // Espelha o valor do produtor para o frigorífico (butchered %)
+        $('#id_yield_butchered_cow_producer_percent').on('change keyup', function () {
+            const valor = yieldButcheredProducer.getNumber();
+            yieldButcheredSlaughterhouse.set(valor);
+            calcularQtdVacasMesProdutor();
+        });
+
+        $('#id_cow_weighing_location, #id_monthly_sales_volume_kg, #id_yield_live_cow_pasture_producer_percent, #id_mean_weight_per_cow_producer_arroba')
+        .on('change keyup', function () {
+            calcularQtdVacasMesProdutor();
+        });
+
+        $('#id_mean_weight_per_cow_slaughterhouse_kg').on('change keyup', function () {
+            calcularPesoProdutorArroba();
+            calcularLucroEfetivoProdutorReal();
+            calcularLucroEfetivoProdutorPercent();              
+            definirMelhorOpcao();            
+        });
+
+        $('#id_monthly_sales_volume_kg, #id_average_price_per_kg').on('keyup change', function () {
+            calcularTotalVendaMes();
+            calcularIcmsDebitoProdutor();
+            calcularCreditoOutorgado();
+            calcularProtegePercent();
+        });
+
+        $('#id_price_per_kg_butchered_cow_slaughterhouse, #id_yield_butchered_cow_slaughterhouse_percent')
+        .on('change keyup', function () {
+            calcularPrecoKgDepoisVacaCasadaFrigorifico();
+        });
+
+        $('#id_price_closed_per_arroba_producer, #id_monthly_sales_volume_kg, #id_yield_butchered_cow_producer_percent')
+        .on('keyup change', function () {
+            console.log('Calculando valores do produtor...1');
+            calcularValorTotalProdutor();
+            calcularComissaoComprador();
+            calcularLucroComparativo();
+            calcularFundeinfraPercent();
+            calcularImpostoEfetivoProdutorReal();
+            calcularImpostoEfetivoProdutorPercent();
+            calcularLucroEfetivoProdutorReal();
+            calcularLucroEfetivoProdutorPercent();  
+            definirMelhorOpcao();          
+        });
+
+        $('#id_monthly_sales_volume_kg, #id_yield_butchered_cow_slaughterhouse_percent, #id_price_per_kg_butchered_cow_slaughterhouse')
+        .on('keyup change', function () {
+            calcularValorTotalFrigorifico();
+            calcularLucroComparativo();
+        }); 
+        
+        $('#id_cow_weighing_location, #id_monthly_sales_volume_kg, #id_mean_weight_per_cow_producer_arroba, #id_slaughter_service_per_cow_producer')
+        .on('change keyup', function () {
+            calcularCustoTotalAbate();
+            calcularLucroComparativo();
+            calcularLucroEfetivoProdutorReal();
+            calcularLucroEfetivoProdutorPercent();
+            definirMelhorOpcao();
+        });
+
+        $('#id_monthly_sales_volume_kg, #id_yield_butchered_cow_slaughterhouse_percent, #id_price_per_kg_butchered_cow_slaughterhouse').on('keyup change', function () {
+            calcularIcmsCreditoFrigorifico();
+            calcularEstornoIcmsPerda();
+            calcularImpostoEfetivoFrigorificoReal();
+            calcularImpostoEfetivoFrigorificoPercent();
+            calcularLucroEfetivoFrigorificoReal();
+            calcularLucroEfetivoFrigorificoPercent();  
+            definirMelhorOpcao();          
+        });   
+        
+        $('#id_total_sales_per_month, #id_tax_producer_real, #id_total_value_producer, #id_freight_producer_slaughterhouse_producer, #id_freight_slaughterhouse_store_producer, #id_total_slaughter_cost, #id_commission_buyer')
+        .on('keyup change', function () {
+            calcularLucroEfetivoProdutorReal();
+            calcularLucroEfetivoProdutorPercent();
+            definirMelhorOpcao();
+        });
+
+        $('#id_total_sales_per_month, #id_tax_slaughterhouse_real, #id_freight_slaughterhouse_store_slaughterhouse, #id_total_value_slaughterhouse')
+        .on('keyup change', function () {
+            calcularLucroEfetivoFrigorificoReal();
+            calcularLucroEfetivoFrigorificoPercent();
+            definirMelhorOpcao();
+        });
+        
+        // Inicialização
+        calcularPrecoLiquidoArrobaProdutor();        
+        calcularPesoProdutorArroba();
+        calcularTotalVendaMes();
+        calcularPrecoPorKgVacaCasadaProdutor();
+        calcularPrecoKgDepoisVacaCasadaProdutor();
+        calcularPrecoKgDepoisVacaCasadaFrigorifico();
+        calcularValorTotalProdutor();
+        calcularComissaoComprador();
+        calcularValorTotalFrigorifico();
+        calcularCustoTotalAbate();
+        calcularIcmsDebitoProdutor();
+        calcularIcmsCreditoFrigorifico();
+        calcularCreditoOutorgado();
+        calcularEstornoIcmsPerda();
+        calcularProtegePercent();
+        calcularFundeinfraPercent();
+        calcularImpostoEfetivoProdutorReal();
+        calcularImpostoEfetivoProdutorPercent();
+        calcularImpostoEfetivoFrigorificoReal();
+        calcularImpostoEfetivoFrigorificoPercent();   
+        calcularLucroEfetivoFrigorificoReal();
+        calcularLucroEfetivoFrigorificoPercent();        
+        definirMelhorOpcao();
+
+    });
+</script>
+
+{% endblock anotherjs %}

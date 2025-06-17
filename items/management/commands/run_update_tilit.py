@@ -346,7 +346,7 @@ if __name__ == "__main__":
 
             try:
                 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-                initial_log += f'[{timestamp}] - Conectando e atuaizando... \n'                
+                initial_log += f'[{timestamp}] - Conectando e atuaizando... \n'          
                 result, initial_log, mensagem_resultante = connect_and_update(host, access_token, client_name, items_df, initial_log)
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"

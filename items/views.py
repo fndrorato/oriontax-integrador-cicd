@@ -806,6 +806,8 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         
         # Obter o segundo queryset (imported_items)
         codes_in_primary_queryset = self.primary_queryset.values_list('code', flat=True)
+        print('faltando o imported_items_queryset')
+        print(list(codes_in_primary_queryset))
         imported_items_queryset = ImportedItem.objects.filter(
             client=client, code__in=codes_in_primary_queryset
         )

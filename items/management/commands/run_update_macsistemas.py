@@ -132,6 +132,7 @@ def convert_df_otx_version_to_df_client(df_client):
 
 def connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log):
     try:
+        print(f"Conectando ao banco de dados para o cliente {client_name}...")
         connection = mysql.connector.connect(
             user=user,
             password=password,
@@ -139,6 +140,7 @@ def connect_and_update(host, user, password, port, database, client_name, client
             port=port,
             database=database
         )
+        print("Conexão estabelecida com sucesso")
 
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão estabelecida com sucesso para o cliente {client_name}\n"
 
@@ -314,7 +316,6 @@ def connect_and_update(host, user, password, port, database, client_name, client
                 f.write(f"Query gerada:\n{update_query}\n")
                 f.write(f"Valores associados:\n{values}\n")
             
-
             cursor.execute(update_query, values)
             connection.commit()
 
@@ -448,12 +449,11 @@ if __name__ == "__main__":
             print('Convertendo o DF para a versao do clinte')
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             initial_log += f'[{timestamp}] - Iniciando conversão  dos dados para o cliente: {client.name} \n'
-            items_df = convert_df_otx_version_to_df_client(items_df)    
-            print('DF convertido')
-            # sys.exit(1)                         
+            items_df = convert_df_otx_version_to_df_client(items_df) 
+                     
             try:
                 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-                initial_log += f'[{timestamp}] - Conectando e atuaizando... \n'                
+                initial_log += f'[{timestamp}] - Conectando e atuaizando... \n' 
                 result, initial_log, mensagem_resultante = connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log)
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"

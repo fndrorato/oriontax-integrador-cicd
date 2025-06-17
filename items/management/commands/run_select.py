@@ -92,11 +92,6 @@ def connect_and_query(host, user, password, port, database, client_name, initial
 
             # Exibir os tipos de dados de cada coluna
             print(df.dtypes)
-
-            # Verificar se há valores nulos
-            print(df.isnull().sum())
-            sys.exit(1)
-
             
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Consulta realizada com sucesso para o cliente {client_name}\n"
             return df, initial_log    
@@ -179,6 +174,47 @@ if __name__ == "__main__":
             )             
             if args.client_id:
                 sys.exit(1)  # Sair com código de erro 1 
+        
+        # Filtra apenas linhas com origem e destino preenchidos
+        df_filtrado = df_client[(df_client['tx_estadoorigem'].notna()) & (df_client['tx_estadodestino'].notna())]
+
+        print(f"Total de linhas filtradas: {df_filtrado.shape[0]}")
+
+        # Coleta os códigos únicos do DataFrame
+        codigos = df_filtrado['cd_produto'].unique().tolist()
+
+        # Busca os itens do cliente 3 com os códigos existentes no DataFrame
+        itens = Item.objects.filter(client_id=3, code__in=codigos)
+        print(f"Total de itens encontrados: {itens.count()}")
+        
+        df_filtrado['cd_produto'] = df_filtrado['cd_produto'].astype(str)
+        # Cria um dicionário com os dados do DataFrame para acesso rápido
+        df_dict = df_filtrado.set_index('cd_produto')[['tx_estadoorigem', 'tx_estadodestino']].to_dict('index')
+        print(f"Total de linhas no dicionário: {len(df_dict)}")
+
+        # Lista para armazenar os itens que serão atualizados
+        itens_para_atualizar = []
+
+        for item in itens:
+            if item.code == '88908':
+                print(f"Item encontrado: {item.code} - {item.description}")
+                print(f"item.code = '{item.code}'")
+                print(f"Chaves exemplo do df_dict: {list(df_dict.keys())[:5]}")
+
+                
+            dados = df_dict.get(item.code)
+            if dados:
+                if item.estado_origem != dados['tx_estadoorigem'] or item.estado_destino != dados['tx_estadodestino']:
+                    item.estado_origem = dados['tx_estadoorigem']
+                    item.estado_destino = dados['tx_estadodestino']
+                    itens_para_atualizar.append(item)
+
+        # Atualiza em massa
+        Item.objects.bulk_update(itens_para_atualizar, ['estado_origem', 'estado_destino'])
+
+        # Exibe o total de linhas atualizadas
+        print(f"{len(itens_para_atualizar)} itens atualizados com sucesso.")            
+        sys.exit(1)
                     
         if df_client is None:
             save_imported_logs(client_id, initial_log)

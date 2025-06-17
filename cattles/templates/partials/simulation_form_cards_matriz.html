@@ -1,0 +1,296 @@
+{# partials/simulation_form_cards.html #}
+<li>
+    <div class="card list-view-media" style="margin-bottom: 0 !important;">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-map-marker-alt fa-2x text-info" data-toggle="tooltip" title="Local onde o gado será pesado"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Local de Pesagem</h6>
+                    <div class="form-group mt-2">
+                        <label for="id_cow_weighing_location">Local de Pesagem</label>
+                        {{ form.cow_weighing_location }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-chart-line fa-2x text-success" data-toggle="tooltip" title="Volume e Preço total das vendas mensais"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Volume e Preço de Venda</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-4">
+                            <label for="id_monthly_sales_volume_kg">Volume de venda (Kg/mês)</label>
+                            {{ form.monthly_sales_volume_kg }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="id_total_sales_per_month">Venda Total (R$/mês)</label>
+                            {{ form.total_sales_per_month.as_widget|safe }}
+                        </div>                        
+                        <div class="col-md-4">
+                            <label for="id_average_price_per_kg">Preço médio (R$/Kg)</label>
+                            {{ form.average_price_per_kg.as_widget }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media" style="margin-bottom: 0 !important;">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-cow fa-2x text-info" data-toggle="tooltip" title="Quantidade de vacas negociadas por mês e por semana, informadas separadamente por origem"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Quantidade de Vacas</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label for="id_cows_per_month_producer">Qtd. vacas / mês - Produtor Rural</label>
+                            {{ form.cows_per_month_producer }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_cows_per_month_slaughterhouse">Qtd. vacas / mês - Frigorífico</label>
+                            {{ form.cows_per_month_slaughterhouse }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_cows_per_week_producer">Qtd. vacas / semana - Produtor Rural</label>
+                            {{ form.cows_per_week_producer }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_cows_per_week_slaughterhouse">Qtd. vacas / semana - Frigorífico</label>
+                            {{ form.cows_per_week_slaughterhouse }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-weight-hanging fa-2x text-warning" data-toggle="tooltip" title="Peso médio por animal, informado em Kg e arroba"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Peso Médio por Vaca</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label for="id_mean_weight_per_cow_producer_arroba">Peso médio produtor (arroba)</label>
+                            {{ form.mean_weight_per_cow_producer_arroba }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_mean_weight_per_cow_slaughterhouse_arroba">Peso médio frigorífico (arroba)</label>
+                            {{ form.mean_weight_per_cow_slaughterhouse_arroba }}
+                        </div>                        
+                        <div class="col-md-6">
+                            <label for="id_mean_weight_per_cow_producer_kg">Peso médio produtor (Kg)</label>
+                            {{ form.mean_weight_per_cow_producer_kg }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_mean_weight_per_cow_slaughterhouse_kg">Peso médio frigorífico (Kg)</label>
+                            {{ form.mean_weight_per_cow_slaughterhouse_kg }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-percentage fa-2x text-danger" data-toggle="tooltip" title="Rendimento percentual esperado na conversão do peso"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Rendimentos</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label for="id_yield_live_cow_pasture_producer_percent">Vaca em pé no pasto - Produtor (%)</label>
+                            {{ form.yield_live_cow_pasture_producer_percent }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_yield_live_cow_pasture_slaughterhouse_percent">Vaca em pé no pasto - Frigorifico (%)</label>
+                            {{ form.yield_live_cow_pasture_slaughterhouse_percent }}
+                        </div>    
+                    </div>
+                    <div class="row mt-2">                    
+                        <div class="col-md-6">
+                            <label for="id_yield_butchered_cow_producer_percent">Vaca casada - Produtor (%)</label>
+                            {{ form.yield_butchered_cow_producer_percent }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_yield_butchered_cow_slaughterhouse_percent">Vaca casada - Frigorifico (%)</label>
+                            {{ form.yield_butchered_cow_slaughterhouse_percent }}
+                        </div>
+                    </div>                    
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-dollar-sign fa-2x text-primary" data-toggle="tooltip" title="Valores de venda por arroba e por quilo da carne"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Preços</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <label for="id_price_closed_per_arroba_producer">Bruto (R$/arroba) produtor</label>
+                            {{ form.price_closed_per_arroba_producer }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_price_per_arroba_slaughterhouse">Bruto (R$/arroba) frigorífico</label>
+                            {{ form.price_closed_per_arroba_slaughterhouse }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_price_net_per_arroba_producer">Líquido (R$/arroba) produtor</label>
+                            {{ form.price_net_per_arroba_producer }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_price_per_arroba_slaughterhouse">Líquido (R$/arroba) frigorífico</label>
+                            {{ form.price_net_per_arroba_slaughterhouse }}
+                        </div>                        
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <label for="id_price_per_kg_butchered_cow_producer">Vaca Casada (R$/kg) produtor</label>
+                            {{ form.price_per_kg_butchered_cow_producer }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_price_per_kg_butchered_cow_slaughterhouse">Vaca Casada (R$/kg) frigorífico</label>
+                            {{ form.price_per_kg_butchered_cow_slaughterhouse }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_price_per_kg_after_butchered_cow_producer">Desossada (R$/kg) produtor</label>
+                            {{ form.price_per_kg_after_butchered_cow_producer }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_price_per_kg_after_butchered_cow_slaughterhouse">Desossada (R$/kg) frigorífico</label>
+                            {{ form.price_per_kg_after_butchered_cow_slaughterhouse }}
+                        </div>                        
+                    </div>                    
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-tools fa-2x text-secondary" data-toggle="tooltip" title="Custo do serviço de abate por animal"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Serviço de Abate</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label for="id_slaughter_service_per_cow_producer">Serviço de abate (R$) produtor</label>
+                            {{ form.slaughter_service_per_cow_producer }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_slaughter_service_per_cow_slaughterhouse">Serviço de abate (R$) frigorífico</label>
+                            {{ form.slaughter_service_per_cow_slaughterhouse }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-truck fa-2x text-info" data-toggle="tooltip" title="Custos de frete entre produtor, frigorífico e loja"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Frete</h6>
+                    <div class="row mt-2">
+                        <div class="col-md-4">
+                            <label for="id_freight_producer_slaughterhouse_producer">Produtor ➝ Frigorífico (produtor)</label>
+                            {{ form.freight_producer_slaughterhouse_producer }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="id_freight_slaughterhouse_store_producer">Frigorífico ➝ Loja (produtor)</label>
+                            {{ form.freight_slaughterhouse_store_producer }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="id_freight_slaughterhouse_store_slaughterhouse">Frigorífico ➝ Loja (frigorífico)</label>
+                            {{ form.freight_slaughterhouse_store_slaughterhouse }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>
+
+<li>
+    <div class="card list-view-media bg-light border">
+        <div class="card-block">
+            <div class="media">
+                <div class="media-left">
+                    <span class="fa fa-calculator fa-2x text-primary" data-toggle="tooltip" title="Resumo dos valores finais da simulação de compra"></span>
+                </div>
+                <div class="media-body">
+                    <h6 class="d-inline-block">Resumo Financeiro</h6>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label for="id_commission_buyer">Mão de Obra - Comprador (1%)</label>
+                            {{ form.commission_buyer }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_total_slaughter_cost">Serviço - Abate por Vaca</label>
+                            {{ form.total_slaughter_cost }}
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label for="id_total_value_producer">Valor Total Compra - Produtor</label>
+                            {{ form.total_value_producer }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_total_value_slaughterhouse">Valor Total Compra - Frigorífico</label>
+                            {{ form.total_value_slaughterhouse }}
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label for="id_profit_gain_comparison">Ganho Potencial na Compra (Produtor x Frigorífico)</label>
+                            {{ form.profit_gain_comparison }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</li>

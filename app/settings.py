@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'api',
     'sales',
     'notifications',
+    'cattles',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -92,7 +93,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'app.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -137,7 +137,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/

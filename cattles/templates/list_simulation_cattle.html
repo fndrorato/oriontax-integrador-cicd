@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    <h4>Simulações</h4>
+    <span>Histórico de Simulações</span>
+{% endblock title %}
+
+{% block content %}
+<div class="row">
+    {% for simulation in simulations %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card list-view-media mb-3">
+            <div class="card-block">
+                <div class="media">
+                    <div class="media-body">
+                        <h5 class="text-primary">
+                            {{ simulation.description|default:"Sem descrição" }}
+                        </h5>
+                        <p class="mb-1">
+                            Criado em: {{ simulation.created_at|date:"d/m/Y H:i" }}
+                        </p>
+                        <p class="mb-2">
+                            Por: {{ simulation.user.get_full_name|default:simulation.user.username }}
+                        </p>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'simulation_edit_matrix_cattle' simulation.pk %}" class="btn btn-sm btn-warning">
+                                <i class="fa fa-edit"></i> Editar
+                            </a>
+                            <form method="post" action="{% url 'simulation_delete_matrix_cattle' simulation.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Tem certeza que deseja excluir?')">
+                                    <i class="fa fa-trash"></i> Excluir
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">Nenhuma simulação encontrada.</div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock content %}

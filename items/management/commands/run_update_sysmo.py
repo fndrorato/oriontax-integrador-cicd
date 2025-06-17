@@ -85,6 +85,27 @@ def connect_and_update(host, user, password, port, database, client_name, items_
                 )
                 for _, row in items_df.iterrows()
             ]
+            
+            # Lista das colunas na ordem correspondente ao INSERT
+            columns = [
+                'sequencial', 'code', 'barcode', 'description', 'ncm',
+                'cest', 'cfop_id', 'icms_cst_id', 'icms_aliquota_id',
+                'icms_aliquota_reduzida', 'protege_id', 'cbenef_id', 'piscofins_cst_id',
+                'pis_aliquota', 'piscofins_cst_id', 'cofins_aliquota',
+                'naturezareceita_code', 'estado_origem', 'estado_destino'
+            ]
+
+            # Cria um novo DataFrame com apenas as colunas selecionadas
+            export_df = items_df[columns].copy()
+            export_df['fl_recebido'] = 'S'  # Adiciona a coluna final do INSERT
+
+            # Define o caminho do CSV temporário
+            csv_path = f"arquivo_enviado_para_sysmo_REDE_ABC.csv"
+
+            # Salva o DataFrame como CSV
+            export_df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+            print(f"CSV exportado com sucesso para: {csv_path}") 
+            sys.exit(0)  # Sair com código de sucesso para depuração  
 
             # for _, row in items_df.iterrows():
             #     print(len(row['barcode']), len(row['description']), len(row['ncm']))  # Verifica os comprimentos
@@ -241,6 +262,7 @@ if __name__ == "__main__":
         else:              
             try:
                 result, initial_log = connect_and_update(host, user, password, port, database, client_name, items_df, initial_log)
+                sys.exit(0)  # Sair com código de sucesso para depuração
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
                 print(f"Erro ao conectar ao cliente {client_name}: {e}") 
