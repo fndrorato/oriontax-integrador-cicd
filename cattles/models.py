@@ -104,11 +104,20 @@ class ButcheryMaster(models.Model):
 
 
 class ButcheryDetail(models.Model):
+    CUT_CLASS_CHOICES = [
+        ('1A', '1ª'),
+        ('2A', '2ª'),
+    ]
+
+    butchery = models.ForeignKey(ButcheryMaster, on_delete=models.CASCADE, related_name='details')    
     user_meat_cut = models.ForeignKey(UserMeatCut, on_delete=models.CASCADE)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
-    
+    weight = models.DecimalField(max_digits=10, decimal_places=3, default=0)
+    cut_class = models.CharField(max_length=2, choices=CUT_CLASS_CHOICES, default='1A')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
 
     

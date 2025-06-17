@@ -77,16 +77,17 @@ class UpdateButcheryView(LoginRequiredMixin, View):
 
     def get(self, request):
         master = get_object_or_404(ButcheryMaster, user=request.user)
-        details = ButcheryDetail.objects.filter(user_meat_cut__user=request.user)
-        available_cuts = MeatCut.objects.filter(active=True)
-        cuts_json = list(available_cuts.values_list('name', flat=True))
+        details = ButcheryDetail.objects.filter(butchery=master)
+        user_cuts = UserMeatCut.objects.filter(user=request.user).order_by('meat_cut')
+        cuts_json = list(user_cuts.values_list('meat_cut', flat=True))  # para autocomplete
 
         context = {
             'master': master,
             'details': details,
-            'available_cuts': available_cuts,
+            'available_cuts': user_cuts,
             'cuts_json': cuts_json,
         }
+        print(context)
         return render(request, self.template_name, context)
 
     def post(self, request, pk):
@@ -133,6 +134,8 @@ class CreateMeatCutView(LoginRequiredMixin, View):
         )
 
         return JsonResponse({
-            'message': 'Corte criado com sucesso.',
-            'name': name
+            'id': user_cut.id,
+            'name': name,
+            'message': 'Corte criado com sucesso.'
         }, status=201)
+

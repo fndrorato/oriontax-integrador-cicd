@@ -1,114 +1,293 @@
+<!-- TEMPLATE CORRIGIDO E ATUALIZADO -->
 {% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>Açougue - Atualização</h4>
+    <span>Tabela de cortes e precificação</span>
+{% endblock title %}
+
+{% block customcss %}
+    <!-- sweet alert framework -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/sweetalert/css/sweetalert.css' %}">
+    <!-- animation nifty modal window effects css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/css/component.css' %}">  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  .form-control, .form-select {
+    border-radius: 6px;
+  }
+  .table td, .table th {
+    vertical-align: middle;
+  }
+  .remove-row {
+    cursor: pointer;
+  }
+</style>
+{% endblock customcss %}
+
+{% block breadcrumb %}
+  <li class="breadcrumb-item"><a href="#">Açougue</a></li>
+  <li class="breadcrumb-item active">Atualizar</li>
+{% endblock breadcrumb %}
 
 {% block content %}
-<div class="container mt-4">
-  <h4 class="mb-3">Atualizar Tabela do Açougue</h4>
+<form method="post" action="" class="form-material">
+  {% csrf_token %}
+  <div class="card">
+    <div class="card-block">
 
-  <form method="post">
-    {% csrf_token %}
-    
-    <!-- Topo: Dados do Master -->
-    <div class="row g-3 mb-4">
-      <div class="col-md-4">
-        <label class="form-label">Preço da Arroba (NF)</label>
-        <input type="number" step="0.01" class="form-control" name="arroba_price_nf" value="{{ master.arroba_price_nf }}">
+      <!-- Dados do Master -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <label class="form-label">Preço da Arroba (NF)</label>
+          <input type="text" class="form-control" name="arroba_price_nf" value="{{ master.arroba_price_nf }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Peso da Nota Fiscal</label>
+          <input type="number" step="0.01" class="form-control" name="invoice_weight" value="{{ master.invoice_weight }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Custo por KG</label>
+          <input type="text" class="form-control" name="cost_per_kg" value="{{ master.cost_per_kg }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Custo Total</label>
+          <input type="text" class="form-control" name="total_cost" value="" readonly="true">
+        </div>        
       </div>
-      <div class="col-md-4">
-        <label class="form-label">Peso da Nota Fiscal</label>
-        <input type="number" step="0.01" class="form-control" name="invoice_weight" value="{{ master.invoice_weight }}">
+
+      <!-- Tabela de Detalhes -->
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered table-striped" id="meat-cuts-table">
+          <thead class="table-success">
+            <tr>
+              <th style="width: 15%;">Descrição</th>
+              <th style="width: 7%;">Tipo</th>
+              <th>Peso (kg)</th>
+              <th style="width: 7%;">Participação</th>
+              <th style="width: 12%;">Custo</th>
+              <th>Preço Venda</th>              
+              <th>Custo no Osso</th>
+              <th>Custo Total</th>
+              <th>Venda Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for detail in details %}
+            <tr>
+              <td>
+                <select class="form-control" name="cuts[{{ forloop.counter0 }}][user_meat_cut_id]" id="user_meat_cut_id_{{ forloop.counter0 }}" required>
+                  {% for cut in available_cuts %}
+                    <option value="{{ cut.id }}" {% if detail.user_meat_cut.id == cut.id %}selected{% endif %}>{{ cut.meat_cut }}</option>
+                  {% endfor %}
+                </select>                
+              </td>
+              <td>
+                <select class="form-control" name="cuts[{{ forloop.counter0 }}][cut_class]" id="cut_class_{{ forloop.counter0 }}" required>
+                  <option value="1A" {% if detail.cut_class == "1A" %}selected{% endif %}>1ª</option>
+                  <option value="2A" {% if detail.cut_class == "2A" %}selected{% endif %}>2ª</option>
+                </select>                  
+              </td>
+              <td>
+                <input type="number" step="0.001" class="form-control" name="cuts[{{ forloop.counter0 }}][weight]" id="weight_{{ forloop.counter0 }}" value="{{ detail.weight|default:'' }}">
+              </td>
+              <td>
+                <input type="text" class="form-control percentage-input" name="cuts[{{ forloop.counter0 }}][contribuition_percent]" id="contribuition_percent_{{ forloop.counter0 }}" readonly>
+              </td>
+              <td>
+                <input type="text" class="form-control money-input" name="cuts[{{ forloop.counter0 }}][meat_cost]" id="meat_cost_{{ forloop.counter0 }}" readonly>
+              </td>
+              <td>
+                <input type="text" class="form-control money-input" name="cuts[{{ forloop.counter0 }}][selling_price]" id="selling_price_{{ forloop.counter0 }}" value="{{ detail.selling_price }}">
+              </td>
+              <td>
+                <input type="text" class="form-control money-input" name="cuts[{{ forloop.counter0 }}][bone_average_cost]" id="bone_average_cost_{{ forloop.counter0 }}" readonly>
+              </td>
+              <td>
+                <input type="text" class="form-control money-input" name="cuts[{{ forloop.counter0 }}][cut_meat_total_cost]" id="cut_meat_total_cost_{{ forloop.counter0 }}" readonly>
+              </td>
+              <td>
+                <input type="text" class="form-control money-input" name="cuts[{{ forloop.counter0 }}][cut_meat_total_sale]" id="cut_meat_total_sale_{{ forloop.counter0 }}" readonly>
+              </td>
+              <td class="text-center">
+                <button type="button" class="btn btn-sm btn-danger remove-row">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="2" class="text-end">Totais:</th>
+              <th><input type="text" class="form-control" id="total_weight" readonly></th>
+              <th></th>
+              <th><input type="text" class="form-control" id="total_meat_cost" readonly></th>
+              <th></th>
+              <th></th>
+              <th><input type="text" class="form-control" id="total_cut_cost" readonly></th>
+              <th><input type="text" class="form-control" id="total_cut_sale" readonly></th>
+              <th></th>
+            </tr>
+          </tfoot>
+          
+        </table>
+        <div class="d-flex gap-2 align-items-center">
+          <button type="button" class="btn btn-success btn-sm" id="add-row"><i class="fas fa-plus"></i> Adicionar Corte</button>
+          <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light" data-toggle="modal" data-target="#addCutModal">Cadastrar novo corte</button>
+        </div>
       </div>
-      <div class="col-md-4">
-        <label class="form-label">Custo por KG</label>
-        <input type="number" step="0.01" class="form-control" name="cost_per_kg" value="{{ master.cost_per_kg }}">
+
+      <div class="text-end mt-4">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Alterações</button>
       </div>
     </div>
+  </div>
+</form>
 
-    <!-- Detalhes dos Cortes -->
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped" id="meat-cuts-table">
-        <thead class="table-success">
-          <tr>
-            <th>Nome do Corte</th>
-            <th>Peso (kg)</th>
-            <th>Preço de Venda</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for detail in details %}
-          <tr>
-            <td>
-              <input type="text" class="form-control meat-cut-input" name="cuts[{{ forloop.counter0 }}][name]" value="{{ detail.user_meat_cut.meat_cut }}">
-              <input type="hidden" name="cuts[{{ forloop.counter0 }}][id]" value="{{ detail.id }}">
-            </td>
-            <td>
-              <input type="number" step="0.01" class="form-control" name="cuts[{{ forloop.counter0 }}][weight]" value="{{ detail.weight }}">
-            </td>
-            <td>
-              <input type="number" step="0.01" class="form-control" name="cuts[{{ forloop.counter0 }}][selling_price]" value="{{ detail.selling_price }}">
-            </td>
-            <td>
-              <button type="button" class="btn btn-danger btn-sm remove-row">Remover</button>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <button type="button" class="btn btn-success btn-sm" id="add-row">+ Adicionar Corte</button>
-      <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#addCutModal">Cadastrar novo corte</button>
-    </div>
-
-    <div class="text-end mt-4">
-      <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-    </div>
-  </form>
-</div>
-
-<!-- Modal: Novo corte -->
+<!-- Modal -->
 <div class="modal fade" id="addCutModal" tabindex="-1" aria-labelledby="addCutModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form method="post" action="{% url 'create_meatcut' %}">
+    <form method="post" action="{% url 'create_meatcut' %}" id="modal-cut-form">
       {% csrf_token %}
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="addCutModalLabel">Cadastrar Novo Corte</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          <h5 class="modal-title">Cadastrar Novo Corte</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Nome do Corte</label>
-            <input type="text" name="name" class="form-control" required>
-          </div>
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" name="active" checked>
-            <label class="form-check-label">Ativo</label>
-          </div>
+          <label class="form-label">Nome do Corte</label>
+          <input type="text" name="name" class="form-control" required>
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-success">Salvar</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
         </div>
       </div>
     </form>
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<datalist id="cut-options">
+  {% for cut in available_cuts %}
+    <option value="{{ cut.meat_cut }}">
+  {% endfor %}
+</datalist>
+{% endblock content %}
+
+
+{% block anotherjs %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
 <script>
+  // Moeda R$
+  function formatMoneyInputs() {
+    document.querySelectorAll('input[name$="[selling_price]"], input[name="cost_per_kg"], input[name="arroba_price_nf"], input[name="total_cost"], input[name$="[meat_cost]"], input[name$="[bone_average_cost]"], input[name$="[cut_meat_total_cost]"], input[name$="[cut_meat_total_sale]"]').forEach(input => {
+      new Cleave(input, {
+        numeral: true,
+        numeralDecimalMark: ',',
+        delimiter: '.',
+        prefix: 'R$ ',
+        numeralDecimalScale: 2,
+        rawValueTrimPrefix: true
+      });
+    });
+  }
+
+  // Porcentagem
+  function formatPercentageInputs() {
+    document.querySelectorAll('input[name$="[contribuition_percent]"]').forEach(input => {
+      new Cleave(input, {
+        numeral: true,
+        numeralDecimalMark: ',',
+        delimiter: '.',
+        suffix: ' %',
+        numeralDecimalScale: 2,
+        rawValueTrimPrefix: true
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    formatMoneyInputs();
+    formatPercentageInputs();
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
+    const invoiceWeightInput = document.querySelector('input[name="invoice_weight"]');
+    const costPerKgInput = document.querySelector('input[name="cost_per_kg"]');
+    const totalCostInput = document.querySelector('input[name="total_cost"]');
+  
+    function parseCurrency(value) {
+      if (!value) return 0;
+      return parseFloat(value.replace(/[R$\s\.]/g, '').replace(',', '.') || 0);
+    }
+  
+    function updateTotalCost() {
+      const invoiceWeight = parseFloat(invoiceWeightInput.value.replace(',', '.') || 0);
+      const costPerKg = parseCurrency(costPerKgInput.value);
+      const total = invoiceWeight * costPerKg;
+  
+      totalCostInput.value = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
+  
+    invoiceWeightInput.addEventListener('input', updateTotalCost);
+    costPerKgInput.addEventListener('input', updateTotalCost);
+  
+    // Executa uma vez ao carregar
+    updateTotalCost();
+
     // Adiciona nova linha
     document.getElementById('add-row').addEventListener('click', function () {
       const table = document.querySelector('#meat-cuts-table tbody');
       const index = table.rows.length;
       const newRow = `
         <tr>
-          <td><input type="text" class="form-control meat-cut-input" name="cuts[${index}][name]" list="cut-options"></td>
-          <td><input type="number" step="0.01" class="form-control" name="cuts[${index}][weight]"></td>
-          <td><input type="number" step="0.01" class="form-control" name="cuts[${index}][selling_price]"></td>
-          <td><button type="button" class="btn btn-danger btn-sm remove-row">Remover</button></td>
+          <td>
+            <select class="form-control" name="cuts[${index}][user_meat_cut_id]" id="user_meat_cut_id_${index}" required>
+              ${[...document.querySelectorAll('select[name$="[user_meat_cut_id]"]')][0].innerHTML}
+            </select>
+          </td>
+          <td>
+            <select class="form-control" name="cuts[${index}][cut_class]" id="cut_class_${index}" required>
+              <option value="1A">1ª</option>
+              <option value="2A">2ª</option>
+            </select>
+          </td>
+          <td>
+            <input type="number" step="0.001" class="form-control" name="cuts[${index}][weight]" id="weight_${index}">
+          </td>
+          <td>
+            <input type="text" class="form-control percentage-input" name="cuts[${index}][contribuition_percent]" id="contribuition_percent_${index}" readonly>
+          </td>
+          <td>
+            <input type="text" class="form-control money-input" name="cuts[${index}][meat_cost]" id="meat_cost_${index}" readonly>
+          </td>
+          <td>
+            <input type="text" class="form-control money-input" name="cuts[${index}][selling_price]" id="selling_price_${index}">
+          </td>
+          <td>
+            <input type="text" class="form-control money-input" name="cuts[${index}][bone_average_cost]" id="bone_average_cost_${index}" readonly>
+          </td>
+          <td>
+            <input type="text" class="form-control money-input" name="cuts[${index}][cut_meat_total_cost]" id="cut_meat_total_cost_${index}" readonly>
+          </td>
+          <td>
+            <input type="text" class="form-control money-input" name="cuts[${index}][cut_meat_total_sale]" id="cut_meat_total_sale_${index}" readonly>
+          </td>
+          <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger remove-row">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
         </tr>
       `;
+
       table.insertAdjacentHTML('beforeend', newRow);
     });
 
@@ -141,31 +320,103 @@
           'X-CSRFToken': data.get('csrfmiddlewaretoken'),
         }
       });
-
       const result = await response.json();
 
       if (response.ok) {
         // Adiciona o novo corte no datalist
-        const datalist = document.getElementById('cut-options');
-        const option = document.createElement('option');
-        option.value = result.name;
-        datalist.appendChild(option);
+        // Adiciona o novo corte a todos os selects existentes
+        const selects = document.querySelectorAll('select[name$="[user_meat_cut_id]"]');
+        selects.forEach(select => {
+          const option = document.createElement('option');
+          option.value = result.id;  // <-- ID retornado da view
+          option.text = result.name;
+          select.appendChild(option);
+        });
+
+        // Adiciona o novo corte ao próximo select (se for usar nas novas linhas)
+        window.latestCreatedCut = { id: result.id, name: result.name };
 
         // Fecha o modal
         form.reset();
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addCutModal'));
-        modal.hide();
+        $('#addCutModal').modal('hide');
+        
       } else {
         alert(result.error || 'Erro ao salvar corte.');
       }
     });
   });
+
+  function parseCurrency(value) {
+    if (!value) return 0;
+    return parseFloat(value.replace(/[R$\s\.]/g, '').replace(',', '.') || 0);
+  }
+  
+  function toCurrency(value) {
+    return `R$ ${value.toFixed(2).replace('.', ',')}`;
+  }
+  
+  function toPercentage(value) {
+    return `${(value * 100).toFixed(2).replace('.', ',')} %`;
+  }
+  
+  function updateCalculatedFields() {
+    const totalCost = parseCurrency(document.querySelector('input[name="total_cost"]').value);
+    const rows = document.querySelectorAll('#meat-cuts-table tbody tr');
+  
+    // Total weight
+    let totalWeight = 0;
+    rows.forEach(row => {
+      const weightInput = row.querySelector('input[name$="[weight]"]');
+      totalWeight += parseFloat(weightInput?.value.replace(',', '.') || 0);
+    });
+  
+    // Calcula por linha
+    rows.forEach(row => {
+      const weight = parseFloat(row.querySelector('input[name$="[weight]"]')?.value.replace(',', '.') || 0);
+      const sellingPrice = parseCurrency(row.querySelector('input[name$="[selling_price]"]')?.value);
+  
+      const contribuitionPercent = totalWeight > 0 ? weight / totalWeight : 0;
+      const meatCost = contribuitionPercent * totalCost;
+      const boneAverageCost = weight > 0 ? meatCost / weight : 0;
+      const cutTotalCost = meatCost;
+      const cutTotalSale = weight * sellingPrice;
+  
+      row.querySelector('input[name$="[contribuition_percent]"]').value = toPercentage(contribuitionPercent);
+      row.querySelector('input[name$="[meat_cost]"]').value = toCurrency(meatCost);
+      row.querySelector('input[name$="[bone_average_cost]"]').value = toCurrency(boneAverageCost);
+      row.querySelector('input[name$="[cut_meat_total_cost]"]').value = toCurrency(cutTotalCost);
+      row.querySelector('input[name$="[cut_meat_total_sale]"]').value = toCurrency(cutTotalSale);
+    });
+  }
+
+  function updateTotals() {
+    updateCalculatedFields(); 
+    let totalWeight = 0;
+    let totalMeatCost = 0;
+    let totalCutCost = 0;
+    let totalCutSale = 0;
+  
+    document.querySelectorAll('#meat-cuts-table tbody tr').forEach(row => {
+      const weight = parseFloat(row.querySelector('input[name$="[weight]"]')?.value.replace(',', '.') || 0);
+      const meatCost = parseFloat(row.querySelector('input[name$="[meat_cost]"]')?.value.replace(/[^\d,]/g, '').replace(',', '.') || 0);
+      const cutCost = parseFloat(row.querySelector('input[name$="[cut_meat_total_cost]"]')?.value.replace(/[^\d,]/g, '').replace(',', '.') || 0);
+      const sale = parseFloat(row.querySelector('input[name$="[cut_meat_total_sale]"]')?.value.replace(/[^\d,]/g, '').replace(',', '.') || 0);
+  
+      totalWeight += weight;
+      totalMeatCost += meatCost;
+      totalCutCost += cutCost;
+      totalCutSale += sale;
+    });
+  
+    document.getElementById('total_weight').value = totalWeight.toFixed(2).replace('.', ',');
+    document.getElementById('total_meat_cost').value = `R$ ${totalMeatCost.toFixed(2).replace('.', ',')}`;
+    document.getElementById('total_cut_cost').value = `R$ ${totalCutCost.toFixed(2).replace('.', ',')}`;
+    document.getElementById('total_cut_sale').value = `R$ ${totalCutSale.toFixed(2).replace('.', ',')}`;
+  }
+  
+  setInterval(updateTotals, 2000); // ou chame em eventos onChange/onInput dos inputs relevantes
+    
+  
 </script>
 
-
-<datalist id="cut-options">
-  {% for cut in available_cuts %}
-    <option value="{{ cut.name }}">
-  {% endfor %}
-</datalist>
-{% endblock %}
+{% endblock anotherjs %}
