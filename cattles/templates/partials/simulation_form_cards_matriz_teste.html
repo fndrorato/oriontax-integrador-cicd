@@ -3,42 +3,23 @@
     <div class="card list-view-media" style="margin-bottom: 0 !important;">
         <div class="card-block">
             <div class="media">
-                <div class="media-left">
-                    <span class="fa fa-map-marker-alt fa-2x text-info" data-toggle="tooltip" title="Local onde o gado será pesado"></span>
-                </div>
-                <div class="media-body">
-                    <h6 class="d-inline-block">Local de Pesagem</h6>
-                    <div class="form-group mt-2">
-                        <label for="id_cow_weighing_location">Local de Pesagem</label>
-                        {{ form.cow_weighing_location }}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</li>
-
-<li>
-    <div class="card list-view-media">
-        <div class="card-block">
-            <div class="media">
-                <div class="media-left">
-                    <span class="fa fa-chart-line fa-2x text-success" data-toggle="tooltip" title="Volume e Preço total das vendas mensais"></span>
-                </div>
-                <div class="media-body">
-                    <h6 class="d-inline-block">Volume e Preço de Venda</h6>
-                    <div class="row mt-2">
-                        <div class="col-md-4">
-                            <label for="id_monthly_sales_volume_kg">Volume de venda (Kg/mês)</label>
-                            {{ form.monthly_sales_volume_kg }}
+                <div class="media-body w-100">
+                    <div class="form-row align-items-end">
+                        <div class="col-md-3">
+                            <label for="id_cow_weighing_location"><small>Local de Pesagem</small></label>
+                            <small>{{ form.cow_weighing_location }}</small>
                         </div>
-                        <div class="col-md-4">
-                            <label for="id_total_sales_per_month">Venda Total (R$/mês)</label>
-                            {{ form.total_sales_per_month.as_widget|safe }}
-                        </div>                        
-                        <div class="col-md-4">
-                            <label for="id_average_price_per_kg">Preço médio (R$/Kg)</label>
-                            {{ form.average_price_per_kg.as_widget }}
+                        <div class="col-md-3">
+                            <label for="id_monthly_sales_volume_kg"><small>Volume de venda (Kg/mês)</small></label>
+                            <small>{{ form.monthly_sales_volume_kg }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_total_sales_per_month"><small>Venda Total (R$/mês)</small></label>
+                            <small>{{ form.total_sales_per_month.as_widget|safe }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_average_price_per_kg"><small>Preço médio (R$/Kg)</small></label>
+                            <small>{{ form.average_price_per_kg.as_widget }}</small>
                         </div>
                     </div>
                 </div>
@@ -51,25 +32,21 @@
     <div class="card list-view-media" style="margin-bottom: 0 !important;">
         <div class="card-block">
             <div class="media">
-                <div class="media-left">
-                    <span class="fa fa-cow fa-2x text-info" data-toggle="tooltip" title="Quantidade de vacas negociadas por mês e por semana, informadas separadamente por origem"></span>
-                </div>
                 <div class="media-body">
-                    <h6 class="d-inline-block">Quantidade de Vacas</h6>
-                    <div class="row mt-2">
-                        <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-3">
                             <label for="id_cows_per_month_producer">Qtd. vacas / mês - Produtor Rural</label>
                             {{ form.cows_per_month_producer }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="id_cows_per_month_slaughterhouse">Qtd. vacas / mês - Frigorífico</label>
                             {{ form.cows_per_month_slaughterhouse }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="id_cows_per_week_producer">Qtd. vacas / semana - Produtor Rural</label>
                             {{ form.cows_per_week_producer }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="id_cows_per_week_slaughterhouse">Qtd. vacas / semana - Frigorífico</label>
                             {{ form.cows_per_week_slaughterhouse }}
                         </div>
@@ -79,7 +56,6 @@
         </div>
     </div>
 </li>
-
 
 <li>
     <div class="card list-view-media">
@@ -286,7 +262,7 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <label for="id_profit_gain_comparison">Ganho Potencial na Compra (Produtor x Frigorífico)</label>
-                            {{ form.profit_gain_comparison|add_class }}
+                            {{ form.profit_gain_comparison }}
                         </div>
                     </div>
                 </div>

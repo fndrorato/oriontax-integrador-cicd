@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    <h4>Operação Gado</h4>
+    <span>Fluxograma Fiscal e Logístico da Cadeia Bovina</span>
+{% endblock title %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Fluxograma Operação Gado</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<style>
+    .etapa-vaca {
+        border: 1px solid #ccc !important;
+        border-radius: 10px !important;
+        padding: 10px;
+        text-align: center !important;
+        vertical-align: top;
+        max-width: 160px;
+    }    
+    .etapa-vaca img {
+        max-height: 80px;
+        margin-bottom: 8px;
+        vertical-align: middle;
+    }    
+    .etapa-box {
+        border: 1px solid #ccc !important;
+        border-radius: 10px !important;
+        padding: 10px;
+        text-align: center !important;
+        max-width: 160px;
+        vertical-align: middle !important;
+        justify-content: center; /* centraliza verticalmente */
+    }
+    .etapa-box img {
+        max-height: 120px;
+        vertical-align: middle;
+    }
+    .seta {
+        font-size: 30px;
+        color: #007bff;
+        text-align: center;
+        vertical-align: middle;
+    }
+</style>
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-block">
+
+                <!-- Tabela principal -->
+                <div class="table-responsive mb-1">
+                    <table class="table table-borderless text-center align-middle">
+                        <tr>
+                            <!-- Etapa 1 -->
+                            <td class="etapa-vaca">
+                                <h6 class="text-center mb-1" style="overflow-wrap: break-word; white-space: normal; font-size: small;">
+                                    <strong>1 - COMPRA DO GADO</strong>
+                                </h6>
+                                <img src="{% static 'assets/images/cattles/vaca.png' %}" alt="Vaca">
+                                <p class="small text-left mb-0" style="white-space: normal; line-height: 1.2;">
+                                    Produtor emite NFE para o Supermercado<br>
+                                    <strong>CFOP:</strong> 5101<br>
+                                    <strong>ICMS:</strong> ISENTO
+                                </p>
+                            </td>
+
+                            <td class="seta"></td>
+
+                            <!-- Etapa 3 -->
+                            <td class="etapa-box">
+                                <img src="{% static 'assets/images/cattles/supermercado.png' %}" alt="Supermercado">
+                            </td>
+
+                            <td class="seta"></td>
+
+                            <!-- Etapa 3 -->
+                            <td class="etapa-box">
+                                <img src="{% static 'assets/images/cattles/frigorifico.png' %}" alt="Frigorífico">
+                            </td>
+
+                            <td class="seta"></td>
+
+                            <!-- Etapa 4 -->
+                            <td class="etapa-box">
+                                <img src="{% static 'assets/images/cattles/supermercado.png' %}" alt="Supermercado">
+                            </td>
+
+                            <td class="seta"></td>
+
+                            <!-- Etapa 5 -->
+                            <td class="etapa-box">
+                                <img src="{% static 'assets/images/cattles/cliente.png' %}" alt="Consumidor">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="7" class="text-center">
+                            </td>
+                        </tr>
+                        <tr>
+                            <!-- Etapa 2 -->
+                            <td class="etapa-box">
+                                <h6 class="text-center mb-1" style="overflow-wrap: break-word; white-space: normal; font-size: small;">
+                                    <strong>2 - TRANSPORTE DO GADO PARA O FRIGORÍFICO</strong>
+                                </h6>
+                                <br>
+                                <p class="small text-left mb-0" style="white-space: normal; line-height: 1.2;">
+                                    Utilizar a mesma NFE de Venda que o Produtor envia ao Supermercado - CFOP: 5101 + GTA<br>
+                                    <strong>Campo de Informação Complementar:</strong><br>
+                                    Obrigatório conter: endereço, CNPJ e I.E. do Frigorífico<br>
+                                    <strong>ICMS:</strong> ISENTO
+                                </p>
+                            </td>
+
+                            <td class="seta"><i class="icofont icofont-rounded-right"></i></td>
+
+                            <!-- Etapa 3 -->
+                            <td class="etapa-box">
+                                <h6 class="text-center mb-1" style="overflow-wrap: break-word; white-space: normal; font-size: small;">
+                                    <strong>3 - REMESSA DE INDUSTRIALIZAÇÃO
+                                        DA COMPRA DO GADO
+                                        POR CONTA E ORDEM DO SUPERMERCADO PARA O FRIGORÍFICO
+                                    </strong>
+                                </h6>
+                                <br>
+                                <p class="small text-left mb-0" style="white-space: normal; line-height: 1.2;">
+                                    Produtor emite NFE de Venda para o Supermercado<br>
+                                    <strong>CFOP:</strong> 5924<br>
+                                    <strong>ICMS:</strong> NÃO TRIBUTADO (CST 41)
+                                </p>
+                            </td>
+
+                            <td class="seta"><i class="icofont icofont-rounded-right"></i></td>
+
+                            <!-- Etapa 4 -->
+                            <td class="etapa-box">
+                                <h6 class="text-center mb-1" style="overflow-wrap: break-word; white-space: normal; font-size: small;">
+                                    <strong>4 - RETORNO DE INDUSTRIALIZAÇÃO</strong>
+                                </h6>
+                                <br>
+                                <p class="small text-left mb-0" style="white-space: normal; line-height: 1.2;">
+                                    Frigorífico emite Nota Fiscal de Retorno
+                                    <br>
+                                    Agraga a Cobrança dos Serviços
+                                    <br><br>
+                                    <strong>ICMS DO GADO:</strong> NÃO TRIBUTADO (CST 41)<br>
+                                    <strong>ICMS DO SERVIÇO:</strong> 12% 
+                                    <span class="text-danger">(VEDADO UTILIZAÇÃO)</span><br>
+
+                                    <strong>CFOP:</strong> 5925
+                                </p>
+                            </td>
+
+                            <td class="seta"><i class="icofont icofont-rounded-right"></i></td>
+
+                            <!-- Etapa 4 -->
+                            <td class="etapa-box">
+                                <h6 class="text-center mb-1" style="overflow-wrap: break-word; white-space: normal; font-size: small;">
+                                    <strong>5 - VENDA CONSUMIDOR FINAL</strong>
+                                </h6>
+                                <br>
+                                <p class="small text-left mb-0" style="white-space: normal; line-height: 1.2;">
+                                    Frigorífico emite Nota Fiscal de Retorno<br>
+                                    <strong>CFOP:</strong> 5102<br>
+                                    <strong>ICMS DÉBITO:</strong> 12%<br>
+                                    <strong>ICMS CRÉDITO:</strong> OUTORGADO DE 9%<br>
+                                    <strong>ICMS EFETIVO:</strong>3%
+                                   <br>
+                                    
+                                    
+                                </p>
+                            </td>
+
+                            <td class="seta"><i class="icofont icofont-rounded-right"></i></td>
+
+                            <!-- Etapa 5 -->
+                            <td class="etapa-box">
+                                <h6 class="text-center mb-1" style="overflow-wrap: break-word; white-space: normal; font-size: small;">
+                                    <strong>6 - OBRIGAÇÕES PARA UTILIZAÇÃO DO BENEFÍCIO</strong>
+                                </h6>
+                                <br>
+                                <p class="small text-left mb-0" style="white-space: normal; line-height: 1.2;">
+                                    Recolhimento de 15% de PROTEGE sobre a Economia (9%)<br><br>
+                                    Recolhimento de 0,5% de FUNDEINFRO sobre a NF do produtor rural
+
+                                </p>
+                            </td>
+                        </tr>                        
+                    </table>
+                </div>
+
+                <!-- Etapa 7 -->
+                <div class="row justify-content-center">
+                    <div class="col-md-12">
+                        <div class="alert text-center" style="background-color: white; color: black; border-color: #333;">
+                            <h6 class="text-center mb-1" style="overflow-wrap: break-word; white-space: normal; font-size: small; color: black;">
+                                <strong>7 - IMPACTOS</strong>
+                            </h6>
+                            ICMS efetivo de 3% s/ a venda (outorgado) + 1,35% de PROTEGE +
+                            estimado de 0,15% de FUNDEINFRO = <strong>4,7%</strong>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

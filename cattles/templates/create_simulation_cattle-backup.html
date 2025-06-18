@@ -3,7 +3,7 @@
 {% load widget_tweaks %}
 
 {% block title %}
-    <h4>MATRIZ DE DECISÃO: COMPRA DO GADO</h4>
+    <h4>Matriz de Decisão</h4>
     <span>Simulação de Compra do Gado</span>
 {% endblock title %}
 
@@ -11,554 +11,101 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            color: #333;
-        }
-        /* Novo container para o cabeçalho superior */
-        .top-header-container {
-            display: flex;
-            gap: 20px; /* Mesma lacuna do main-container para alinhamento visual */
-            margin-bottom: 15px;
-            align-items: center; /* Alinha verticalmente os itens */
-        }
-        .top-header-column {
-            flex: 1; /* Permite que as colunas cresçam */
-        }
-        .top-header-column.select-area {
-            /* Largura da coluna do select deve corresponder à largura da coluna da matriz abaixo */
-            max-width: 100%; /* Ajuste com base no gap */
-            background-color: #004080; /* Fundo azul do cabeçalho */
-            color: #fff;
-            padding: 8px 15px;
-            border-radius: 4px;
-            display: flex; /* Para alinhar label e select */
-            align-items: center;
-            gap: 10px;
-        }
-        .top-header-column.select-area label {
-            margin: 0;
-            font-size: 0.9rem;
-            white-space: nowrap; /* Impede a quebra de linha aqui */
-        }
-        .top-header-column.select-area select {
-            background-color: #fff;
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            width: 100%; /* Faz o select ocupar o espaço restante */
-        }
-
-        .top-header-column.description-area {
-            /* Largura da coluna da descrição deve corresponder à largura da coluna do simulador abaixo */
-            max-width: calc(35% - 10px); /* Ajuste com base no gap */
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            /* ADICIONADO: Estilos para a cor de fundo e padding */
-            background-color: #004080;
-            color: #fff;
-            padding: 8px 15px; /* Mesmo padding do select-area */
-            border-radius: 4px; /* Mesmo border-radius */
-        }
-        .top-header-column.description-area label { /* Removida do HTML, mas mantendo o estilo caso precise re-adicionar */
-            margin-bottom: 0;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-        .top-header-column.description-area input {
-            flex-grow: 1; /* Faz o input ocupar o máximo de espaço */
-            /* Ajuste o estilo do input para se adequar ao fundo escuro */
-            background-color: #fff;
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        .top-header-column.description-area button {
-            white-space: nowrap; /* Evita quebra de linha do botão */
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            /* Cor do botão conforme a imagem (parece um tom de verde/azul mais claro) */
-            background-color: #5cb85c; /* Ou um tom mais próximo da imagem, tipo #4CAF50 ou #4CAF50 */
-            border-color: #5cb85c;
-            color: #fff;
-        }
-
-
-        /* Estilos existentes (não alterados aqui, apenas para contexto) */
-        .main-container {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: flex-start;
-        }
-        .card-column {
-            flex: 1;
-            min-width: 450px;
-        }
-        .card-column.matriz {
-            max-width: 60%;
-        }
-        .card-column.simulador {
-            max-width: 40%;
-        }
-
-        table.simulacao, table.lucratividade {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            margin-bottom: 15px;
-        }
-        table.simulacao th, table.simulacao td,
-        table.lucratividade th, table.lucratividade td {
-            border: 1px solid #cce0f0;
-            padding: 4px 8px;
-            text-align: left;
-            vertical-align: middle;
-        }
-        table.simulacao thead th, table.lucratividade thead th {
-            background-color: #004080;
-            color: #fff;
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            text-align: center;
-            padding: 8px 10px;
-        }
-        table.simulacao tbody th {
-            background-color: #d9e2ef;
-            text-align: center;
-            font-weight: bold;
-            color: #004080;
-        }
-        table.lucratividade tbody th {
-            background-color: #e6f0fa;
-            font-weight: normal;
-        }
-        table.simulacao td input,
-        table.simulacao td select,
-        table.lucratividade td input,
-        table.lucratividade td select {
-            width: 100%;
-            font-size: 0.8rem;
-            padding: 3px 5px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            background-color: #fff;
-        }
-        table.simulacao td input:focus,
-        table.simulacao td select:focus,
-        table.lucratividade td input:focus,
-        table.lucratividade td select:focus {
-            border-color: #007bff;
-            outline: none;
-        }
-        table.simulacao td, table.lucratividade td {
-            text-align: right;
-            padding-right: 5px;
-        }
-        table.simulacao td.text-left, table.lucratividade td.text-left {
-            text-align: left;
-            padding-right: 8px;
-        }
-        table.simulacao td.text-center, table.lucratividade td.text-center {
-            text-align: center;
-        }
-        .static-value {
-            background-color: #e6f0fa;
-            font-weight: bold;
-            padding: 3px 5px;
-            border-radius: 3px;
-            display: block;
-            text-align: right;
-        }
-        .profit-negative {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-        .profit-positive {
-            color: #28a745;
-            font-weight: bold;
-        }
-        .recommendation-box {
-            background-color: #cfe2f3;
-            border: 1px solid #9fc5e8;
-            padding: 10px;
+        .list-view > li + li {
             margin-top: 10px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #004080;
-            border-radius: 4px;
         }
-        .potential-economy-box {
-            margin-top: 15px;
-            border: 1px solid #cce0f0;
-            border-collapse: collapse;
+        .list-view-media {
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            margin-bottom: 0 !important;
         }
-        .potential-economy-box table {
+        .media-body input,
+        .media-body select {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px 12px;
             width: 100%;
-            border-collapse: collapse;
+            font-size: 0.95rem;
+            background-color: #fdfdfd;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
         }
-        .potential-economy-box th, .potential-economy-box td {
-            border: 1px solid #cce0f0;
-            padding: 4px 8px;
-            text-align: right;
-            font-size: 0.8rem;
+        .media-body label {
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: block;
         }
-        .potential-economy-box th {
-            background-color: #e6f0fa;
-            font-weight: bold;
-            text-align: left;
+        .select2-container--default .select2-results__option--highlighted[aria-selected]
+        {
+            background-color: #215c99 !important;
         }
-        .potential-economy-box .header {
-            background-color: #004080;
+         
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            background-color: #215c99 !important;
             color: #fff;
-            font-weight: bold;
-            text-align: center;
-            padding: 6px 0;
-            font-size: 0.85rem;
+            padding: 8px 30px 8px 20px;
         }
-        .potential-economy-box td.label {
-            text-align: left;
-            font-weight: bold;
-            background-color: #e6f0fa;
+        .highlight-card {
+            background-color: #e8f1fb !important;  /* azul claro suave */
+            border-left: 5px solid #215c99;
         }
-        .potential-economy-box td.value {
-            text-align: right;
-        }
-        .potential-economy-box tfoot td {
-            font-weight: bold;
-            background-color: #f0f8ff;
-        }
-        .divider {
-            border-bottom: 1px dashed #aaa;
-            margin: 10px 0;
-        }
-        .label-value-pair {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-        .label-value-pair span {
-            font-size: 0.75rem;
-            color: #555;
-        }
-        .label-value-pair .value-input {
-            flex-grow: 1;
-            margin-left: 5px;
-        }
-        .label-value-pair input {
-            width: calc(100% - 40px);
-        }
-        .dual-value-cell {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .dual-value-cell input {
-            width: 100%;
-        }
+        .economia-input {
+            background-color: #215c99 !important;
+            color: #fff !important;
+            border: 1px solid #215c99;
+        }        
+        
+      
     </style>
 {% endblock customcss %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#">Simulações</a></li>
+{% endblock breadcrumb %}
 
 {% block content %}
 <form method="post" action="" class="form-material">
     {% csrf_token %}
-    {{ form.icms_debit_value }}
-    {{ form.icms_credit_value }}     
-    {{ form.granted_credit_value }} 
-    {{ form.icms_loss_reversal_value }} 
-    {{ form.protege_value }} 
-    {{ form.fundeinfra_value }}    
-    <div class="top-header-container">
-        <div class="top-header-column select-area">
-            <label for="id_cow_weighing_location">Local de Pesagem</label>
-            {{ form.cow_weighing_location }}
-            {% render_field form.description class="form-control" placeholder="Ex: Compra Julho - Gado PO" %}
-            <button type="submit" class="btn btn-primary">Salvar Simulação</button>            
-        </div>
-    </div>
+    <div class="card">
+        <div class="row card-block">
+            <div class="col-md-12">
+                <!-- Nav Tabs -->
+                <ul class="nav nav-tabs md-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#matriz" role="tab">MATRIZ DE DECISÃO: COMPRA DO GADO</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#simulador" role="tab">SIMULADOR DE LUCRATIVIDADE</a>
+                    </li>
+                </ul>
 
-    <div class="main-container">
-        <div class="card-column matriz">
-            <div class="card">
-                <div class="card-block">
-                    <table class="simulacao">
-                        <thead>
-                            <tr>
-                                <th colspan="3" class="text-center">MATRIZ DE DECISÃO: COMPRA DO GADO</th>
-                                <th class="text-center">Produtor Rural</th>
-                                <th class="text-center">Frigorífico</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Volume de Venda</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Kg / Mês</td>
-                                <td>{{ form.monthly_sales_volume_kg|add_class:"text-right" }}</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" colspan="2"></td> {# Vazio para alinhar #}
-                                <td class="text-center">R$ / Mês</td>
-                                <td>{{ form.total_sales_per_month|add_class:"text-right" }}</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" colspan="2"></td> {# Vazio para alinhar #}
-                                <td class="text-center">R$ / Kg</td>
-                                <td>{{ form.average_price_per_kg|add_class:"text-right" }}</td>
-                                <td></td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Quantidade</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Vacas - Mês</td>
-                                <td>{{ form.cows_per_month_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.cows_per_month_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" colspan="2"></td>
-                                <td class="text-center">Vacas - Semana</td>
-                                <td>{{ form.cows_per_week_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.cows_per_week_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Peso</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Arroba</td>
-                                <td>{{ form.mean_weight_per_cow_producer_arroba|add_class:"text-right" }}</td>
-                                <td>{{ form.mean_weight_per_cow_slaughterhouse_arroba|add_class:"text-right" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" colspan="2"></td>
-                                <td class="text-center">Kg</td>
-                                <td>{{ form.mean_weight_per_cow_producer_kg|add_class:"text-right" }}</td>
-                                <td>{{ form.mean_weight_per_cow_slaughterhouse_kg|add_class:"text-right" }}</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Rendimento</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Vaca em Pé (no pasto)</td>
-                                <td>{{ form.yield_live_cow_pasture_producer_percent|add_class:"text-right" }}</td>
-                                <td>{{ form.yield_live_cow_pasture_slaughterhouse_percent|add_class:"text-right" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" colspan="2"></td>
-                                <td class="text-center">Vaca Casada</td>
-                                <td>{{ form.yield_butchered_cow_producer_percent|add_class:"text-right" }}</td>
-                                <td>{{ form.yield_butchered_cow_slaughterhouse_percent|add_class:"text-right" }}</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Preço</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Bruto R$/Arroba</td>
-                                <td>{{ form.price_closed_per_arroba_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.price_closed_per_arroba_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" colspan="2"></td>
-                                <td class="text-center">Líquido R$/Arroba</td>
-                                <td>{{ form.price_net_per_arroba_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.price_net_per_arroba_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Preço</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Vaca Casada R$/Kg</td>
-                                <td>{{ form.price_per_kg_butchered_cow_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.price_per_kg_butchered_cow_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" colspan="2"></td>
-                                <td class="text-center">Pós Desossa R$/Kg</td>
-                                <td>{{ form.price_per_kg_after_butchered_cow_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.price_per_kg_after_butchered_cow_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Serviço</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Abate por Vaca</td>
-                                <td>{{ form.slaughter_service_per_cow_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.slaughter_service_per_cow_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Frete:</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Produtor - Frigorífico</td>
-                                <td>{{ form.freight_producer_slaughterhouse_producer|add_class:"text-right" }}</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" colspan="2"></td>
-                                <td class="text-center">Frigorífico - Supermercado</td>
-                                <td>{{ form.freight_slaughterhouse_store_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.freight_slaughterhouse_store_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Mão de Obra - Comprador</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Comissão de 1%</td>
-                                <td>{{ form.commission_buyer|add_class:"text-right" }}</td>
-                                <td></td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Serviço</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Abate por Vaca</td>
-                                <td>{{ form.total_slaughter_cost|add_class:"text-right" }}</td>
-                                <td></td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">Valor Total Compra</td>
-                                <td class="text-center" style="background-color: #e6f0fa;">Montante R$</td>
-                                <td>{{ form.total_value_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.total_value_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-
-                            <tr>
-                                <td class="text-left" colspan="3" style="background-color: #e6f0fa; font-weight: bold;">Ganho Potencial na Compra (Produtor x Frigorífico)</td>
-                                <td colspan="2" class="text-center">
-                                    {{ form.profit_gain_comparison|add_class:"text-center" }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="card-column simulador">
-            <div class="card">
-                <div class="card-block">
-                    <table class="lucratividade">
-                        <thead>
-                            <tr>
-                                <th colspan="3" class="text-center">SIMULADOR DE LUCRATIVIDADE</th>
-                            </tr>
-                            <tr>
-                                <th class="text-center">Drivers</th>
-                                <th class="text-center">Produtor Rural</th>
-                                <th class="text-center">Frigorífico</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="3" class="text-center divider"></td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" style="background-color: #e6f0fa; font-weight: bold;">ICMS Débito 12%</td>
-                                <td>{{ form.icms_debit_producer|add_class:"text-right" }}</td>
-                                <td>{{ form.icms_debit_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" style="background-color: #e6f0fa; font-weight: bold;">Crédito 12%</td>
-                                <td></td>
-                                <td>{{ form.icms_credit_slaughterhouse|add_class:"text-right" }}</td>
-                            </tr>
-                             <tr>
-                                <td colspan="3" class="text-center divider"></td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" style="background-color: #e6f0fa; font-weight: bold;">Crédito Outorgado 9%</td>
-                                <td>
-                                    {{ form.granted_credit_percent|add_class:"text-right" }}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" style="background-color: #e6f0fa; font-weight: bold;">Estorno ICMS da Perda 25%</td>
-                                <td></td>
-                                <td>
-                                    {{ form.icms_loss_reversal_percent|add_class:"text-right" }}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" style="background-color: #e6f0fa; font-weight: bold;">PROTEGE 1,35%</td>
-                                <td>
-                                    {{ form.protege_percent|add_class:"text-right" }}
-                                </td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" style="background-color: #e6f0fa; font-weight: bold;">FUNDEINFRO 0,50%</td>
-                                <td>
-                                    {{ form.fundeinfra_percent|add_class:"text-right" }}
-                                </td>
-                                <td></td>
-                            </tr>
-                             <tr>
-                                <td colspan="3" class="text-center divider"></td>
-                            </tr>
-                            <tr>
-                                <td class="text-left" style="background-color: #e6f0fa; font-weight: bold;">Impostos Efetivos</td>
-                                <td>
-                                    <span class="dual-value-cell">
-                                        {{ form.tax_producer_real|add_class:"text-right" }}
-                                        {{ form.tax_producer_percent|add_class:"text-right" }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="dual-value-cell">
-                                        {{ form.tax_slaughterhouse_real|add_class:"text-right" }}
-                                        {{ form.tax_slaughterhouse_percent|add_class:"text-right" }}
-                                    </span>                                    
-                                </td>                                
-                            </tr>
-                            <tr>
-                                <td class="text-left" style="background-color: #e6f0fa; font-weight: bold;">Margem de Lucro Efetiva</td>
-                                <td>
-                                    <span class="dual-value-cell">
-                                        {{ form.profit_producer_real|add_class:"text-right" }}
-                                        {{ form.profit_producer_percent|add_class:"text-right" }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="dual-value-cell">
-                                        {{ form.profit_slaughterhouse_real|add_class:"text-right" }}
-                                        {{ form.profit_slaughterhouse_percent|add_class:"text-right" }}
-                                    </span>                                    
-                                </td>                                
-                            </tr>                            
-                        </tbody>
-                    </table>
-                    <div class="potential-economy-box">
-                        <div class="header">MELHOR OPÇÃO</div>
-                    </div>
-                    <div class="recommendation-box">
-                        <div class="col-md-12 text-center" id="melhor_opcao_container">
-                            <h4 id="melhor_opcao" class="font-weight-bold py-2">Frigorífico</h4>                            
-                        </div>   
+                <!-- Tab Content -->
+                <div class="tab-content card-block">
+                    <!-- Aba 1: Matriz -->
+                    <div class="tab-pane active" id="matriz" role="tabpanel">
+                        <ul class="list-view">
+                            {% include "partials/simulation_form_cards_matriz_teste.html" %}
+                        </ul>
                     </div>
 
-                    <div class="divider"></div>
-                    <div class="divider"></div>
+                    <!-- Aba 2: Simulador -->
+                    <div class="tab-pane" id="simulador" role="tabpanel">
+                        <ul class="list-view">
+                            {% include "partials/simulation_form_cards_lucratividade.html" %}
+                        </ul>
+                    </div>
 
-                    <div class="potential-economy-box">
-                        <div class="header">ECONOMIA POTENCIAL</div>
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <td class="text-center" style="background-color: #e6f0fa; font-weight: bold;">Mensal</td>
-                                    <td class="text-center" style="background-color: #e6f0fa; font-weight: bold;">Anual</td>
-                                    <td class="text-center" style="background-color: #e6f0fa; font-weight: bold;">Arroba</td>
-                                    <td class="text-center" style="background-color: #e6f0fa; font-weight: bold;">Kg</td>
-                                </tr>
-                                <tr>
-                                    <td>{{ form.economia_mensal }}</td>
-                                    <td>{{ form.economia_anual }}</td>
-                                    <td>{{ form.economia_arroba }}</td>
-                                    <td>{{ form.economia_kg }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Descrição e botão -->
+                    <div class="form-group row align-items-center mt-4">
+                        <label for="id_simulation_description" class="col-md-3 col-form-label text-md-right font-weight-bold">
+                            Descrição da Simulação:
+                        </label>
+                        <div class="col-md-6">
+                            <input type="text" id="id_description" name="description"
+                                class="form-control" placeholder="Ex: Compra Julho - Gado PO">
+                        </div>
+                        <div class="col-md-3 text-right">
+                            <button type="submit" class="btn btn-primary">Salvar Simulação</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -924,7 +471,6 @@
         function calcularTotalVendaMes() {
             const qtd = volume.getNumber();
             const preco = precoMedio.getNumber();
-            console.log(`Calculando total venda: qtd=${qtd}, preco=${preco}`);
             if (qtd > 0 && preco > 0) {
                 totalVenda.set(qtd * preco);
             } else {
@@ -1310,9 +856,7 @@
         calcularImpostoEfetivoFrigorificoReal();
         calcularImpostoEfetivoFrigorificoPercent();   
         calcularLucroEfetivoFrigorificoReal();
-        calcularLucroEfetivoFrigorificoPercent();  
-        calcularLucroEfetivoProdutorReal();
-        calcularLucroEfetivoProdutorPercent();               
+        calcularLucroEfetivoFrigorificoPercent();        
         definirMelhorOpcao();
 
     });

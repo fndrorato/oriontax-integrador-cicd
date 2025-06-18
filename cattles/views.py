@@ -6,7 +6,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.http import JsonResponse
-from django.views.generic import ListView, UpdateView
+from django.views.generic import ListView, UpdateView, TemplateView
 from django.views.generic.edit import CreateView, DeleteView
 from django.urls import reverse_lazy
 from rolepermissions.decorators import has_role_decorator
@@ -16,6 +16,9 @@ from cattles.models import (
 from cattles.forms import MatrixSimulationForm
 
 
+class OperationGadoView(TemplateView):
+    template_name = 'guide_cattle_operation.html'
+    
 class MatrixSimulationListView(LoginRequiredMixin, ListView):
     model = MatrixSimulation
     template_name = 'list_simulation_cattle.html'  # mesmo nome do template criado

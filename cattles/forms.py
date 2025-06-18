@@ -269,12 +269,19 @@ class MatrixSimulationForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'class': 'form-control autonumeric economia-input', 'readonly': True})
     )
     # Campos HiddenInput
-    icms_debit_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
-    icms_credit_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
-    granted_credit_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
-    icms_loss_reversal_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
-    protege_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
-    fundeinfra_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
+    # icms_debit_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
+    # icms_credit_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
+    # granted_credit_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
+    # icms_loss_reversal_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
+    # protege_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
+    # fundeinfra_value = BrazilianDecimalField(required=False, widget=forms.HiddenInput())
+    
+    icms_debit_value = forms.DecimalField(required=False, widget=forms.HiddenInput())
+    icms_credit_value = forms.DecimalField(required=False, widget=forms.HiddenInput())
+    granted_credit_value = forms.DecimalField(required=False, widget=forms.HiddenInput())
+    icms_loss_reversal_value = forms.DecimalField(required=False, widget=forms.HiddenInput())
+    protege_value = forms.DecimalField(required=False, widget=forms.HiddenInput())
+    fundeinfra_value = forms.DecimalField(required=False, widget=forms.HiddenInput())
 
 
     class Meta:
@@ -294,13 +301,13 @@ class MatrixSimulationForm(forms.ModelForm):
             self.fields['cow_weighing_location'] = forms.ChoiceField(
                 label="Onde será pesada a vaca?",
                 choices=[(opt.value, opt.label) for opt in options],
-                widget=forms.Select(attrs={'class': 'form-control select2 custom-select-bg'})
+                widget=forms.Select(attrs={'class': 'form-control custom-select-bg'})
             )
         except FieldConfiguration.DoesNotExist:
             self.fields['cow_weighing_location'] = forms.ChoiceField(
                 label="Onde será pesada a vaca?",
                 choices=[],
-                widget=forms.Select(attrs={'class': 'form-control select2 custom-select-bg'})
+                widget=forms.Select(attrs={'class': 'form-control  custom-select-bg'})
             )
 
 
@@ -322,7 +329,8 @@ class MatrixSimulationForm(forms.ModelForm):
                 if option:
                     # Converte para Decimal antes de definir o initial
                     # pois o valor da opção pode vir como string
-                    self.fields[field_name].initial = BrazilianDecimalField().to_python(option.value)
+                    # self.fields[field_name].initial = BrazilianDecimalField().to_python(option.value)
+                    self.fields[field_name].initial = option.value
         except FieldConfiguration.DoesNotExist as e:
             print(f"Configuração de campo não encontrada: {e}")
             # Lidar com o erro de forma apropriada, talvez definindo defaults ou logando.

@@ -1,3 +1,4 @@
+<!-- TEMPLATE CORRIGIDO E ATUALIZADO -->
 {% extends "base.html" %}
 {% load static %}
 {% load widget_tweaks %}
@@ -8,86 +9,31 @@
 {% endblock title %}
 
 {% block customcss %}
+    <!-- sweet alert framework -->
     <link rel="stylesheet" type="text/css" href="{% static 'bower_components/sweetalert/css/sweetalert.css' %}">
+    <!-- animation nifty modal window effects css -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/css/component.css' %}">  
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-  /* Base para todos os inputs e selects */
   .form-control, .form-select {
-    border-radius: 4px; /* Levemente menor para um visual mais compacto */
-    padding: 0.2rem 0.5rem; /* Diminui o padding interno */
-    height: calc(1.8rem + 2px); /* Ajusta a altura dos inputs/selects */
-    font-size: 0.85rem; /* Fonte um pouco menor */
-  }
-
-  /* Ajustes para a tabela */
-  .table {
-    margin-bottom: 10px; /* Reduz o espaço abaixo da tabela */
+    border-radius: 6px;
   }
   .table td, .table th {
     vertical-align: middle;
-    padding: 0.3rem 0.5rem; /* Reduz o padding das células da tabela */
-    font-size: 0.8rem; /* Fonte menor para o conteúdo da tabela */
-  }
-  .table th { /* Ajusta a altura do cabeçalho da tabela */
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-
-  /* Outros ajustes específicos para inputs */
-  .money-input, .percentage-input, .weight-input {
-    text-align: right;
   }
   .remove-row {
     cursor: pointer;
   }
-
-  /* Ajustes para a row principal de dados do master */
-  .row.mb-4 {
-    margin-bottom: 1rem !important; /* Reduz o margin-bottom para esta linha específica */
+  .money-input {
+    text-align: right;
   }
-  .row.mb-4 .col-md-3 label {
-    font-size: 0.8rem; /* Labels um pouco menores */
-    margin-bottom: 0.2rem; /* Reduz o espaçamento abaixo das labels */
-    display: block; /* Garante que a label ocupe seu próprio espaço */
+  .percentage-input {
+    text-align: right;
   }
-
-  /* Botões */
-  .btn {
-    padding: 0.375rem 0.75rem; /* Padding padrão de botões bootstrap, ajustável se precisar */
-    font-size: 0.85rem; /* Fonte menor para botões */
-    line-height: 1.5; /* Altura da linha para consistência */
-    border-radius: 4px;
+  .weight-input {
+    text-align: right;
   }
-  .btn-sm { /* Botões pequenos */
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-  }
-
-  /* Footer da tabela (tfoot) */
-  .table-light th, .table-light td {
-    padding: 0.4rem 0.5rem; /* Ajusta o padding do footer da tabela */
-  }
-  .table-light input.form-control {
-    height: calc(1.8rem + 2px); /* Mantém a altura dos inputs no footer */
-    font-size: 0.8rem; /* Fonte consistente com o corpo da tabela */
-  }
-
-  /* Alinhamento dos elementos abaixo da tabela */
-  .d-flex.gap-2.align-items-center {
-    gap: 0.5rem !important; /* Reduz o espaçamento entre os botões */
-    margin-bottom: 1rem; /* Reduz o espaço abaixo dos botões */
-  }
-  
-  /* Ajuste para o rodapé do formulário */
-  .text-end.mt-4 {
-    margin-top: 1rem !important; /* Reduz o margin-top */
-  }
-
-  /* Card block padding */
-  .card-block {
-    padding: 15px; /* Reduz o padding do card block se estiver muito grande */
-  }
+    
 </style>
 {% endblock customcss %}
 
@@ -102,6 +48,7 @@
   <div class="card">
     <div class="card-block">
       <input type="hidden" name="master_id" value="{{ master.id }}">
+      <!-- Dados do Master -->
       <div class="row mb-4">
         <div class="col-md-3">
           <label class="form-label">Preço da Arroba (NF)</label>
@@ -121,6 +68,7 @@
         </div>        
       </div>
 
+      <!-- Tabela de Detalhes -->
       <div class="table-responsive mb-4">
         <table class="table table-bordered table-striped" id="meat-cuts-table">
           <thead class="table-success">
@@ -211,6 +159,7 @@
   </div>
 </form>
 
+<!-- Modal -->
 <div class="modal fade" id="addCutModal" tabindex="-1" aria-labelledby="addCutModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form method="post" action="{% url 'create_meatcut' %}" id="modal-cut-form">
@@ -245,6 +194,7 @@
 
 {% block anotherjs %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cleave.js/1.6.0/cleave.min.js"></script>
+    <!-- sweet alert js -->
     <script type="text/javascript" src="{% static 'bower_components/sweetalert/js/sweetalert.min.js' %}"></script>
 
 <script>
@@ -354,28 +304,12 @@
       table.insertAdjacentHTML('beforeend', newRow);
       // Reaplica Cleave.js nos novos campos de moeda
       formatMoneyInputs();      
-      // Também reaplica Cleave.js nos novos campos de porcentagem
-      formatPercentageInputs();
     });
 
     // Remover linha
     document.addEventListener('click', function (e) {
-      if (e.target.closest('.remove-row')) { // Use closest para garantir que o clique no ícone funcione
+      if (e.target.classList.contains('remove-row')) {
         e.target.closest('tr').remove();
-        // Reindexar as linhas após a remoção para manter a consistência com `forloop.counter0`
-        document.querySelectorAll('#meat-cuts-table tbody tr').forEach((row, idx) => {
-            row.querySelectorAll('[name^="cuts["]').forEach(element => {
-                const nameAttr = element.getAttribute('name');
-                if (nameAttr) {
-                    element.setAttribute('name', nameAttr.replace(/cuts\[\d+\]/, `cuts[${idx}]`));
-                }
-                const idAttr = element.getAttribute('id');
-                if (idAttr) {
-                    element.setAttribute('id', idAttr.replace(/_\d+$/, `_${idx}`));
-                }
-            });
-        });
-        updateTotals(); // Atualiza os totais após remover uma linha
       }
     });
 
@@ -404,6 +338,7 @@
       const result = await response.json();
 
       if (response.ok) {
+        // Adiciona o novo corte no datalist
         // Adiciona o novo corte a todos os selects existentes
         const selects = document.querySelectorAll('select[name$="[user_meat_cut_id]"]');
         selects.forEach(select => {
@@ -413,13 +348,8 @@
           select.appendChild(option);
         });
 
-        // Opcional: Adiciona ao datalist (se estiver sendo usado para autocomplete em algum lugar)
-        const datalist = document.getElementById('cut-options');
-        if (datalist) {
-            const option = document.createElement('option');
-            option.value = result.name;
-            datalist.appendChild(option);
-        }
+        // Adiciona o novo corte ao próximo select (se for usar nas novas linhas)
+        window.latestCreatedCut = { id: result.id, name: result.name };
 
         // Fecha o modal
         form.reset();
@@ -433,7 +363,6 @@
 
   function parseCurrency(value) {
     if (!value) return 0;
-    // Remove "R$", pontos de milhar e troca vírgula por ponto decimal
     return parseFloat(value.replace(/[R$\s\.]/g, '').replace(',', '.') || 0);
   }
   
@@ -446,8 +375,7 @@
   }
   
   function updateCalculatedFields() {
-    const totalCostInput = document.querySelector('input[name="total_cost"]');
-    const totalCost = parseCurrency(totalCostInput.value); // Obtém o valor do Custo Total
+    const totalCost = parseCurrency(document.querySelector('input[name="total_cost"]').value);
     const rows = document.querySelectorAll('#meat-cuts-table tbody tr');
   
     // Total weight
@@ -459,16 +387,13 @@
   
     // Calcula por linha
     rows.forEach(row => {
-      const weightInput = row.querySelector('input[name$="[weight]"]');
-      const sellingPriceInput = row.querySelector('input[name$="[selling_price]"]');
-
-      const weight = parseFloat(weightInput?.value.replace(',', '.') || 0);
-      const sellingPrice = parseCurrency(sellingPriceInput?.value);
+      const weight = parseFloat(row.querySelector('input[name$="[weight]"]')?.value.replace(',', '.') || 0);
+      const sellingPrice = parseCurrency(row.querySelector('input[name$="[selling_price]"]')?.value);
   
       const contribuitionPercent = totalWeight > 0 ? weight / totalWeight : 0;
       const meatCost = contribuitionPercent * totalCost;
       const boneAverageCost = weight > 0 ? meatCost / weight : 0;
-      const cutTotalCost = meatCost; // Conforme lógica atual, custo do corte é o custo da carne
+      const cutTotalCost = meatCost;
       const cutTotalSale = weight * sellingPrice;
   
       row.querySelector('input[name$="[contribuition_percent]"]').value = toPercentage(contribuitionPercent);
@@ -480,7 +405,7 @@
   }
 
   function updateTotals() {
-    updateCalculatedFields(); // Garante que os campos individuais estão atualizados antes de somar
+    updateCalculatedFields(); 
     let totalWeight = 0;
     let totalMeatCost = 0;
     let totalCutCost = 0;
@@ -488,9 +413,9 @@
   
     document.querySelectorAll('#meat-cuts-table tbody tr').forEach(row => {
       const weight = parseFloat(row.querySelector('input[name$="[weight]"]')?.value.replace(',', '.') || 0);
-      const meatCost = parseCurrency(row.querySelector('input[name$="[meat_cost]"]')?.value);
-      const cutCost = parseCurrency(row.querySelector('input[name$="[cut_meat_total_cost]"]')?.value);
-      const sale = parseCurrency(row.querySelector('input[name$="[cut_meat_total_sale]"]')?.value);
+      const meatCost = parseFloat(row.querySelector('input[name$="[meat_cost]"]')?.value.replace(/[^\d,]/g, '').replace(',', '.') || 0);
+      const cutCost = parseFloat(row.querySelector('input[name$="[cut_meat_total_cost]"]')?.value.replace(/[^\d,]/g, '').replace(',', '.') || 0);
+      const sale = parseFloat(row.querySelector('input[name$="[cut_meat_total_sale]"]')?.value.replace(/[^\d,]/g, '').replace(',', '.') || 0);
   
       totalWeight += weight;
       totalMeatCost += meatCost;
@@ -498,26 +423,13 @@
       totalCutSale += sale;
     });
   
-    document.getElementById('total_weight').value = totalWeight.toFixed(3).replace('.', ','); // Peso com 3 casas
-    document.getElementById('total_meat_cost').value = toCurrency(totalMeatCost);
-    document.getElementById('total_cut_cost').value = toCurrency(totalCutCost);
-    document.getElementById('total_cut_sale').value = toCurrency(totalCutSale);
+    document.getElementById('total_weight').value = totalWeight.toFixed(2).replace('.', ',');
+    document.getElementById('total_meat_cost').value = `R$ ${totalMeatCost.toFixed(2).replace('.', ',')}`;
+    document.getElementById('total_cut_cost').value = `R$ ${totalCutCost.toFixed(2).replace('.', ',')}`;
+    document.getElementById('total_cut_sale').value = `R$ ${totalCutSale.toFixed(2).replace('.', ',')}`;
   }
   
-  // Melhor abordagem para gatilhar updates: em eventos de input/change
-  document.addEventListener('input', function(e) {
-    // Escuta eventos nos campos de input da tabela e nos campos mestres
-    if (e.target.matches('input[name^="cuts["][name$="[weight]"]') ||
-        e.target.matches('input[name^="cuts["][name$="[selling_price]"]') ||
-        e.target.matches('input[name="invoice_weight"]') ||
-        e.target.matches('input[name="cost_per_kg"]')) {
-      updateTotals();
-    }
-  });
-
-  // Inicializa os totais e cálculos ao carregar a página
-  document.addEventListener('DOMContentLoaded', updateTotals);
-
+  setInterval(updateTotals, 2000); // ou chame em eventos onChange/onInput dos inputs relevantes
 
   document.querySelector('form.form-material').addEventListener('submit', function (e) {
     // Evita envio imediato
@@ -534,12 +446,12 @@
     const costPerKg = parseCurrency(document.querySelector('input[name="cost_per_kg"]').value);
   
     // Validação do peso da nota e custo por kg
-    if (isNaN(invoiceWeight) || invoiceWeight <= 0) {
+    if (!invoiceWeight || invoiceWeight <= 0) {
       isValid = false;
       messages.push('O campo "Peso da Nota Fiscal" é obrigatório e deve ser maior que zero.');
     }
   
-    if (isNaN(costPerKg) || costPerKg <= 0) {
+    if (!costPerKg || costPerKg <= 0) {
       isValid = false;
       messages.push('O campo "Custo por KG" é obrigatório e deve ser maior que zero.');
     }
@@ -548,8 +460,8 @@
       const cutSelect = row.querySelector(`select[name="cuts[${index}][user_meat_cut_id]"]`);
       const cutValue = cutSelect?.value;
       const cutClass = row.querySelector(`select[name="cuts[${index}][cut_class]"]`)?.value;
-      const weight = parseFloat(row.querySelector(`input[name="cuts[${index}][weight]"]`)?.value.replace(',', '.') || 0);
-      const sellingPrice = parseCurrency(row.querySelector(`input[name="cuts[${index}][selling_price]"]`)?.value);
+      const weight = row.querySelector(`input[name="cuts[${index}][weight]"]`)?.value;
+      const sellingPrice = row.querySelector(`input[name="cuts[${index}][selling_price]"]`)?.value;
   
       // Verifica cortes duplicados
       if (cutValue) {
@@ -571,13 +483,13 @@
       }
   
       // Verifica peso
-      if (isNaN(weight) || weight <= 0) {
+      if (!weight || parseFloat(weight.replace(',', '.')) <= 0) {
         isValid = false;
         messages.push(`Informe um peso válido na linha ${index + 1}.`);
       }
   
       // Verifica preço de venda
-      if (isNaN(sellingPrice) || sellingPrice <= 0) {
+      if (!sellingPrice || parseCurrency(sellingPrice) <= 0) {
         isValid = false;
         messages.push(`Informe um preço de venda válido na linha ${index + 1}.`);
       }
