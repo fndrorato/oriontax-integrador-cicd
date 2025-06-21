@@ -1,0 +1,629 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    <h4>SIMULAÇÃO DE COMPRAS</h4>
+    <span>Matriz para simulação de compras entre estados</span>
+{% endblock title %}
+
+{% block customcss %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS fornecido por você, com algumas pequenas adaptações para o template Django */
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        /* Novo container para o cabeçalho superior */
+        .top-header-container {
+            display: flex;
+            gap: 20px; /* Mesma lacuna do main-container para alinhamento visual */
+            margin-bottom: 15px;
+            align-items: center; /* Alinha verticalmente os itens */
+            flex-wrap: wrap; /* Para responsividade em telas menores */
+            background-color: #004080;
+        }
+        .top-header-column {
+            /* flex: 1; Removido para controle mais preciso de largura com max-width */
+        }
+        .top-header-column.select-area {
+            /* Largura da coluna do select deve corresponder à largura da coluna da matriz abaixo */
+            /* Removido max-width: 100%; para permitir que flex-basis controle */
+            flex-basis: 30%; /* Mantido como antes, ajuste se precisar de mais espaço */
+            max-width: 30%; /* Mantido como antes, ajuste se precisar de mais espaço */
+            background-color: #004080; /* Fundo azul do cabeçalho */
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center; /* Centraliza horizontalmente */
+            align-items: center;    /* Centraliza verticalmente (já estava lá) */
+            gap: 0; /* ou remova a propriedade 'gap' se não houver outros itens */
+        }
+        
+        .top-header-column.select-area h6 {
+            margin: 0; /* Remover margem padrão do h6 para evitar espaçamentos indesejados */
+            text-align: center; /* Garante que o texto dentro do h6 também esteja centralizado */
+            width: 100%; /* Opcional: Garante que o h6 ocupe toda a largura disponível para centralizar o texto */
+        }
+
+        .top-header-column.description-area {
+            flex-basis: calc(70% - 20px); /* Ajuste para ocupar a largura do simulador */
+            max-width: calc(70% - 20px); /* Ajuste com base no gap */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #004080;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 4px;
+        }
+        .top-header-column.description-area label {
+            margin-bottom: 0;
+            font-weight: bold;
+            white-space: nowrap;
+            font-size: 0.9rem; /* Consistente com o outro label */
+        }
+        .top-header-column.description-area input {
+            flex-grow: 1; /* Faz o input ocupar o máximo de espaço */
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .top-header-column.description-area button {
+            white-space: nowrap; /* Evita quebra de linha do botão */
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            background-color: #5cb85c;
+            border-color: #5cb85c;
+            color: #fff;
+            border-radius: 4px; /* Adicionar border-radius para consistência */
+            cursor: pointer;
+        }
+
+
+        /* Estilos da Tabela (adaptação do CSS fornecido para sua tabela .table-bordered) */
+        .table-simulacao { /* Nova classe para sua tabela */
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+        }
+        .table-simulacao th, .table-simulacao td {
+            border: 1px solid #cce0f0;
+            padding: 4px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .table-simulacao thead th {
+            background-color: #004080;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 8px 10px;
+        }
+        .table-simulacao tbody th {
+            background-color: #fff;
+            text-align: center; 
+            font-weight: bold;
+            color: #070707;
+        }
+        /* Estilos para inputs e selects dentro da tabela */
+        .table-simulacao td input,
+        .table-simulacao td select {
+            width: 100%;
+            font-size: 0.8rem;
+            padding: 3px 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc; /* Bordas finas como no CSS fornecido */
+            border-radius: 3px;
+            background-color: #fff;
+            height: auto !important;
+            text-align: center; /* Centraliza o texto nos inputs/selects */
+            -webkit-appearance: none; /* Remover estilo padrão do select */
+            -moz-appearance: none;
+            appearance: none;
+        }
+        .table-simulacao td input[readonly] { /* Estilo para campos somente leitura */
+            background-color: #e6f0fa; /* Mais claro para indicar que é um resultado */
+            font-weight: bold;
+            border-color: #cce0f0; /* Borda mais suave */
+            cursor: default;
+        }
+        .table-simulacao td input:focus,
+        .table-simulacao td select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        .table-simulacao td {
+            text-align: right; /* Default para valores */
+            padding-right: 5px;
+        }
+        .table-simulacao td.text-left { /* Para a descrição na tabela, se ela voltar para lá */
+            text-align: left;
+            padding-right: 8px;
+        }
+        .table-simulacao td.text-center {
+            text-align: center;
+        }
+
+        /* Estilos para as linhas de resultado */
+        .result-row th {
+            background-color: #e6f0fa !important; /* Mais claro para resultados */
+            color: #004080 !important;
+            font-weight: bold !important;
+        }
+        .result-row td {
+             background-color: #f0f8ff; /* Fundo diferente para células de resultado */
+        }
+        /* Estilos para o rodapé (Melhor Opção) */
+        .table-simulacao tfoot th {
+            background-color: #004080 !important;
+            color: #fff !important;
+            font-weight: bold !important;
+            text-align: right !important; /* Alinha "Melhor Opção" à direita */
+            padding-right: 15px !important;
+            font-size: 0.9rem !important;
+        }
+        .table-simulacao tfoot td {
+            background-color: #f0f8ff !important; /* Azul claro para o valor da melhor opção */
+            font-weight: bold !important;
+            color: #004080 !important; /* Cor do texto */
+            font-size: 0.9rem !important;
+            text-align: center !important; /* Centraliza o texto do resultado */
+        }
+        
+        /* Remove o "R$" direto no HTML e usa formatação JS */
+        /* .table-simulacao td:nth-child(2),
+        .table-simulacao td:nth-child(3) {
+            position: relative;
+        }
+        .table-simulacao td:nth-child(2)::before,
+        .table-simulacao td:nth-child(3)::before {
+            content: "R$ ";
+            position: absolute;
+            left: 5px;
+            color: #333;
+            font-size: 0.8rem;
+            line-height: normal;
+        } */
+        /* Estilos para remover spinners de input type="number" */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+{% endblock customcss %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#">Simulações</a></li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<form method="post" action="" class="form-material">
+    {% csrf_token %}
+
+    <div class="top-header-container">
+        <div class="top-header-column select-area">
+            <h6>
+                <strong>
+                    SIMULADOR DE COTAÇÃO DE PREÇO
+                </strong>
+            </h6>
+        </div>
+        <div class="top-header-column description-area">
+            <label for="id_simulation_description">Descrição:</label>
+            {% render_field form.simulation_description placeholder="Descrição da Simulação" %}
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="card-column">
+            <div class="card">
+                <div class="card-block">    
+                    <table class="table-simulacao">
+                        <tbody>
+                            <tr>
+                                <th>Produto é 7% no ICMS?</th>
+                                <td colspan="2" class="text-center">{% render_field form.product_icms_7 %} </td>
+                            </tr>            
+                            <tr>
+                                <th>Produto é tributado PIS/COFINS?</th>
+                                <td colspan="2" class="text-center">{% render_field form.product_pis_cofins %}</td>
+                            </tr>
+                            <tr>
+                                <th>Descrição do Produto</th>
+                                <td colspan="2" class="text-center">{% render_field form.product_description placeholder="Descrição do Produto" %}</td>
+                            </tr>                            
+                            <tr>
+                                <th>Estado de compra</th>
+                                <td>{% render_field form.state_option_01 %}</td>
+                                <td>{% render_field form.state_option_02 %}</td>
+                            </tr>
+                            <tr>
+                                <th>Perfil do Fornecedor</th>
+                                <td>{% render_field form.supplier_profile_01 %}</td>
+                                <td>{% render_field form.supplier_profile_02 %}</td>
+                            </tr>
+                            <tr>
+                                <th>Valor do produto</th>
+                                <td>{% render_field form.product_price_01 %}</td>
+                                <td>{% render_field form.product_price_02 %}</td>
+                            </tr>
+                            <tr>
+                                <th>Frete</th>
+                                <td>{% render_field form.freight_01 %}</td>
+                                <td>{% render_field form.freight_02 %}</td>
+                            </tr>
+                            <tr>
+                                <th>Custos adicionais</th>
+                                <td>{% render_field form.additional_costs_01 %}</td>
+                                <td>{% render_field form.additional_costs_02 %}</td>
+                            </tr>
+                            <tr>
+                                <th>Alíquota Inter.</th>
+                                <td>{% render_field form.aliquota_inter_display_01 %}</td>
+                                <td>{% render_field form.aliquota_inter_display_02 %}</td>
+                            </tr>
+                            <tr >
+                                <th>Crédito ICMS</th>
+                                <td>{% render_field form.icms_credit_display_01 %}</td>
+                                <td>{% render_field form.icms_credit_display_02 %}</td>
+                            </tr>
+                            <tr >
+                                <th>Crédito PIS/COFINS</th>
+                                <td>{% render_field form.pis_cofins_credit_display_01 %}</td>
+                                <td>{% render_field form.pis_cofins_credit_display_02 %}</td>
+                            </tr>
+                            <tr >
+                                <th>Custo do produto</th>
+                                <td>{% render_field form.total_cost_display_01 %}</td>
+                                <td>{% render_field form.total_cost_display_02 %}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="best-option-row">
+                            <tr>
+                                <th colspan="2">MELHOR OPÇÃO</th>
+                                <td>
+                                    {% render_field form.best_option %}
+                                    <span id="id_best_option_display">
+                                        GO
+                                    </span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock content %}
+
+{% block anotherjs %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0"></script>
+<script>
+    $(document).ready(function() {
+        const moneyFields = [
+            '#id_product_price_01',
+            '#id_product_price_02',
+            '#id_freight_01',
+            '#id_freight_02',
+            '#id_additional_costs_01',
+            '#id_additional_costs_02',
+            '#id_icms_credit_display_01',
+            '#id_icms_credit_display_02',
+            '#id_pis_cofins_credit_display_01',
+            '#id_pis_cofins_credit_display_02',
+            '#id_total_cost_display_01',
+            '#id_total_cost_display_02'
+        ];
+        
+        window.autoNumericInstances = {}; // Garante que este objeto esteja disponível
+
+        moneyFields
+            .map(id => document.querySelector(id))
+            .filter(el => el !== null)
+            .forEach(el => {
+                const an = new AutoNumeric(el, {
+                    digitGroupSeparator: '.',
+                    decimalCharacter: ',',
+                    decimalCharacterAlternative: '.',
+                    allowDecimalPadding: true,
+                    minimumValue: '0',
+                    maximumValue: '9999999999999.99',
+                    currencySymbol: 'R$ ',
+                    currencySymbolPlacement: AutoNumeric.options.currencySymbolPlacement.prefix,
+                });
+                window.autoNumericInstances[el.id] = an;
+            });
+            
+        const aliquotaFields = [
+            '#id_aliquota_inter_display_01',
+            '#id_aliquota_inter_display_02',
+        ];
+
+        aliquotaFields
+            .map(id => document.querySelector(id))
+            .filter(el => el !== null)
+            .forEach(el => {
+                const an = new AutoNumeric(el, {
+                    digitGroupSeparator: '.',
+                    decimalCharacter: ',',
+                    decimalCharacterAlternative: '.',
+                    allowDecimalPadding: true,
+                    minimumValue: '0',
+                    maximumValue: '100.00',
+                    suffix: '%',
+                    readOnly: true,
+                });
+                window.autoNumericInstances[el.id] = an;
+            });
+
+        // --- MOVIDO PARA AQUI: TODAS AS CHAMADAS DE INICIALIZAÇÃO E REGISTRO DE EVENTOS ---
+        // As funções `calcular...` e `registrarEventos...` ainda podem ser definidas fora do ready,
+        // mas suas chamadas iniciais e os `addEventListener` devem estar aqui dentro para garantir
+        // que AutoNumeric esteja pronto.
+
+        // Chamadas de inicialização para o estado inicial do formulário
+        calcularAliquota(1);
+        calcularAliquota(2);
+        
+        registrarEventosCalculoICMS(1);
+        registrarEventosCalculoICMS(2);
+    
+        registrarEventosCalculoPISCOFINS(1);
+        registrarEventosCalculoPISCOFINS(2);
+
+        // Chamar calcularCustoTotalProduto e determinarMelhorOpcao para o estado inicial do formulário
+        calcularCustoTotalProduto(1);
+        calcularCustoTotalProduto(2);
+        determinarMelhorOpcao();
+    
+        // Gatilhos para o cálculo da alíquota
+        registrarEventosAliquota(1);
+        registrarEventosAliquota(2);
+
+        // Garantir que a alteração do preço também recalcule tudo
+        const priceFields = ['#id_product_price_01', '#id_product_price_02'];
+        priceFields.forEach(id => {
+            const el = document.querySelector(id);
+            if (el) {
+                el.addEventListener('change', () => {
+                    const tipo = id.includes('_01') ? 1 : 2;
+                    calcularPISCOFINSCredit(tipo); // Recalcula PIS/COFINS
+                    calcularICMSCredit(tipo);      // Recalcula ICMS
+                    calcularCustoTotalProduto(tipo); // Recalcula Custo Total
+                    determinarMelhorOpcao();       // Reavalia Melhor Opção
+                });
+            }
+        });
+    }); // Fim de $(document).ready()
+
+    // --- FUNÇÕES DE CÁLCULO E REGISTRO DE EVENTOS (PODEM PERMANECER FORA DE ready()) ---
+
+    const supplierTaxValues = {{ supplier_tax_json|safe }};
+    const stateAliquotas = {{ state_tax_json|safe }};
+
+    function calcularAliquota(tipo) {
+        const stateSelect = document.getElementById(`id_state_option_0${tipo}`);
+        const supplierSelect = document.getElementById(`id_supplier_profile_0${tipo}`);
+        const icmsSelect = document.getElementById('id_product_icms_7');
+        const displayInput = document.getElementById(`id_aliquota_inter_display_0${tipo}`);
+    
+        if (!stateSelect || !supplierSelect || !icmsSelect || !displayInput) return;
+    
+        const stateId = stateSelect.value;
+        const supplierId = supplierSelect.value;
+        const icmsValue = icmsSelect.value;
+    
+        const taxValueSupplier = parseFloat(supplierTaxValues[supplierId] || 0);
+        // CORREÇÃO AQUI: MUDAR 'aliquota_inter' para 'aliquota'
+        const stateInfo = stateAliquotas[stateId] || { code: '', aliquota: 0 }; // <-- Mudado para 'aliquota'
+        const taxValueState = parseFloat(stateInfo.aliquota || 0);               // <-- Mudado para 'aliquota'
+        const stateCode = stateInfo.code;
+    
+        console.log(`Todas as variaveis: ${stateId}, ${stateCode}, ${taxValueSupplier}, ${taxValueState}, ${icmsValue}`);
+    
+        let result = 0;
+    
+        if (taxValueSupplier === 0) {
+            result = 0;
+        } else if (icmsValue === 'True') {
+            result = 7;
+        } else {
+            result = stateCode === 'GO' ? taxValueSupplier : taxValueState;
+        }
+    
+        const aliquotaAutoNumeric = window.autoNumericInstances[displayInput.id];
+        if (aliquotaAutoNumeric) {
+            aliquotaAutoNumeric.set(result);
+        } else {
+            console.warn(`AutoNumeric instance not found for ${displayInput.id}`);
+            displayInput.value = result.toFixed(2) + '%';
+        }
+    }
+
+    function calcularPISCOFINSCredit(tipo) {
+        const precoEl = document.querySelector(`#id_product_price_0${tipo}`);
+        const pisCofinsEl = document.getElementById('id_product_pis_cofins');
+        const outputEl = document.querySelector(`#id_pis_cofins_credit_display_0${tipo}`);
+        
+        if (!precoEl || !pisCofinsEl || !outputEl) return;
+    
+        const preco = window.autoNumericInstances[precoEl.id]?.getNumber() || 0;
+        const pisCofinsValue = pisCofinsEl.value;
+    
+        const resultado = pisCofinsValue === 'True' ? preco * 0.0925 : 0;
+    
+        const outputAutoNumeric = window.autoNumericInstances[outputEl.id];
+        if (outputAutoNumeric) {
+            outputAutoNumeric.set(resultado);
+        } else {
+            console.warn(`AutoNumeric instance not found for ${outputEl.id}`);
+            outputEl.value = resultado.toFixed(2).replace('.', ',');
+        }
+    }
+    
+    function calcularICMSCredit(tipo) {
+        const precoEl = document.querySelector(`#id_product_price_0${tipo}`);
+        const freightEl = document.querySelector(`#id_freight_0${tipo}`);
+        const addCostEl = document.querySelector(`#id_additional_costs_0${tipo}`);
+        const aliquotaDisplayEl = document.querySelector(`#id_aliquota_inter_display_0${tipo}`);
+        const outputEl = document.querySelector(`#id_icms_credit_display_0${tipo}`);
+    
+        if (!precoEl || !freightEl || !addCostEl || !aliquotaDisplayEl || !outputEl) return;
+
+        const preco = window.autoNumericInstances[precoEl.id]?.getNumber() || 0;
+        const frete = window.autoNumericInstances[freightEl.id]?.getNumber() || 0;
+        const adicionais = window.autoNumericInstances[addCostEl.id]?.getNumber() || 0;
+    
+        const aliquotaAutoNumeric = window.autoNumericInstances[aliquotaDisplayEl.id];
+        // É crucial que aliquotaAutoNumeric.getNumber() retorne o número sem o '%'
+        // e que você o divida por 100 para usar na multiplicação.
+        const aliquota = aliquotaAutoNumeric ? (aliquotaAutoNumeric.getNumber() / 100) : 0;
+    
+        const resultado = (preco + frete + adicionais) * aliquota;
+    
+        const outputAutoNumeric = window.autoNumericInstances[outputEl.id];
+        if (outputAutoNumeric) {
+            outputAutoNumeric.set(resultado);
+        } else {
+            console.warn(`AutoNumeric instance not found for ${outputEl.id}`);
+            outputEl.value = resultado.toFixed(2).replace('.', ',');
+        }
+    }
+
+    function calcularCustoTotalProduto(tipo) {
+        const precoEl = document.querySelector(`#id_product_price_0${tipo}`);
+        const freightEl = document.querySelector(`#id_freight_0${tipo}`);
+        const addCostEl = document.querySelector(`#id_additional_costs_0${tipo}`);
+        const icmsCreditEl = document.querySelector(`#id_icms_credit_display_0${tipo}`);
+        const pisCofinsCreditEl = document.querySelector(`#id_pis_cofins_credit_display_0${tipo}`);
+        const outputEl = document.querySelector(`#id_total_cost_display_0${tipo}`);
+
+        if (!precoEl || !freightEl || !addCostEl || !icmsCreditEl || !pisCofinsCreditEl || !outputEl) return;
+
+        const preco = window.autoNumericInstances[precoEl.id]?.getNumber() || 0;
+        const frete = window.autoNumericInstances[freightEl.id]?.getNumber() || 0;
+        const adicionais = window.autoNumericInstances[addCostEl.id]?.getNumber() || 0;
+        const icmsCredit = window.autoNumericInstances[icmsCreditEl.id]?.getNumber() || 0;
+        const pisCofinsCredit = window.autoNumericInstances[pisCofinsCreditEl.id]?.getNumber() || 0;
+
+        const custoTotal = preco + frete + adicionais - icmsCredit - pisCofinsCredit;
+
+        const outputAutoNumeric = window.autoNumericInstances[outputEl.id];
+        if (outputAutoNumeric) {
+            outputAutoNumeric.set(custoTotal);
+        } else {
+            console.warn(`AutoNumeric instance not found for ${outputEl.id}`);
+            outputEl.value = custoTotal.toFixed(2).replace('.', ',');
+        }
+    }
+    
+    function determinarMelhorOpcao() {
+        const totalCost1El = document.querySelector('#id_total_cost_display_01');
+        const totalCost2El = document.querySelector('#id_total_cost_display_02');
+        const bestOptionDisplayEl = document.querySelector('#id_best_option_display');
+        const bestOptionHiddenEl = document.querySelector('#id_best_option');
+
+        if (!totalCost1El || !totalCost2El || !bestOptionDisplayEl) return;
+
+        const totalCost1 = window.autoNumericInstances[totalCost1El.id]?.getNumber() || Infinity;
+        const totalCost2 = window.autoNumericInstances[totalCost2El.id]?.getNumber() || Infinity;
+
+        let bestOptionValue = ''; // Agora vamos armazenar o ID do estado ou 'Empate'
+        let bestOptionText = '';
+        if (totalCost1 < totalCost2) {
+            bestOptionText = document.getElementById('id_state_option_01').options[document.getElementById('id_state_option_01').selectedIndex].text;
+            bestOptionValue = document.getElementById('id_state_option_01').value;
+        } else if (totalCost2 < totalCost1) {
+            bestOptionText = document.getElementById('id_state_option_02').options[document.getElementById('id_state_option_02').selectedIndex].text;
+            bestOptionValue = document.getElementById('id_state_option_02').value;
+
+        } else if (totalCost1 !== Infinity && totalCost1 === totalCost2) { // Se são iguais e não são infinitos (ou seja, ambos foram calculados)
+            bestOptionText = 'Empate';
+        } else {
+            bestOptionText = '';
+        }
+        bestOptionHiddenEl.value = bestOptionValue; 
+        bestOptionDisplayEl.textContent = bestOptionText;
+    }
+
+
+    function registrarEventosCalculoICMS(tipo) {
+        const campos = [
+            `#id_product_price_0${tipo}`,
+            `#id_freight_0${tipo}`,
+            `#id_additional_costs_0${tipo}`,
+            `#id_aliquota_inter_display_0${tipo}`
+        ];
+
+        campos.forEach(id => {
+            const el = document.querySelector(id);
+            if (el) {
+                el.addEventListener('change', () => {
+                    calcularICMSCredit(tipo);
+                    calcularCustoTotalProduto(tipo);
+                    determinarMelhorOpcao();
+                });
+            }
+        });
+        // Não chame o cálculo inicial aqui, pois já será chamado no ready()
+    }    
+    
+    function registrarEventosCalculoPISCOFINS(tipo) {
+        const campos = [
+            `#id_product_price_0${tipo}`,
+            '#id_product_pis_cofins'
+        ];
+    
+        campos.forEach(id => {
+            const el = document.querySelector(id);
+            if (el) {
+                el.addEventListener('change', () => {
+                    calcularPISCOFINSCredit(tipo);
+                    calcularCustoTotalProduto(tipo);
+                    determinarMelhorOpcao();
+                });
+            }
+        });
+        // Não chame o cálculo inicial aqui, pois já será chamado no ready()
+    }    
+
+    function registrarEventosAliquota(tipo) {
+        const camposAliquota = [
+            `id_state_option_0${tipo}`,
+            `id_supplier_profile_0${tipo}`,
+            'id_product_icms_7'
+        ];
+
+        camposAliquota.forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', () => {
+                    calcularAliquota(tipo);
+                    calcularICMSCredit(tipo);
+                    calcularCustoTotalProduto(tipo);
+                    determinarMelhorOpcao();
+                });
+            }
+        });
+    }
+</script>
+
+
+{% endblock anotherjs %}

@@ -123,6 +123,29 @@
                     </li>                    
                 </ul>
             </li>   
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-cpu"></i></span>
+                    <span class="pcoded-mtext">Simulador de Compras</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">                      
+                    <li class=" ">
+                        <a href="{% url 'simulation_shop_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Listar Simulações</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                    
+                    <li class=" ">
+                        <a href="{% url 'pricequote_create' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Nova Simulação</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                   
+                </ul>
+            </li>             
             {% endif %}         
             <li class="pcoded-hasmenu">
                 <a href="javascript:void(0)">
