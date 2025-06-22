@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'cattles',
     'base',
     'shopsim',
+    'pricing',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

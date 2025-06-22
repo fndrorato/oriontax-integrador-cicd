@@ -18,6 +18,7 @@ urlpatterns = [
     path('', include('notifications.urls')),
     path('', include('cattles.urls')),
     path('', include('shopsim.urls')),
+    path('', include('pricing.urls')),
     path('', HomeView.as_view(), name='home'),
     path('search/', SearchResultsView.as_view(), name='search'),
     path('ajax/cities/', CitySearchView.as_view(), name='city_search'),    
