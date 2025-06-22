@@ -42,6 +42,22 @@ def login_view(request):
                 user_group = user.groups.first()  # Assume que o usuário pertence a apenas um grupo
                 if user_group:
                     assign_role(user, user_group.name.lower())  # Atribui o papel com base no nome do grupo
+
+                # Se for cliente, redireciona conforme a permissão
+                if user_group.name.lower() == 'cliente':
+                    try:
+                        profile = user.profile
+                        if profile.cattle_permission:
+                            return JsonResponse({"success": True, "redirect_url": reverse_lazy('simulation_create_matrix_cattle')})
+                        elif profile.shop_simulation_permission:
+                            return JsonResponse({"success": True, "redirect_url": reverse_lazy('pricequote_create')})
+                        elif profile.pricing_permission:
+                            return JsonResponse({"success": True, "redirect_url": reverse_lazy('pricing_simulation')})
+                        else:
+                            return JsonResponse({"success": False, "errors": ["Você não tem permissões ativas para acesso."]})
+                    except Profile.DoesNotExist:
+                        return JsonResponse({"success": False, "errors": ["Perfil de usuário não encontrado."]})
+
                                 
                 return JsonResponse({"success": True, "redirect_url": reverse_lazy('home')})
             else:
@@ -190,7 +206,6 @@ class UserUpdateView(UpdateView):
                 self.object.groups.clear()
                 self.object.groups.add(group)
 
-            # return redirect(self.success_url)
             return redirect(reverse_lazy('user_update', kwargs={'pk': self.object.pk}))
         else:
             return self.render_to_response(self.get_context_data(form=form))    

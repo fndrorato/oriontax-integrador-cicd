@@ -65,7 +65,6 @@ class UserModelForm(forms.ModelForm):
         super(UserModelForm, self).__init__(*args, **kwargs)
                 
     def clean_email(self):
-        print(self.skip_email_validation)
         if not self.skip_email_validation:
             email = self.cleaned_data['email']
             if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
@@ -82,7 +81,7 @@ class UserModelForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ('birth_date', 'phone', 'supervisor', 'manager')
+        fields = ('birth_date', 'phone', 'supervisor', 'manager', 'cattle_permission', 'shop_simulation_permission', 'pricing_permission')
         
     def __init__(self, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)

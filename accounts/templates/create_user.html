@@ -92,7 +92,41 @@
                                         {{ form.groups.errors }}
                                     </div>
                                 </div>                                    
-                            </div>                                                                                                                                            
+                            </div>   
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Permissões:</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <div class="checkbox-fade fade-in-primary">
+                                        <label>
+                                            {{ profile_form.cattle_permission|add_class:"form-check-input" }}
+                                            <span class="cr">
+                                                <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                            </span>
+                                            <span>Operação Gado</span>
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-fade fade-in-primary">
+                                        <label>
+                                            {{ profile_form.shop_simulation_permission|add_class:"form-check-input" }}
+                                            <span class="cr">
+                                                <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                            </span>
+                                            <span>Simulação de Compras</span>
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-fade fade-in-primary">
+                                        <label>
+                                            {{ profile_form.pricing_permission|add_class:"form-check-input" }}
+                                            <span class="cr">
+                                                <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                            </span>
+                                            <span>Precificação</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="text-center m-t-20">
@@ -119,14 +153,6 @@
     <script src="{% static 'assets/pages/form-masking/autoNumeric.js' %}"></script>
     <script src="{% static 'assets/pages/form-masking/form-mask.js' %}?{% now "U" %}"></script>
 
-    {% comment %} <script>
-        function showLoading2() {
-            console.log('entrou no loading')
-            $('.theme-loader').animate({
-                'opacity': '1',
-            }, 200); 
-        }        
-    </script> {% endcomment %}
 {% endblock anotherjs %}
 
 

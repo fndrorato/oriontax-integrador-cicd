@@ -169,7 +169,40 @@
                                                     </label>
                                                 </div>
                                             </div>                                    
-                                        </div>                                                                                
+                                        </div>  
+                                        <div class="row">
+                                            <label class="col-sm-4 col-lg-2 col-form-label">Permissões:</label>
+                                            <div class="col-sm-8 col-lg-10">
+                                                <div class="checkbox-fade fade-in-primary">
+                                                    <label>
+                                                        {{ profile_form.cattle_permission|add_class:"form-check-input" }}
+                                                        <span class="cr">
+                                                            <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                                        </span>
+                                                        <span>Operação Gado</span>
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox-fade fade-in-primary">
+                                                    <label>
+                                                        {{ profile_form.shop_simulation_permission|add_class:"form-check-input" }}
+                                                        <span class="cr">
+                                                            <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                                        </span>
+                                                        <span>Simulação de Compras</span>
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox-fade fade-in-primary">
+                                                    <label>
+                                                        {{ profile_form.pricing_permission|add_class:"form-check-input" }}
+                                                        <span class="cr">
+                                                            <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                                        </span>
+                                                        <span>Precificação</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                                                                                                                                             
                                         {% if request.user|has_role:"administrador" %}
                                         <div class="row">
                                             <div class="col-sm-12">

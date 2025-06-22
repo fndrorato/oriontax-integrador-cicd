@@ -9,6 +9,10 @@ class Profile(models.Model):
     phone = models.CharField(max_length=15, null=True, blank=True)
     supervisor = models.ForeignKey(User, related_name='analysts', null=True, blank=True, on_delete=models.SET_NULL)
     manager = models.ForeignKey(User, related_name='supervisors', null=True, blank=True, on_delete=models.SET_NULL)
+    cattle_permission = models.BooleanField(default=False)
+    shop_simulation_permission = models.BooleanField(default=False)
+    pricing_permission = models.BooleanField(default=False)
+    
 
     def __str__(self):
         return self.user.username
