@@ -85,7 +85,7 @@
                     </li>
                 </ul>
             </li>
-            {% if user|has_any_role:"administrador" or (user.is_authenticated and user.profile.cattle_permission) %}
+            {% if user|has_any_role:"administrador" or user|has_profile_permission:"cattle_permission" %}
             <li class="pcoded-hasmenu">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-cpu"></i></span>
@@ -124,7 +124,7 @@
                 </ul>
             </li> 
             {% endif %}  
-            {% if user|has_any_role:"administrador" or (user.is_authenticated and user.profile.shop_simulation_permission) %}
+            {% if user|has_any_role:"administrador" or user|has_profile_permission:"shop_simulation_permission" %}
             <li class="pcoded-hasmenu">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-cpu"></i></span>
@@ -149,7 +149,7 @@
                 </ul>
             </li>    
             {% endif %}  
-            {% if user|has_any_role:"administrador" or (user.is_authenticated and user.profile.pricing_permission) %}
+            {% if user|has_any_role:"administrador" or user|has_profile_permission:"pricing_permission" %}
             <li class="pcoded-hasmenu">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-cpu"></i></span>
