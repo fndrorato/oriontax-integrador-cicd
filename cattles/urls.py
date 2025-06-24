@@ -19,6 +19,4 @@ urlpatterns = [
     path('cattles/butchery/', UpdateButcheryView.as_view(), name='update_butchery'),
     path('meatcut/create/', CreateMeatCutView.as_view(), name='create_meatcut'),
     path('operacao-gado/', OperationGadoView.as_view(), name='operation_gado')
-
-
 ]

@@ -27,7 +27,7 @@ class MatrixSimulation(models.Model):
     description = models.CharField(max_length=255, blank=True, null=True)
 
     # Core simulation fields
-    cow_weighing_location = models.CharField(max_length=50)  # ex: 'pasture' or 'slaughterhouse'
+    cow_weighing_location = models.CharField(max_length=50)
 
     monthly_sales_volume_kg = models.DecimalField(max_digits=12, decimal_places=2)
     average_price_per_kg = models.DecimalField(max_digits=10, decimal_places=2)
@@ -66,10 +66,14 @@ class MatrixSimulation(models.Model):
     freight_slaughterhouse_store_slaughterhouse = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
 
     commission_buyer = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    percent_comission = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, default=0.0)
+    is_estorno_icms = models.BooleanField(default=False)
     total_slaughter_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_value_producer = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     total_value_slaughterhouse = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     profit_gain_comparison = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    
+    
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
