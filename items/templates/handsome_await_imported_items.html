@@ -259,7 +259,31 @@
     </div>
 </div>
 
-
+<div class="modal fade stick-up" id="divergenceModal" tabindex="-1" role="dialog" aria-labelledby="divergenceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <!-- Cabeçalho com bg-warning -->
+        <div class="modal-header clearfix text-left bg-warning">
+          <h5 class="modal-title text-white" id="divergenceModalLabel">Título aqui</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-hidden="true">
+            <i class="pg-close"></i>
+          </button>
+        </div>
+        
+        <!-- Corpo -->
+        <div class="modal-body">
+          <p id="divergenceModalContent" style="white-space: pre-wrap;"></p>
+        </div>
+  
+        <!-- Rodapé -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary btn-cons" data-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
 {% endblock content %}
 
 {% block anotherjs %}
@@ -514,6 +538,8 @@
             var itemDivergent = dataDivergent.find(function(row){
                 return row['code'] === code;
             })
+
+            /*
         
             if (item && itemDivergent) {
                 var info = item[22]; // Obtém a informação da coluna 22
@@ -530,6 +556,33 @@
             } else {
                 alert('Código ' + code + ' não encontrado.');
             }
+            */
+            if (item && itemDivergent) {
+                var info = item[22];
+                var problemColumns = info.split(', ');
+                
+                var alertMessage = 'Colunas com problemas para o código ' + code + ':';
+                var alertMessageBody = '';
+            
+                problemColumns.forEach(columnName => {
+                    if (itemDivergent.hasOwnProperty(columnName)) {
+                        alertMessageBody += columnName + ': ' + itemDivergent[columnName] + '\n';
+                    }
+                });
+            
+                // Define título e corpo do modal
+                document.getElementById('divergenceModalLabel').innerText = alertMessage;
+                document.getElementById('divergenceModalContent').innerText = alertMessageBody;
+            
+                // Exibe o modal
+                $('#divergenceModal').modal('show');
+            } else {
+                document.getElementById('divergenceModalLabel').innerText = 'Código não encontrado';
+                document.getElementById('divergenceModalContent').innerText = 'Código ' + code + ' não encontrado.';
+                $('#divergenceModal').modal('show');
+            }
+            
+            
         }        
 
         function evenRowRenderer(instance, td, row, col, prop, value, cellProperties) {
