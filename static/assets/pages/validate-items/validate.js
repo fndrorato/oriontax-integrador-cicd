@@ -70,14 +70,21 @@ function validateData(data, client_id, unnecessary_fields, rowIndex, validar_typ
                 errors.push({ field: 'cbenef_cst', message: 'Para o CST ICMS selecionado, o CBENEF é obrigatório.' });                
             }
         }        
+        
+        // Extrai os valores distintos de piscofinsCst do array naturezareceitaData
+        const validCsts = [...new Set(naturezareceitaData.map(item => item.piscofinsCst))];
 
         if (!unnecessary_fields.includes('naturezareceita')) {
             // Execute o restante do código se minhaVar não estiver no array
-            if (selectedPisCofinsCst == '04' || selectedPisCofinsCst == '05' || selectedPisCofinsCst == '06'){
+            // if (selectedPisCofinsCst == '04' || selectedPisCofinsCst == '05' || selectedPisCofinsCst == '06'){
+            console.log("selectedPisCofinsCst", selectedPisCofinsCst)
+            console.log("validCsts", validCsts)
+            if (validCsts.includes(selectedPisCofinsCst)) {
                 if (selectedNaturezareceita === '' || selectedNaturezareceita === null || selectedNaturezareceita === undefined) {
                     errors.push({ field: 'naturezareceita', message: "Para o PIS/COFINS selecionado, a  Natureza Receita é obrigatória." });
                 } else {
                     var nr_id = findIdByCodeAndPiscofinsCst(naturezareceitaData, selectedNaturezareceita, selectedPisCofinsCst);
+                    console.log("nr_id", nr_id)
                     if (nr_id === null) {
                         errors.push({ field: 'naturezareceita_cst', message: 'A combinação Natureza Receita: ' + selectedNaturezareceita + ' com o PIS/COFINS ' + selectedPisCofinsCst + ' não é uma combinação válida!' });
                     } 
