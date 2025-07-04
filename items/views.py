@@ -185,7 +185,7 @@ def export_items_to_excel(request, client_id, table):
         print('await3...')       
                             
     elif table == 'new':
-        items = ImportedItem.objects.filter(client=client, status_item=0).values(
+        items = ImportedItem.objects.filter(client=client, status_item=0, is_pending=True).values(
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',

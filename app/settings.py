@@ -100,28 +100,28 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'oriontax',
-        'USER': 'oriondb',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-
-# # O DATABASE ABAIXO É O OFICIAL
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'oriontax',
 #         'USER': 'oriondb',
-#         'PASSWORD': 'orion@2024',
-#         'HOST': '172.16.10.248',
-#         'PORT': '5433',
+#         'PASSWORD': '1234',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
 #     }
 # }
+
+# # O DATABASE ABAIXO É O OFICIAL
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'oriontax',
+        'USER': 'oriondb',
+        'PASSWORD': 'orion@2024',
+        'HOST': '172.16.10.248',
+        'PORT': '5433',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
