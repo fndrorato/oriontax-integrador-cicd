@@ -47,12 +47,12 @@ class PriceQuoteForm(forms.ModelForm):
         (True, 'Sim'),
     ]
 
-    product_icms_7 = forms.TypedChoiceField(
-        choices=BOOLEAN_CHOICES,
-        coerce=lambda x: x == 'True',
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label="Produto é 7% no ICMS?"
-    )
+    # product_icms_7 = forms.TypedChoiceField(
+    #     choices=BOOLEAN_CHOICES,
+    #     coerce=lambda x: x == 'True',
+    #     widget=forms.Select(attrs={'class': 'form-control'}),
+    #     label="Produto é 7% no ICMS?"
+    # )
     product_pis_cofins = forms.TypedChoiceField(
         choices=BOOLEAN_CHOICES,
         coerce=lambda x: x == 'True',
@@ -106,6 +106,11 @@ class PriceQuoteForm(forms.ModelForm):
         max_digits=10, decimal_places=2, required=False,
         widget=forms.TextInput(attrs={'class': 'form-control autonumeric'})
     )
+    
+    tax_icms_sale = BrazilianDecimalField(
+        max_digits=5, decimal_places=2, required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control autonumeric'})
+    )
     # --- FIM DOS CAMPOS NUMÉRICOS ---
 
     # Campos de exibição (display fields) - Mantemos como CharField e readonly
@@ -125,7 +130,7 @@ class PriceQuoteForm(forms.ModelForm):
         model = PriceQuote
         fields = [
             'simulation_description',
-            'product_icms_7',
+            'tax_icms_sale',
             'product_pis_cofins',
             'product_description',
             'state_option_01',
@@ -143,22 +148,13 @@ class PriceQuoteForm(forms.ModelForm):
         widgets = {
             'simulation_description': forms.TextInput(attrs={'class': 'form-control'}),
             'product_description': forms.TextInput(attrs={'class': 'form-control'}),
-            # Remova os widgets específicos para product_price_01, etc.,
-            # pois eles já estão definidos na declaração do BrazilianDecimalField acima.
-            # Se você os deixar aqui, eles podem sobrescrever os widgets do BrazilianDecimalField.
-            # Ex:
-            # 'product_price_01': forms.TextInput(attrs={'class': 'form-control'}), # REMOVA ESTAS LINHAS
-            # ...
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            # Ao editar, formate os valores do DecimalField do modelo para a exibição no TextInput
-            # Isso é importante para que o autoNumeric possa inicializar corretamente
-            # Use o método format_value do próprio campo para garantir consistência
-            # ou faça a formatação manual como antes.
-            # O .value_to_string é mais para ModelForms internos do Django, então a formatação manual é boa.
+            # 
+            self.fields['tax_icms_sale'].initial = f"{self.instance.state_option_01.aliquota_inter:.2f}%".replace('.', ',') if self.instance.state_option_01 else ''            
             self.fields['product_price_01'].initial = f"R$ {self.instance.product_price_01:.2f}".replace('.', ',') if self.instance.product_price_01 is not None else ''
             self.fields['product_price_02'].initial = f"R$ {self.instance.product_price_02:.2f}".replace('.', ',') if self.instance.product_price_02 is not None else ''
             self.fields['freight_01'].initial = f"R$ {self.instance.freight_01:.2f}".replace('.', ',') if self.instance.freight_01 is not None else ''
@@ -170,12 +166,6 @@ class PriceQuoteForm(forms.ModelForm):
             self.fields['aliquota_inter_display_02'].initial = f"{self.instance.state_option_02.aliquota_inter:.2f}%".replace('.', ',') if self.instance.state_option_02 else ''
 
             self.fields['best_option'].initial = self.instance.best_option.id if self.instance.best_option else ''
-
-    # Não precisamos mais dos métodos clean_product_price_01, etc.,
-    # porque a lógica de limpeza já está no BrazilianDecimalField.
-    # def clean_product_price_01(self): ...
-    # def clean_freight_01(self): ...
-    # ...
 
     def clean(self):
         # Apenas chame o clean do pai. BrazilianDecimalField já fez seu trabalho.

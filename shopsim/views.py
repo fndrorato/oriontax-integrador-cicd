@@ -26,9 +26,10 @@ class PriceQuoteCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         
         # Cria um dicionário com os dados já formatados
+
         context['supplier_tax_json'] = {
             str(s.id): float(f"{s.tax_value:.2f}".replace(',', '.'))
-            for s in SupplierProfile.objects.all()
+            for s in SupplierProfile.objects.filter(only_shop_simulation=True)
         }
         
         context['state_tax_json'] = {
@@ -41,9 +42,7 @@ class PriceQuoteCreateView(LoginRequiredMixin, CreateView):
 
         return context
     
-    def form_valid(self, form):
-        print("📦 Dados brutos (POST):", self.request.POST)
-        print("✅ Dados limpos (cleaned_data):", form.cleaned_data)             
+    def form_valid(self, form):         
         # Atribui o usuário logado à instância
         form.instance.user = self.request.user
         
@@ -62,7 +61,6 @@ class PriceQuoteCreateView(LoginRequiredMixin, CreateView):
                 best_option_instance = States.objects.get(id=state_id)
             except (ValueError, States.DoesNotExist):
                 # Lida com casos onde o valor não é um inteiro válido ou o estado não existe
-                print(f"ID de estado inválido ou inexistente para best_option: '{best_option_input_value}'")
                 best_option_instance = None # Garante que seja None se houver erro
         
         # Atribui a instância do Estado (ou None) ao campo best_option do modelo
@@ -73,9 +71,6 @@ class PriceQuoteCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form) 
     
     def form_invalid(self, form):
-        print("📦 Dados brutos (POST):", self.request.POST)        
-        print("❌ Formulário inválido!")
-        print(form.errors)  # Mostra os erros que impedem a validação
         return super().form_invalid(form)         
 
 
@@ -84,6 +79,25 @@ class PriceQuoteSimulationUpdateView(LoginRequiredMixin, UpdateView):
     form_class = PriceQuoteForm
     template_name = 'shop_simulation.html'  # reutiliza o mesmo template do CreateView
     success_url = reverse_lazy('simulation_shop_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Cria um dicionário com os dados já formatados
+        context['supplier_tax_json'] = {
+            str(s.id): float(f"{s.tax_value:.2f}".replace(',', '.'))
+            for s in SupplierProfile.objects.filter(only_shop_simulation=True)
+        }
+        
+        context['state_tax_json'] = {
+            str(st.id): {
+                'code': st.code,
+                'aliquota': float(f"{st.aliquota_inter:.2f}".replace(',', '.'))
+            }
+            for st in States.objects.all()
+        }
+
+        return context    
 
     def get_queryset(self):
         # Garante que o usuário só possa editar suas próprias simulações

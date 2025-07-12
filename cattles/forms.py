@@ -315,12 +315,14 @@ class MatrixSimulationForm(forms.ModelForm):
             self.fields['cow_weighing_location'] = forms.ChoiceField(
                 label="Onde será pesada a vaca?",
                 choices=[(opt.value, opt.label) for opt in options],
+                required=False,
                 widget=forms.Select(attrs={'class': 'form-control custom-select-bg'})
             )
         except FieldConfiguration.DoesNotExist:
             self.fields['cow_weighing_location'] = forms.ChoiceField(
                 label="Onde será pesada a vaca?",
                 choices=[],
+                required=False,
                 widget=forms.Select(attrs={'class': 'form-control  custom-select-bg'})
             )
 

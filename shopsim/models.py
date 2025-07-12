@@ -7,6 +7,7 @@ class SupplierProfile(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="Supplier Profile Name")
     description = models.TextField(blank=True, verbose_name="Description")
     tax_value = models.DecimalField(max_digits=5, decimal_places=2, default=0.0, verbose_name="Tax Value")
+    only_shop_simulation = models.BooleanField(default=True, verbose_name="Only Shop Simulation")
 
     def __str__(self):
         return self.name
@@ -18,7 +19,8 @@ class SupplierProfile(models.Model):
 class PriceQuote(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='price_quotes')
     simulation_description = models.CharField(max_length=100, verbose_name="Simulation Description")
-    product_icms_7 = models.BooleanField(verbose_name="Is product taxed at 7% ICMS?")
+    tax_icms_sale = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    product_icms_7 = models.BooleanField(verbose_name="Is product taxed at 7% ICMS?", null=True, blank=True)
     product_pis_cofins = models.BooleanField(verbose_name="Is product taxed for PIS/COFINS?")
     product_description = models.CharField(max_length=255)
     state_option_01 = models.ForeignKey(States, on_delete=models.CASCADE, related_name='state_option_01', verbose_name="State Option 01")

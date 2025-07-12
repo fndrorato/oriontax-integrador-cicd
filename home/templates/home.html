@@ -492,7 +492,7 @@
           columnLimits: [{ key: "client_name", minWidth: 900 }],
         });
       }    
-  
+  /*
     document.addEventListener("DOMContentLoaded", () => {
         const gridDiv = document.querySelector("#myGrid");
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
@@ -500,6 +500,38 @@
         const syncGridDiv = document.querySelector("#gridSyncStores");
         syncGridApi = agGrid.createGrid(syncGridDiv, syncGridOptions);
     });
+    */
+    document.addEventListener("DOMContentLoaded", () => {
+        const gridDiv = document.querySelector("#myGrid");
+        gridApi = agGrid.createGrid(gridDiv, gridOptions);
+    
+        const syncGridDiv = document.querySelector("#gridSyncStores");
+        syncGridApi = agGrid.createGrid(syncGridDiv, syncGridOptions);
+    
+        // Verifica se o jQuery está disponível (usado pelo Bootstrap)
+        if (typeof $ !== "undefined") {
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                const target = $(e.target).attr("href");
+    
+                // Se a aba aberta for a de sincronizações
+                if (target === "#sync-stores") {
+                    // Garante um pequeno delay para que o layout esteja visível
+                    setTimeout(() => {
+                        if (syncGridApi) {
+                            syncGridApi.sizeColumnsToFit({
+                                defaultMinWidth: 100,
+                                columnLimits: [{ key: "client_name", minWidth: 350 }],
+                            });
+                        }
+                    }, 150);
+                }
+            });
+        }
+    });
+    
+    
+    
+    
 
 
     

@@ -304,15 +304,15 @@
                         </tr>
                         <tr class="celula-cinza">
                             <th colspan="2">Item</th>
-                            <th>Produto está nas exceções do ICMS?</th>
-                            <th>Produto está nas exceções do PIS/COFINS?</th>
+                            <th>Tributação de Venda ICMS</th>
+                            <th>Tributado no PIS/COFINS?</th>
                         </tr>
                         <tr>
                             <td colspan="2">
-                                {% render_field form.item_class class="form-control" %}
+                                {% render_field form.item_description class="form-control" %}
                             </td>
                             <td>
-                                {% render_field form.item_icms_excluded class="form-control" %}
+                                {% render_field form.tax_icms_sale class="form-control" %}
                             </td>
                             <td>
                                 {% render_field form.items_pis_cofins_excluded class="form-control" %}  
@@ -322,10 +322,14 @@
                             <th colspan="4"></th>
                         </tr>
                         <tr class="linha-titulo-celula">
-                            <th colspan="4">Fornecedor</th>
+                            <th colspan="2">Estado de Compra</th>
+                            <td colspan="2">
+                                {% render_field form.state_option class="form-control" %}
+                            </td>
                         </tr>
-                        <tr>
-                            <td colspan="4">
+                        <tr class="linha-titulo-celula">
+                            <th colspan="2">Perfil do Fornecedor</th>
+                            <td colspan="2">
                                 {% render_field form.supplier class="form-control" %}
                             </td>
                         </tr>
@@ -417,25 +421,25 @@
                                 <table class="sub-table w-100">
                                     <tbody>
                                         <tr>
-                                            <td>Valor de Margem Líquida</td>
+                                            <td>Markup sobre o Custo - %</td>
+                                            <td>{% render_field form.gross_margin_percentage_display class="form-control calculated-percentage" %}</td>
+                                        </tr>                                        
+                                        <tr>
+                                            <td>Margem Bruta após Tributos - R$</td>
                                             <td>{% render_field form.liquid_margin_value_display class="form-control calculated-value" %}</td>
                                         </tr>
                                         <tr>
-                                            <td>% de Margem Bruta</td>
-                                            <td>{% render_field form.gross_margin_percentage_display class="form-control calculated-percentage" %}</td>
-                                        </tr>
+                                            <td>Margem Bruta após Tributos - %</td>
+                                            <td>{% render_field form.mark_down_percentage_display class="form-control calculated-percentage" %}</td>
+                                        </tr>                                        
                                         <tr>
-                                            <td>% Custo Operacional</td>
+                                            <td>Custo operacional - %</td>
                                             <td>
-                                                <input type="text" id="id_operational_cost_percentage_display" class="form-control calculated-percentage" readonly>
+                                                {% render_field form.operational_cost_percentage_display class="form-control calculated-percentage" %}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td>% Mark Down</td>
-                                            <td>{% render_field form.mark_down_percentage_display class="form-control calculated-percentage" %}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>% de Margem Líquida</td>
+                                            <td>Margem Liquida - %</td>
                                             <td>{% render_field form.liquid_margin_final_percentage_display class="form-control calculated-percentage" %}</td>
                                         </tr>
                                     </tbody>
@@ -454,7 +458,26 @@
 
 {% block anotherjs %}
 <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0"></script>
-   
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Adiciona o evento de tecla Enter para avançar para o próximo campo        
+        const formElements = document.querySelectorAll('input, select');
+        formElements.forEach(element => {
+            element.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' || event.keyCode === 13) {
+                    event.preventDefault();
+                    const currentIndex = Array.from(formElements).indexOf(this);
+                    const nextIndex = currentIndex + 1;
+                    if (nextIndex < formElements.length) {
+                        formElements[nextIndex].focus();
+                    }
+                }
+            });
+        });
+    });
+</script>
+
 <script>
     function parseFloatLocale(str) {
         if (!str) return 0;
@@ -472,7 +495,31 @@
     $(document).ready(function() {
 
         window.autoNumericInstances = {};
-        console.log("{{ porcentagem_custo_operacional|safe }}")
+
+        const taxIcmsSaleEl = document.getElementById('id_tax_icms_sale');
+        if (taxIcmsSaleEl) {
+            const anTaxIcmsSale = new AutoNumeric(taxIcmsSaleEl, {
+                decimalPlaces: 2,
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                decimalCharacterAlternative: '.',
+                suffixText: ' %',
+                allowDecimalPadding: true,
+                suffix: '%',
+                readOnly: false
+            });
+            window.autoNumericInstances[taxIcmsSaleEl.id] = anTaxIcmsSale;
+
+            // ⚠️ Só define valor se o campo estiver vazio
+            if (!taxIcmsSaleEl.value || taxIcmsSaleEl.value.trim() === '') {
+                const initialTaxIcmsSale = parseFloatLocale("{{ tax_icms_sale|default:'0'|safe }}");
+                if (!isNaN(initialTaxIcmsSale)) {
+                    anTaxIcmsSale.set(initialTaxIcmsSale / 100);
+                }
+            }
+        }
+
+        
         const operationalCostEl = document.getElementById('id_operational_cost_percentage_display');
         if (operationalCostEl) {
             const anOperationalCost = new AutoNumeric(operationalCostEl, {
@@ -483,15 +530,19 @@
                 suffixText: ' %',
                 allowDecimalPadding: true,
                 suffix: '%',
-                readOnly: true
+                readOnly: false
             });
             window.autoNumericInstances[operationalCostEl.id] = anOperationalCost;
-            
-            const initialOperationalCost = parseFloatLocale("{{ porcentagem_custo_operacional|safe }}");
-            if (!isNaN(initialOperationalCost)) {
-                anOperationalCost.set(initialOperationalCost/100);
+
+            // Só define o valor se o campo estiver vazio
+            if (!operationalCostEl.value || operationalCostEl.value.trim() === '') {
+                const initialOperationalCost = parseFloatLocale("{{ porcentagem_custo_operacional|default:'0'|safe }}");
+                if (!isNaN(initialOperationalCost)) {
+                    anOperationalCost.set(initialOperationalCost / 100);
+                }
             }
-        }        
+        }
+        
 
         const moneyFields = [
             '#id_cost_price',
@@ -509,7 +560,6 @@
             '#id_markup',
             '#id_card_tax',        
             '#id_gross_margin_percentage_display',
-            '#id_operational_cost_percentage_display',
             '#id_mark_down_percentage_display',
             '#id_liquid_margin_final_percentage_display',
         ];
@@ -551,13 +601,15 @@
                 window.autoNumericInstances[el.id] = an;
             });
         
-        const itemClassData = {{ item_class_json|safe }}; // Dados do ItemClass do Django
+        const stateAliquotas = {{ state_tax_json|safe }}; // Dados do StateTax do Django
         const supplierData = {{ supplier_json|safe }}; // Dados do Supplier do Django
         
         // --- FUNÇÕES DE CÁLCULO ---
         function calculateAllPricingFields() {
-            const itemClassSelect = document.getElementById('id_item_class');
-            const itemIcmsExcluded = document.getElementById('id_item_icms_excluded');
+            // const itemClassSelect = document.getElementById('id_item_class');
+            // const itemIcmsExcluded = document.getElementById('id_item_icms_excluded');
+            const taxIcmsSaleValue = document.getElementById('id_tax_icms_sale').value;
+            const stateSelect = document.getElementById('id_state_option');
             const itemsPisCofinsExcluded = document.getElementById('id_items_pis_cofins_excluded');
             const supplierSelect = document.getElementById('id_supplier');
             const markupEl = document.getElementById('id_markup');
@@ -566,9 +618,8 @@
             const custoOperacionalEl = document.getElementById('id_operational_cost_percentage_display');
             
             // Get values from inputs (using AutoNumeric for numeric fields)
+            const stateId = stateSelect.value;
             const selectedSupplierId = supplierSelect.value;
-            const selectedItemClassId = itemClassSelect.value;
-            const isIcmsExcluded = itemIcmsExcluded.value === 'True';
             const isPisCofinsExcluded = itemsPisCofinsExcluded.value === 'True';
             
             const markup = window.autoNumericInstances[markupEl.id]?.getNumber() || 0;
@@ -577,33 +628,30 @@
 
             const custoOperacinal = window.autoNumericInstances[custoOperacionalEl.id]?.getNumber() || 0;
 
-            const itemData = itemClassData[selectedItemClassId] || { icms_value: 0, pis_value: 0, cofins_value: 0 };
-            const itemPisRate = parseFloat(itemData.pis_value) || 0;
-            const itemCofinsRate = parseFloat(itemData.cofins_value) || 0;
-            
-            const itemIcmsRate = parseFloat(itemData.icms_value) || 0;
+            const icmsNumeric = parseFloat(
+                taxIcmsSaleValue.replace('%', '').replace('.', '').replace(',', '.').trim()
+            ) || 0;               
+          
+            const stateInfo = stateAliquotas[stateId] || { code: '', aliquota: 0, pis: 0, cofins: 0 }; // <-- Mudado para 'aliquota'
+            const taxValueState = parseFloat(stateInfo.aliquota || 0);
+            const stateCode = stateInfo.code;            
+
+            const itemPisRate = parseFloat(stateInfo.pis) || 0;
+            const itemCofinsRate = parseFloat(stateInfo.cofins) || 0;
+            const itemIcmsRate = parseFloat(stateInfo.aliquota) || 0;
             
             const selectedSupplier = supplierData[selectedSupplierId] || { tax_value: 0 };
             const supplierTaxValue = parseFloat(selectedSupplier.tax_value) || 0;
 
-            let itemIcmsRateDebit = 0;
+            let itemIcmsRateDebit = icmsNumeric;
             let itemIcmsRateCredit = 0;
-            if (isIcmsExcluded) {
-                // Se o item está nas exceções do ICMS, não aplica a taxa de ICMS
-                itemIcmsRateDebit = 19;
-            } else {
-                // Se o item não está nas exceções do ICMS, aplica a taxa de ICMS
-                itemIcmsRateDebit = itemIcmsRate;
-            }
 
-            if (supplierTaxValue) {
-                if (supplierTaxValue > itemIcmsRateDebit) {
-                    // Se a taxa do fornecedor for maior que a taxa de ICMS do item, usa a taxa do fornecedor
-                    itemIcmsRateCredit = itemIcmsRateDebit;
-                } else {
-                    itemIcmsRateCredit = supplierTaxValue;
-                }
-            }
+            if (supplierTaxValue === 0) {
+                result = 0;
+            }  else {
+                result = stateCode === 'GO' ? supplierTaxValue : taxValueState;
+            } 
+            itemIcmsRateCredit = result;           
         
             // ✅ Atualiza as <span> de exibição textual
             document.getElementById('id_pis_credit_percentage_display').textContent = `${itemPisRate.toFixed(2).replace('.', ',')}%`;
@@ -669,7 +717,7 @@
         }
 
         // --- REGISTRO DE EVENTOS ---
-        $('#id_item_class, #id_item_icms_excluded, #id_items_pis_cofins_excluded, #id_supplier, #id_markup, #id_card_tax, #id_cost_price').on('change', calculateAllPricingFields);
+        $('#id_state_option, #id_tax_icms_sale, #id_items_pis_cofins_excluded, #id_supplier, #id_markup, #id_card_tax, #id_cost_price, #id_operational_cost_percentage_display').on('change', calculateAllPricingFields);
 
         // Chamar o cálculo inicial
         calculateAllPricingFields();

@@ -1,5 +1,6 @@
 import json
 import re
+from base.models import States
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -205,16 +206,7 @@ class PricingCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         
         # Lógica para obter e processar dados do ItemClass e SupplierProfile para JS
-        item_class_data = list(ItemClass.objects.filter(active=True).values('id', 'icms_value', 'pis_value', 'cofins_value'))
         supplier_data = list(SupplierProfile.objects.all().values('id', 'tax_value'))
-
-        processed_item_class_data = {
-            str(item['id']): {
-                'icms_value': float(item['icms_value']), # Converte Decimal para float
-                'pis_value': float(item['pis_value']),
-                'cofins_value': float(item['cofins_value']),
-            } for item in item_class_data
-        }
 
         processed_supplier_data = {
             str(supplier['id']): {
@@ -229,7 +221,16 @@ class PricingCreateView(LoginRequiredMixin, CreateView):
         sales_per_month = master.sales_per_month or 1
         porcentagem_custo_operacional = Decimal(total_value) / Decimal(sales_per_month) * 100
 
-        context['item_class_json'] = json.dumps(processed_item_class_data, cls=DjangoJSONEncoder)
+        context['state_tax_json'] = {
+            str(st.id): {
+                'code': st.code,
+                'aliquota': float(f"{st.aliquota_inter:.2f}".replace(',', '.')),
+                'cofins': float(f"{st.cofins_aliquota:.2f}".replace(',', '.')),
+                'pis': float(f"{st.pis_aliquota:.2f}".replace(',', '.'))
+            }
+            for st in States.objects.all()
+        }
+
         context['supplier_json'] = json.dumps(processed_supplier_data, cls=DjangoJSONEncoder)
         context['porcentagem_custo_operacional'] = round(porcentagem_custo_operacional, 2)
         
@@ -244,8 +245,7 @@ class PricingCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        print("📦 Dados brutos (POST):", self.request.POST)        
-        print("❌ Formulário inválido!")        
+        print("❌ Formulário inválido!")    
         # Re-popule o contexto com os dados JSON, assim como em get_context_data
         context = self.get_context_data(form=form) # Passe o formulário com erros para o contexto
         return self.render_to_response(context)
@@ -254,7 +254,7 @@ class PricingUpdateView(LoginRequiredMixin, UpdateView):
     model = Pricing
     form_class = PricingForm
     template_name = 'pricing_simulation.html'  # reutiliza o mesmo template do CreateView
-    success_url = reverse_lazy('list_pricing')
+    success_url = reverse_lazy('pricing_list')
 
     def get_queryset(self):
         # Garante que o usuário só possa editar suas próprias simulações
@@ -287,6 +287,16 @@ class PricingUpdateView(LoginRequiredMixin, UpdateView):
         total_value = details.aggregate(total=Sum('value'))['total'] or 0
         sales_per_month = master.sales_per_month or 1
         porcentagem_custo_operacional = Decimal(total_value) / Decimal(sales_per_month) * 100
+
+        context['state_tax_json'] = {
+            str(st.id): {
+                'code': st.code,
+                'aliquota': float(f"{st.aliquota_inter:.2f}".replace(',', '.')),
+                'cofins': float(f"{st.cofins_aliquota:.2f}".replace(',', '.')),
+                'pis': float(f"{st.pis_aliquota:.2f}".replace(',', '.'))
+            }
+            for st in States.objects.all()
+        }
        
         context['item_class_json'] = json.dumps(processed_item_class_data, cls=DjangoJSONEncoder)
         context['supplier_json'] = json.dumps(processed_supplier_data, cls=DjangoJSONEncoder)

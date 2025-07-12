@@ -27,7 +27,7 @@ class MatrixSimulation(models.Model):
     description = models.CharField(max_length=255, blank=True, null=True)
 
     # Core simulation fields
-    cow_weighing_location = models.CharField(max_length=50)
+    cow_weighing_location = models.CharField(max_length=50, blank=True, null=True)
 
     monthly_sales_volume_kg = models.DecimalField(max_digits=12, decimal_places=2)
     average_price_per_kg = models.DecimalField(max_digits=10, decimal_places=2)

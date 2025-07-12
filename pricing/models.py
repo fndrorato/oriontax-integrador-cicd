@@ -1,3 +1,4 @@
+from base.models import States
 from django.db import models
 from django.contrib.auth.models import User
 from django.db import models
@@ -48,12 +49,16 @@ class ItemClass(models.Model):
 class Pricing(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pricings_user')
     description = models.CharField(max_length=255, blank=True, null=True)
-    item_class = models.ForeignKey(ItemClass, on_delete=models.CASCADE, related_name='pricings')
+    item_description = models.CharField(max_length=255, blank=True, null=True)
+    tax_icms_sale = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    item_class = models.ForeignKey(ItemClass, on_delete=models.CASCADE, related_name='pricings', null=True, blank=True)
     item_icms_excluded = models.BooleanField(default=False)
     items_pis_cofins_excluded = models.BooleanField(default=False)
+    state_option = models.ForeignKey(States, on_delete=models.CASCADE, related_name='state_option', verbose_name="State Option", null=True, blank=True) 
     supplier = models.ForeignKey(SupplierProfile, on_delete=models.CASCADE, related_name='pricings')
     total_cost_at_moment = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     markup = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    operational_cost_percentage_display = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, null=True, blank=True)
     card_tax = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     sale_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)

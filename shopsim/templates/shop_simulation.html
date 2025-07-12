@@ -236,17 +236,20 @@
                     <table class="table-simulacao">
                         <tbody>
                             <tr>
-                                <th>Produto é 7% no ICMS?</th>
-                                <td colspan="2" class="text-center">{% render_field form.product_icms_7 %} </td>
+                                <th>Descrição do Produto</th>
+                                <td colspan="2" class="text-center">{% render_field form.product_description placeholder="Descrição do Produto" %}</td>
+                            </tr>                             
+                            <tr>
+                                <th>Tributação de venda ICMS</th>
+                                <td colspan="2" class="text-center">
+                                    {% render_field form.tax_icms_sale %}
+                                </td>
                             </tr>            
                             <tr>
                                 <th>Produto é tributado PIS/COFINS?</th>
                                 <td colspan="2" class="text-center">{% render_field form.product_pis_cofins %}</td>
                             </tr>
-                            <tr>
-                                <th>Descrição do Produto</th>
-                                <td colspan="2" class="text-center">{% render_field form.product_description placeholder="Descrição do Produto" %}</td>
-                            </tr>                            
+                           
                             <tr>
                                 <th>Estado de compra</th>
                                 <td>{% render_field form.state_option_01 %}</td>
@@ -316,6 +319,24 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Adiciona o evento de tecla Enter para avançar para o próximo campo        
+        const formElements = document.querySelectorAll('input, select');
+        formElements.forEach(element => {
+            element.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' || event.keyCode === 13) {
+                    event.preventDefault();
+                    const currentIndex = Array.from(formElements).indexOf(this);
+                    const nextIndex = currentIndex + 1;
+                    if (nextIndex < formElements.length) {
+                        formElements[nextIndex].focus();
+                    }
+                }
+            });
+        });
+    });
+</script>
+<script>
     $(document).ready(function() {
         const moneyFields = [
             '#id_product_price_01',
@@ -331,8 +352,21 @@
             '#id_total_cost_display_01',
             '#id_total_cost_display_02'
         ];
+
+        const percentOptions = {
+            suffixText: ' %',
+            decimalCharacter: ',',
+            digitGroupSeparator: '.',
+            decimalPlaces: 2
+        };
         
         window.autoNumericInstances = {}; // Garante que este objeto esteja disponível
+        
+        const taxIcmsSale = new AutoNumeric('#id_tax_icms_sale', percentOptions);
+        const aliquotaInterDisplay01 = new AutoNumeric('#id_aliquota_inter_display_01', percentOptions);
+        const aliquotaInterDisplay02 = new AutoNumeric('#id_aliquota_inter_display_02', percentOptions);
+        window.autoNumericInstances['id_aliquota_inter_display_01'] = aliquotaInterDisplay01;
+        window.autoNumericInstances['id_aliquota_inter_display_02'] = aliquotaInterDisplay02;
 
         moneyFields
             .map(id => document.querySelector(id))
@@ -351,36 +385,15 @@
                 window.autoNumericInstances[el.id] = an;
             });
             
-        const aliquotaFields = [
-            '#id_aliquota_inter_display_01',
-            '#id_aliquota_inter_display_02',
-        ];
-
-        aliquotaFields
-            .map(id => document.querySelector(id))
-            .filter(el => el !== null)
-            .forEach(el => {
-                const an = new AutoNumeric(el, {
-                    digitGroupSeparator: '.',
-                    decimalCharacter: ',',
-                    decimalCharacterAlternative: '.',
-                    allowDecimalPadding: true,
-                    minimumValue: '0',
-                    maximumValue: '100.00',
-                    suffix: '%',
-                    readOnly: true,
-                });
-                window.autoNumericInstances[el.id] = an;
-            });
-
-        // --- MOVIDO PARA AQUI: TODAS AS CHAMADAS DE INICIALIZAÇÃO E REGISTRO DE EVENTOS ---
-        // As funções `calcular...` e `registrarEventos...` ainda podem ser definidas fora do ready,
-        // mas suas chamadas iniciais e os `addEventListener` devem estar aqui dentro para garantir
-        // que AutoNumeric esteja pronto.
-
         // Chamadas de inicialização para o estado inicial do formulário
         calcularAliquota(1);
         calcularAliquota(2);
+
+        calcularPISCOFINSCredit(1);
+        calcularPISCOFINSCredit(2);
+
+        calcularICMSCredit(1);
+        calcularICMSCredit(2);
         
         registrarEventosCalculoICMS(1);
         registrarEventosCalculoICMS(2);
@@ -421,32 +434,35 @@
     function calcularAliquota(tipo) {
         const stateSelect = document.getElementById(`id_state_option_0${tipo}`);
         const supplierSelect = document.getElementById(`id_supplier_profile_0${tipo}`);
-        const icmsSelect = document.getElementById('id_product_icms_7');
         const displayInput = document.getElementById(`id_aliquota_inter_display_0${tipo}`);
-    
-        if (!stateSelect || !supplierSelect || !icmsSelect || !displayInput) return;
+        const taxIcmsSaleValue = document.getElementById('id_tax_icms_sale').value;
+            
+        if (!stateSelect || !supplierSelect || !displayInput || !taxIcmsSaleValue) return;
+
+        const icmsNumeric = parseFloat(
+            taxIcmsSaleValue.replace('%', '').replace('.', '').replace(',', '.').trim()
+          ) || 0;        
     
         const stateId = stateSelect.value;
         const supplierId = supplierSelect.value;
-        const icmsValue = icmsSelect.value;
     
         const taxValueSupplier = parseFloat(supplierTaxValues[supplierId] || 0);
         // CORREÇÃO AQUI: MUDAR 'aliquota_inter' para 'aliquota'
         const stateInfo = stateAliquotas[stateId] || { code: '', aliquota: 0 }; // <-- Mudado para 'aliquota'
         const taxValueState = parseFloat(stateInfo.aliquota || 0);               // <-- Mudado para 'aliquota'
         const stateCode = stateInfo.code;
-    
-        console.log(`Todas as variaveis: ${stateId}, ${stateCode}, ${taxValueSupplier}, ${taxValueState}, ${icmsValue}`);
-    
+            
         let result = 0;
     
         if (taxValueSupplier === 0) {
             result = 0;
-        } else if (icmsValue === 'True') {
-            result = 7;
-        } else {
+        }  else {
             result = stateCode === 'GO' ? taxValueSupplier : taxValueState;
         }
+
+        if (result > icmsNumeric) {
+            result = icmsNumeric;
+        }        
     
         const aliquotaAutoNumeric = window.autoNumericInstances[displayInput.id];
         if (aliquotaAutoNumeric) {
@@ -490,13 +506,12 @@
         const preco = window.autoNumericInstances[precoEl.id]?.getNumber() || 0;
         const frete = window.autoNumericInstances[freightEl.id]?.getNumber() || 0;
         const adicionais = window.autoNumericInstances[addCostEl.id]?.getNumber() || 0;
-    
         const aliquotaAutoNumeric = window.autoNumericInstances[aliquotaDisplayEl.id];
         // É crucial que aliquotaAutoNumeric.getNumber() retorne o número sem o '%'
         // e que você o divida por 100 para usar na multiplicação.
         const aliquota = aliquotaAutoNumeric ? (aliquotaAutoNumeric.getNumber() / 100) : 0;
     
-        const resultado = (preco + frete + adicionais) * aliquota;
+        const resultado = (preco) * aliquota;
     
         const outputAutoNumeric = window.autoNumericInstances[outputEl.id];
         if (outputAutoNumeric) {
@@ -607,8 +622,7 @@
     function registrarEventosAliquota(tipo) {
         const camposAliquota = [
             `id_state_option_0${tipo}`,
-            `id_supplier_profile_0${tipo}`,
-            'id_product_icms_7'
+            `id_supplier_profile_0${tipo}`
         ];
 
         camposAliquota.forEach(function(id) {
@@ -623,6 +637,16 @@
             }
         });
     }
+
+    document.getElementById('id_tax_icms_sale').addEventListener('change', () => {
+        [1, 2].forEach(tipo => {
+            calcularAliquota(tipo);
+            calcularICMSCredit(tipo);
+            calcularCustoTotalProduto(tipo);
+        });
+        determinarMelhorOpcao();
+    });
+    
 </script>
 
 

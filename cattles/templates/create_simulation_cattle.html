@@ -287,8 +287,8 @@
     {{ form.fundeinfra_value }}    
     <div class="top-header-container">
         <div class="top-header-column select-area">
-            <label for="id_cow_weighing_location">Local de Pesagem</label>
-            {{ form.cow_weighing_location }}
+            {% comment %} <label for="id_cow_weighing_location">Local de Pesagem</label>
+            {{ form.cow_weighing_location }} {% endcomment %}
             {% render_field form.description class="form-control" placeholder="Ex: Compra Julho - Gado PO" %}
             <button type="submit" class="btn btn-primary">Salvar Simulação</button>            
         </div>
@@ -346,7 +346,9 @@
                                 <td class="text-left" rowspan="2" style="background-color: #fff;">Médio por Vaca</td>
                                 <td class="text-center" style="background-color: #fff;">Arroba</td>
                                 <td>{{ form.mean_weight_per_cow_producer_arroba|add_class:"text-center" }}</td>
-                                <td>{{ form.mean_weight_per_cow_slaughterhouse_arroba|add_class:"text-center" }}</td>
+                                <td>
+                                    {% comment %} {{ form.mean_weight_per_cow_slaughterhouse_arroba|add_class:"text-center" }} {% endcomment %}
+                                </td>
                             </tr>
                             <tr>
                                 <td class="text-center">Kg</td>
@@ -359,7 +361,9 @@
                                 <td class="text-left" style="background-color: #fff;">Vaca em Pé (no pasto)</td>
                                 <td class="text-center" style="background-color: #fff;">%</td>
                                 <td>{{ form.yield_live_cow_pasture_producer_percent|add_class:"text-center" }}</td>
-                                <td>{{ form.yield_live_cow_pasture_slaughterhouse_percent|add_class:"text-center" }}</td>
+                                <td>
+                                    {% comment %} {{ form.yield_live_cow_pasture_slaughterhouse_percent|add_class:"text-center" }} {% endcomment %}
+                                </td>
                             </tr>
                             <tr>
                                 <td class="text-left">Vaca Casada</td>
@@ -373,13 +377,17 @@
                                 <td class="text-left" style="background-color: #fff;">Bruto no pasto</td>
                                 <td class="text-center" style="background-color: #fff;">R$ / Arroba</td>
                                 <td>{{ form.price_closed_per_arroba_producer|add_class:"text-center" }}</td>
-                                <td>{{ form.price_closed_per_arroba_slaughterhouse|add_class:"text-center" }}</td>
+                                <td>
+                                    {% comment %} {{ form.price_closed_per_arroba_slaughterhouse|add_class:"text-center" }} {% endcomment %}
+                                </td>
                             </tr>
                             <tr>
                                 <td class="text-left">Líquido</td>
                                 <td class="text-center">R$ / Arroba</td>
                                 <td>{{ form.price_net_per_arroba_producer|add_class:"text-center" }}</td>
-                                <td>{{ form.price_net_per_arroba_slaughterhouse|add_class:"text-center" }}</td>
+                                <td>
+                                    {% comment %} {{ form.price_net_per_arroba_slaughterhouse|add_class:"text-center" }} {% endcomment %}
+                                </td>
                             </tr>
 
                             <tr>
@@ -401,7 +409,9 @@
                                 <td class="text-left" style="background-color: #fff;">Abate por Vaca</td>
                                 <td class="text-center" style="background-color: #fff;">R$</td>
                                 <td>{{ form.slaughter_service_per_cow_producer|add_class:"text-center" }}</td>
-                                <td>{{ form.slaughter_service_per_cow_slaughterhouse|add_class:"text-center" }}</td>
+                                <td>
+                                    {% comment %} {{ form.slaughter_service_per_cow_slaughterhouse|add_class:"text-center" }} {% endcomment %}
+                                </td>
                             </tr>
 
                             <tr>
@@ -415,7 +425,9 @@
                                 <td class="text-left">Frigorífico - Supermercado</td>
                                 <td class="text-center">R$</td>
                                 <td>{{ form.freight_slaughterhouse_store_producer|add_class:"text-center" }}</td>
-                                <td>{{ form.freight_slaughterhouse_store_slaughterhouse|add_class:"text-center" }}</td>
+                                <td>
+                                    {% comment %} {{ form.freight_slaughterhouse_store_slaughterhouse|add_class:"text-center" }} {% endcomment %}
+                                </td>
                             </tr>
 
                             <tr>
@@ -456,11 +468,11 @@
                                         readonly>
                                 </td>
                                 <td>
-                                    <input type="text"
+                                    {% comment %} <input type="text"
                                         id="id_frete_total_frigorifico"
                                         value="0"
                                         class="form-control text-center"
-                                        readonly>                                    
+                                        readonly> {% endcomment %}
                                 </td>
                             </tr>                            
 
@@ -545,7 +557,7 @@
                                 <td class="text-left" colspan="2" style="background-color: #e6f0fa; font-weight: bold;">
                                     <div style="display: flex; align-items: center; justify-content: space-between;">
                                         {# O texto do label #}
-                                        <span>Estorno ICMS da Perda 23%</span>
+                                        <span>Estorno ICMS da Perda 12%</span>
                                         
                                         {# O select do formulário #}
                                         {{ form.is_estorno_icms|add_class:"select-auto-height" }}
@@ -707,6 +719,7 @@
             readOnly: true
         });
         
+        /*
         const totalFreteFrigorifico = new AutoNumeric('#id_frete_total_frigorifico', {
             currencySymbol: 'R$ ',
             decimalCharacter: ',',
@@ -714,6 +727,7 @@
             decimalPlaces: 2,
             readOnly: true
         });      
+        */
 
         const totalVenda = new AutoNumeric('#id_total_sales_per_month', {
             currencySymbol: 'R$ ',
@@ -798,10 +812,12 @@
             decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
         });
 
+        /*
         const slaughterServicePerCowSlaughterhouse = new AutoNumeric('#id_slaughter_service_per_cow_slaughterhouse', {
             currencySymbol: 'R$ ',
             decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
         });     
+        */
         
         const freightProducerSlaughterhouseProducer = new AutoNumeric('#id_freight_producer_slaughterhouse_producer', {
             currencySymbol: 'R$ ',
@@ -813,10 +829,12 @@
             decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
         });  
         
+        /*
         const freightSlaughterhouseStoreSlaughterhouse = new AutoNumeric('#id_freight_slaughterhouse_store_slaughterhouse', {
             currencySymbol: 'R$ ',
             decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2
         });  
+        */
         
         const totalValueProducer = new AutoNumeric('#id_total_value_producer', {
             currencySymbol: 'R$ ',
@@ -846,7 +864,7 @@
             currencySymbol: 'R$ ',
             decimalCharacter: ',', digitGroupSeparator: '.', decimalPlaces: 2,
             readOnly: true
-        });     
+        });    
         
         const totalSlaughterCost = new AutoNumeric('#id_total_slaughter_cost', {
             currencySymbol: 'R$ ',
@@ -1017,7 +1035,8 @@
         
         function calcularValorTotalFrigorificoTotal(){
             const h34 = totalValueSlaughterhouse.getNumber();
-            const i36 = totalFreteFrigorifico.getNumber(); 
+            // const i36 = totalFreteFrigorifico.getNumber(); 
+            const i36 = 0;
         
             const resultado = h34 + i36;
             totalSlaughterhouse.set(resultado);    
@@ -1038,14 +1057,13 @@
         }
 
         function calcularQtdVacasMesProdutor() {
-            const t4 = $('#id_cow_weighing_location').val();  // 'campo' ou 'frigorifico'
+            // const t4 = $('#id_cow_weighing_location').val();  // 'campo' ou 'frigorifico'
+            const t4 = 'campo'; // Forçando o valor para teste, remova esta linha na produção
             const f6 = volume.getNumber(); // monthly_sales_volume_kg
             const i17 = yieldButcheredProducer.getNumber() / 100; 
             const j17 = yieldButcheredSlaughterhouse.getNumber() / 100;
             const h16 = yieldLive.getNumber() / 100;
             const h13 = pesoProdutorArroba.getNumber(); // peso médio por vaca em arrobas
-
-            console.log(`t4: ${t4}, f6: ${f6}, i17: ${i17}, j17: ${j17}, h16: ${h16}, h13: ${h13}`);
         
             // Verifica se os valores necessários foram preenchidos
             if (f6 > 0 && i17 > 0 && j17 > 0 && h16 > 0 && h13 > 0) {
@@ -1221,9 +1239,7 @@
         function calcularProtegePercent() {
             const f7 = totalVenda.getNumber();
             const n13 = $('#id_protege_value').val() / 100 || 0;
-            console.log(`protege value ${$('#id_protege_value').val()}`)
             const resultado = f7 * n13;
-            console.log(`Calculando Protege: f7=${f7}, n13=${n13}, resultado=${resultado}`);
             protegeField.set(resultado);
         }
 
@@ -1243,7 +1259,6 @@
             const p10 = grantedCreditPercent.getNumber();
 
             //P7+P13+P14-P10
-            console.log(`P7: ${p7}, P13: ${p13}, P14: ${p14}, P10: ${p10}`);
         
             if (p7 !== null && p13 !== null && p14 !== null && p10 !== null) {
                 const resultado = p7 + p13 + p14 - p10;
@@ -1325,7 +1340,8 @@
         function calcularLucroEfetivoFrigorificoReal() {
             const f7 = totalVenda.getNumber();
             const r16 = taxSlaughterhouseReal.getNumber();
-            const j27 = freightSlaughterhouseStoreSlaughterhouse.getNumber();
+            // const j27 = freightSlaughterhouseStoreSlaughterhouse.getNumber();
+            const j27 = 0; // Temporariamente definido como 0, pois não está sendo usado
             const j34 = totalValueSlaughterhouse.getNumber();
         
             if ([f7, r16, j27, j34].every(val => val !== null)) {
@@ -1403,13 +1419,15 @@
         }
 
         function calcularFreteTotalFrigorifico() {
-            const j27 = freightSlaughterhouseStoreSlaughterhouse.getNumber();
-        
+            // const j27 = freightSlaughterhouseStoreSlaughterhouse.getNumber();
+            const j27 = 0;
+            /*
             if (j27 !== null) {
                 totalFreteFrigorifico.set(j27);
             } else {
                 totalFreteFrigorifico.set(0);
             }
+            */
             calcularValorTotalFrigorificoTotal();
         }
 

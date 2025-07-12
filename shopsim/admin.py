@@ -4,7 +4,7 @@ from .models import SupplierProfile, PriceQuote
 
 @admin.register(SupplierProfile)
 class SupplierProfileAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tax_value')
+    list_display = ('name', 'tax_value', 'description', 'only_shop_simulation')
     search_fields = ('name',)
     ordering = ('name',)
 
