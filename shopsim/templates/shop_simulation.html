@@ -276,7 +276,7 @@
                                 <td>{% render_field form.additional_costs_02 %}</td>
                             </tr>
                             <tr>
-                                <th>Alíquota Inter.</th>
+                                <th>Alíquota ICMS Compra</th>
                                 <td>{% render_field form.aliquota_inter_display_01 %}</td>
                                 <td>{% render_field form.aliquota_inter_display_02 %}</td>
                             </tr>
@@ -562,12 +562,18 @@
 
         let bestOptionValue = ''; // Agora vamos armazenar o ID do estado ou 'Empate'
         let bestOptionText = '';
+        let bestSupplierText = '';
         if (totalCost1 < totalCost2) {
             bestOptionText = document.getElementById('id_state_option_01').options[document.getElementById('id_state_option_01').selectedIndex].text;
             bestOptionValue = document.getElementById('id_state_option_01').value;
+
+            bestSupplierText = document.getElementById('id_supplier_profile_01').options[document.getElementById('id_supplier_profile_01').selectedIndex].text;
+            
         } else if (totalCost2 < totalCost1) {
             bestOptionText = document.getElementById('id_state_option_02').options[document.getElementById('id_state_option_02').selectedIndex].text;
             bestOptionValue = document.getElementById('id_state_option_02').value;
+
+            bestSupplierText = document.getElementById('id_supplier_profile_02').options[document.getElementById('id_supplier_profile_02').selectedIndex].text;
 
         } else if (totalCost1 !== Infinity && totalCost1 === totalCost2) { // Se são iguais e não são infinitos (ou seja, ambos foram calculados)
             bestOptionText = 'Empate';
@@ -575,7 +581,8 @@
             bestOptionText = '';
         }
         bestOptionHiddenEl.value = bestOptionValue; 
-        bestOptionDisplayEl.textContent = bestOptionText;
+        bestOptionDisplayEl.textContent = bestOptionText + 
+            (bestSupplierText ? ` (${bestSupplierText})` : ''); // Adiciona o texto do fornecedor se existir
     }
 
 
