@@ -87,6 +87,11 @@ class PricingForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     
+    sale_price = BrazilianDecimalField( # Este é o campo que será salvo no MODELO Pricing
+        max_digits=10, decimal_places=2, required=True, # Ajuste required conforme seu modelo
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )    
+    
     card_tax = BrazilianDecimalField(
         max_digits=5, # Ajuste conforme a precisão necessária para a taxa
         decimal_places=2,
@@ -143,10 +148,7 @@ class PricingForm(forms.ModelForm):
         widget=forms.HiddenInput()
     )
     
-    sale_price = BrazilianDecimalField( # Este é o campo que será salvo no MODELO Pricing
-        max_digits=10, decimal_places=2, required=False, # Ajuste required conforme seu modelo
-        widget=forms.HiddenInput() # Pode ser hidden se não quiser que o usuário edite
-    )
+
 
     class Meta:
         model = Pricing

@@ -185,7 +185,7 @@ class PricingCreateView(LoginRequiredMixin, CreateView):
     model = Pricing # Defina o modelo que o formulário está criando
     form_class = PricingForm
     template_name = 'pricing_simulation.html' # Confirme o nome do seu template
-    success_url = reverse_lazy('simulation_shop_list') # Confirme o nome da sua URL de sucesso
+    success_url = reverse_lazy('pricing_list') # Confirme o nome da sua URL de sucesso
 
     def get_initial(self):
         initial = super().get_initial()

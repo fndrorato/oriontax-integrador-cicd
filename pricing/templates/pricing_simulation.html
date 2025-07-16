@@ -355,7 +355,7 @@
                                         </tr>
                                         <tr>
                                             <td>PREÇO DE VENDA</td>
-                                            <td>{% render_field form.sale_price_display class="form-control calculated-value" %}</td>
+                                            <td>{% render_field form.sale_price class="form-control" %}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -546,7 +546,7 @@
 
         const moneyFields = [
             '#id_cost_price',
-            '#id_sale_price_display',
+            '#id_sale_price',
             '#id_pis_credit_display',
             '#id_cofins_credit_display',
             '#id_icms_credit_display',
@@ -664,7 +664,7 @@
             // --- CÁLCULO DO PREÇO DE VENDA ---
             let salePrice = 0;
             salePrice = (markup / 100) * costPrice + costPrice;
-            window.autoNumericInstances['id_sale_price_display']?.set(salePrice);
+            window.autoNumericInstances['id_sale_price']?.set(salePrice);
             
             // --- CÁLCULO DO CRÉDITO ---
             let pisCredit = 0;
@@ -716,8 +716,22 @@
 
         }
 
+        function calculateMarkupFromSalePrice() {
+            const costPrice = window.autoNumericInstances['id_cost_price']?.getNumber() || 0;
+            const salePrice = window.autoNumericInstances['id_sale_price']?.getNumber() || 0;
+        
+            if (costPrice > 0) {
+                const markup = ((salePrice / costPrice) - 1) * 100;
+                window.autoNumericInstances['id_markup']?.set(markup);
+                calculateAllPricingFields(); // recalcula todos os outros valores com o novo markup
+            }
+        }
+        
+
         // --- REGISTRO DE EVENTOS ---
         $('#id_state_option, #id_tax_icms_sale, #id_items_pis_cofins_excluded, #id_supplier, #id_markup, #id_card_tax, #id_cost_price, #id_operational_cost_percentage_display').on('change', calculateAllPricingFields);
+
+        $('#id_sale_price').on('change', calculateMarkupFromSalePrice);
 
         // Chamar o cálculo inicial
         calculateAllPricingFields();
