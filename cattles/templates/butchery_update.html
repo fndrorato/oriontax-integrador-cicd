@@ -313,7 +313,7 @@
         <tr>
           <td>
             <select class="form-control" name="cuts[${index}][user_meat_cut_id]" id="user_meat_cut_id_${index}" required>
-              ${[...document.querySelectorAll('select[name$="[user_meat_cut_id]"]')][0].innerHTML}
+              ${userMeatCutOptions}
             </select>
           </td>
           <td>
@@ -413,6 +413,9 @@
           select.appendChild(option);
         });
 
+        // Atualiza a variável com o novo corte incluído
+        userMeatCutOptions += `<option value="${result.id}">${result.name}</option>`;
+
         // Opcional: Adiciona ao datalist (se estiver sendo usado para autocomplete em algum lugar)
         const datalist = document.getElementById('cut-options');
         if (datalist) {
@@ -430,6 +433,24 @@
       }
     });
   });
+
+  // Variável global para armazenar as opções de cortes
+  let userMeatCutOptions = '';
+  document.addEventListener('DOMContentLoaded', () => {
+    formatMoneyInputs();
+    formatPercentageInputs();
+  
+    const firstSelect = document.querySelector('select[name$="[user_meat_cut_id]"]');
+    if (firstSelect) {
+      userMeatCutOptions = firstSelect.innerHTML;
+    } else {
+      // Caso não haja nenhuma linha ainda, pegue de uma fonte segura (como o `datalist` ou `cuts_json`)
+      {% if available_cuts %}
+      userMeatCutOptions = `{% for cut in available_cuts %}<option value="{{ cut.id }}">{{ cut.meat_cut }}</option>{% endfor %}`;
+      {% endif %}
+    }
+  });
+  
 
   function parseCurrency(value) {
     if (!value) return 0;
