@@ -53,7 +53,11 @@ class IcmsAliquota(models.Model):
         return str(self.code)           
 
 class IcmsAliquotaReduzida(models.Model):
-    code = models.PositiveIntegerField(primary_key=True)
+    code = models.DecimalField(
+        primary_key=True,
+        max_digits=5,
+        decimal_places=2
+    )
     description = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):

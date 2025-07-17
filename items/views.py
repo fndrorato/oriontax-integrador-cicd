@@ -5,6 +5,7 @@ import time
 import json
 import logging
 import pandas as pd
+from decimal import Decimal
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -28,6 +29,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.models import User
+from psycopg2 import OperationalError
 from clients.models import Client
 from .models import Item, ImportedItem
 from .forms import ItemForm, CSVUploadForm, ImportedItemForm
@@ -1130,7 +1132,8 @@ def save_bulk_imported_item(request):
                         variavel_oriontax['cfop'] = int(variavel_oriontax['cfop'])
                         variavel_oriontax['icms_cst'] = int(variavel_oriontax['icms_cst'])
                         variavel_oriontax['icms_aliquota'] = int(variavel_oriontax['icms_aliquota'])
-                        variavel_oriontax['icms_aliquota_reduzida'] = int(variavel_oriontax['icms_aliquota_reduzida'])
+                        # variavel_oriontax['icms_aliquota_reduzida'] = int(variavel_oriontax['icms_aliquota_reduzida'])
+                        variavel_oriontax['icms_aliquota_reduzida'] = float(variavel_oriontax['icms_aliquota_reduzida'])
                         variavel_oriontax['protege'] = int(variavel_oriontax['protege'])
                         variavel_oriontax['piscofins_cst'] = int(variavel_oriontax['piscofins_cst'])
                         var_status_item = comparar_item_filtrado(client.erp.name, variavel_oriontax, itens_filtrados_dict)
@@ -1304,7 +1307,15 @@ class XLSXUploadView(View):
             try:
                 valid_cfops = set(Cfop.objects.values_list('cfop', flat=True))
                 valid_icms_csts = set(IcmsCst.objects.values_list('code', flat=True))
-                valid_icms_aliquotas = set(IcmsAliquota.objects.values_list('code', flat=True))
+                valid_icms_aliquotas = set(IcmsAliquota.objects.values_list('code', flat=True))                
+                valid_icms_aliquotas_reduzidas = set(IcmsAliquotaReduzida.objects.values_list('code', flat=True))
+                
+                valid_icms_aliquotas_to_reduzidas = {float(v) for v in IcmsAliquota.objects.values_list('code', flat=True)}
+                valid_icms_aliquotas_reduzidas = {float(v) for v in IcmsAliquotaReduzida.objects.values_list('code', flat=True)}
+
+                # União sem duplicatas:
+                valid_icms_aliquotas_reduzidas = valid_icms_aliquotas_to_reduzidas.union(valid_icms_aliquotas_reduzidas)
+                
                 valid_piscofins_csts = set(PisCofinsCst.objects.values_list('code', flat=True))
                 valid_natureza_receitas = set(NaturezaReceita.objects.values_list('code', flat=True))
                 valid_proteges = set(Protege.objects.values_list('code', flat=True))
@@ -1328,7 +1339,7 @@ class XLSXUploadView(View):
                 df['cfop'] = df['cfop'].astype(int)
                 df['icms_cst'] = df['icms_cst'].astype(str)
                 df['icms_aliquota'] = df['icms_aliquota'].astype(int)
-                df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
+                df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(float).round(1)                
                 df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
                 df['naturezareceita'] = df['naturezareceita'].fillna('').astype(str).str.zfill(3).replace(['000', 'nan'], None)
                 df['protege'] = df['protege'].astype(int)
@@ -1378,7 +1389,7 @@ class XLSXUploadView(View):
                     ('cfop', valid_cfops),
                     ('icms_cst', valid_icms_csts),
                     ('icms_aliquota', valid_icms_aliquotas),
-                    ('icms_aliquota_reduzida', valid_icms_aliquotas),
+                    ('icms_aliquota_reduzida', valid_icms_aliquotas_reduzidas),
                     ('piscofins_cst', valid_piscofins_csts),
                     ('naturezareceita', valid_natureza_receitas),
                     ('protege', valid_proteges),
@@ -1947,7 +1958,7 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
         return context    
 
 # Função para validar uma linha do DataFrame
-def validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, cbenef_data, natureza_receita_dict):
+def validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, valid_icms_aliquotas_reduzidas,   cbenef_data, natureza_receita_dict):
     errors = []
     column_name = None 
 
@@ -1968,7 +1979,7 @@ def validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, cbenef_da
 
     column_name = 'icms_aliquota_reduzida'
     if row['icms_cst'] == '20':
-        if row['icms_aliquota_reduzida'] not in valid_icms_aliquotas:
+        if row['icms_aliquota_reduzida'] not in valid_icms_aliquotas_reduzidas:
             errors.append(f"Erro na linha {index + 2} [{column_name}]: O valor do ICMS alíquota reduzida não é válido.")
 
     cbenef_info = cbenef_data.get(row['cbenef'])
@@ -2073,7 +2084,6 @@ class XLSXUploadDivergentView(View):
                 }
                 df = df.rename(columns=lambda x: x.replace('_base', '').replace('_cliente', '') if x not in rename_mapping else rename_mapping[x])
 
-                
                 pd.set_option('display.max_columns', None)
                 # Verificação das colunas obrigatórias
                 missing_columns = [col for col in self.REQUIRED_COLUMNS if col not in df.columns]
@@ -2099,7 +2109,14 @@ class XLSXUploadDivergentView(View):
                 valid_cfops = set(Cfop.objects.values_list('cfop', flat=True))
                 valid_icms_csts = set(IcmsCst.objects.values_list('code', flat=True))
                 valid_icms_aliquotas = set(IcmsAliquota.objects.values_list('code', flat=True))
-                print('caiu aqui2')
+                valid_icms_aliquotas_reduzidas = set(IcmsAliquotaReduzida.objects.values_list('code', flat=True))
+                
+                valid_icms_aliquotas_to_reduzidas = {float(v) for v in IcmsAliquota.objects.values_list('code', flat=True)}
+                valid_icms_aliquotas_reduzidas = {float(v) for v in IcmsAliquotaReduzida.objects.values_list('code', flat=True)}
+
+                # União sem duplicatas:
+                valid_icms_aliquotas_reduzidas = valid_icms_aliquotas_to_reduzidas.union(valid_icms_aliquotas_reduzidas)
+
                 valid_piscofins_csts = set(PisCofinsCst.objects.values_list('code', flat=True))
                 valid_natureza_receitas = set(NaturezaReceita.objects.values_list('code', flat=True))
                 valid_proteges = set(Protege.objects.values_list('code', flat=True))
@@ -2133,7 +2150,7 @@ class XLSXUploadDivergentView(View):
                 df['icms_cst'] = df['icms_cst'].astype(str)
                 df['icms_aliquota'] = df['icms_aliquota'].astype(int)
                 print('caiu aqui8')
-                df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(int)
+                df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(float).round(1)
                 print('caiu aqui9')
                 df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
                 print('caiu aqui10')
@@ -2182,20 +2199,26 @@ class XLSXUploadDivergentView(View):
                     elif valid_set is not None:
                         invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
                         for index, row in invalid_rows.iterrows():
-                            error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]} é um valor inválido."
-                            invalid_details.append(error_message)
+                            valor = row[column_name]
+                            error_message = (
+                                f"Erro na linha {index + 2} [{column_name}]: {valor} ({type(valor).__name__}) é um valor inválido."
+                            )
+                            invalid_details.append(error_message)                        
+                        # for index, row in invalid_rows.iterrows():
+                        #     error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]}  é um valor inválido."
+                        #     invalid_details.append(error_message)
                     elif length is None and valid_set is None and allow_empty == False:
                         invalid_rows = df[df[column_name].apply(lambda x: len(x) != length)]
                         
                     else:
                         invalid_rows = pd.DataFrame()
                     return invalid_rows
-                print('caiu aqui103')
+
                 columns_to_check = [
                     ('cfop', valid_cfops),
                     ('icms_cst', valid_icms_csts),
                     ('icms_aliquota', valid_icms_aliquotas),
-                    ('icms_aliquota_reduzida', valid_icms_aliquotas),
+                    ('icms_aliquota_reduzida', valid_icms_aliquotas_reduzidas),
                     ('piscofins_cst', valid_piscofins_csts),
                     ('naturezareceita', valid_natureza_receitas),
                     ('protege', valid_proteges),
@@ -2204,7 +2227,7 @@ class XLSXUploadDivergentView(View):
                     ('cest', None, 7, True),
                     ('description', None, None, False) 
                 ]
-                print('caiu aqui 200')
+                
                 for column_name, valid_set, *length in columns_to_check:
                     if len(length) == 2:  # Se fornecidos length e allow_empty
                         invalid_rows = check_invalid_rows(df, column_name, valid_set, length[0], length[1])
@@ -2215,15 +2238,17 @@ class XLSXUploadDivergentView(View):
                     
                     if not invalid_rows.empty:
                         break
+
                 print('caiu aqui 201')
                 # Validando todas as linhas
                 all_errors = []
                 for index, row in df.iterrows():
-                    errors = validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, cbenef_data, natureza_receita_dict)
+                    errors = validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, valid_icms_aliquotas_reduzidas, cbenef_data, natureza_receita_dict)
                     if errors:
                         all_errors.extend(errors)
 
                 if all_errors:
+                    print('all erros:')
                     end_time = time.time()
                     elapsed_time = round(end_time - start_time, 3)
                     return JsonResponse({
@@ -2233,6 +2258,7 @@ class XLSXUploadDivergentView(View):
                     }, status=400)                  
 
                 if invalid_details:
+                    print('invalid details')
                     end_time = time.time()
                     elapsed_time = round(end_time - start_time, 3)
                     return JsonResponse({
