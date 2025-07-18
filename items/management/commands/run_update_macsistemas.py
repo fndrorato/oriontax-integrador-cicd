@@ -62,7 +62,13 @@ def convert_df_otx_version_to_df_client(df_client):
     # Garantir que os valores na coluna 'icms_cst_id' tenham exatamente 3 caracteres
     df_client['icms_cst_int'] = pd.to_numeric(df_client['icms_cst_id'], errors='coerce').astype('Int64')
     df_client['icms_cst_id'] = df_client['icms_cst_id'].str.zfill(3)
-    df_client['icms_aliquota_reduzida'] = pd.to_numeric(df_client['icms_aliquota_reduzida'], errors='coerce').astype('Int64')
+    # df_client['icms_aliquota_reduzida'] = pd.to_numeric(df_client['icms_aliquota_reduzida'], errors='coerce').astype('Int64')
+    
+    df_client['icms_aliquota_reduzida'] = (
+        pd.to_numeric(df_client['icms_aliquota_reduzida'], errors='coerce')  # converte para número (float), nulos viram NaN
+        .round(2)  # arredonda para 2 casas decimais
+    )
+    
     # Aplicar a função ao DataFrame para criar a coluna 'redbcicms_id'
     df_client['redbcicms_id'] = df_client.apply(calculate_redbcicms_id, axis=1)   
     df_client['piscofins_cst_id'] = pd.to_numeric(df_client['piscofins_cst_id'], errors='coerce').astype('Int64')
