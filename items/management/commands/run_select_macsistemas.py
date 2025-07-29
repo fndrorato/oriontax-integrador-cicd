@@ -50,12 +50,12 @@ def calcular_icms_aliquota_reduzida(row):
     if row['icms_cst'] == 0 and row['redbcicms'] == 0:
         return row['icms_aliquota']
     elif row['icms_cst'] == 20:
-        return round((row['icms_aliquota'] * row['redbcicms']) / 100)
+        return round((row['icms_aliquota'] * row['redbcicms']) / 100, 2)
     elif row['icms_cst'] in [40, 41, 60]:
         if row['redbcicms'] == 0:
             return 0
         else:
-            return round((row['icms_aliquota'] * row['redbcicms']) / 100)
+            return round((row['icms_aliquota'] * row['redbcicms']) / 100, 2)
     else:
         return 9999  # Valor padrão se nenhuma condição for satisfeita
     
@@ -309,6 +309,11 @@ if __name__ == "__main__":
             )        
             if items_queryset:
                 items_df = pd.DataFrame(list(items_queryset.values()))
+                # Define o tipo float para a coluna desejada (com duas casas decimais ao formatar)
+                items_df = items_df.astype({'icms_aliquota_reduzida': 'float'})
+
+                # Opcional: se quiser preencher com zeros inicialmente
+                items_df['icms_aliquota_reduzida'] = items_df['icms_aliquota_reduzida'].fillna(0).round(2)
             else: 
                 # Lista das colunas desejadas
                 colunas_desejadas = [

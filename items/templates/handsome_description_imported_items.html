@@ -9,8 +9,12 @@
 {% endblock title %}
 
 {% block customcss %}
-    <!-- Handson table css start -->
+    <!-- Handson table css start 
     <link rel="stylesheet" type="text/css" href="https://docs.handsontable.com/pro/bower_components/handsontable-pro/dist/handsontable.full.min.css">
+    -->
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@16.0.1/dist/handsontable.full.min.css" integrity="sha256-akBbtLh9VrKKUkpusgWfKTTP3nPicJBSDNf6wohI9xw=" crossorigin="anonymous">
+    <!-- Handson table css end -->
                                                 
     <!-- Notification.css -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/notification/notification.css' %}">
@@ -29,6 +33,19 @@
         .error-row {
             background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
         }
+
+        .handsontable .htCore td { /* Targets all cells in the Handsontable */
+            font-size: 10px; /* Or your desired smaller font size */
+        }
+        /* Target all column headers */
+        .handsontable .ht_master th {
+            font-size: 12px; /* Adjust the size as needed */
+        }
+        
+        /* Target row headers */
+        .handsontable .ht_clone_left .htCore th {
+            font-size: 12px; /* Adjust the size as needed */
+        }         
     </style>
     <!-- jpro forms css -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/j-pro/css/demo.css' %}">
@@ -55,7 +72,7 @@
 
                 <a href="{% url 'export_items_to_excel' client_id=client.id table='desc_divergent' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
-                    Exportar Cadastros de Itens Divergentes
+                    Exportar para Excel
                 </a>    
                 
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
@@ -65,7 +82,12 @@
                 <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#uploadModal"  onclick="clearDiv()"> 
                     <i class="feather icon-upload-cloud"></i>
                     Fazer Upload em Excel
-                </button>                   
+                </button>   
+                
+                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" id="checkAllValidate"> 
+                    <i class="icofont icofont-verification-check"></i>
+                    Validar Todos
+                </button>                
                 
                 <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
                     <i class="icofont icofont-save"></i>
@@ -111,7 +133,15 @@
                                         </div>
                                         Aguardando Validação/Envio</a>
                                     <div class="slide"></div>
-                                </li>                                                                                                                                                                                           
+                                </li>    
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'inactive_item_list' client_id=client_id %}" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-exclamation-circle"></i>
+                                        </div>
+                                        Produtos Inativos</a>
+                                    <div class="slide"></div>
+                                </li>                                                                                                                                                                                                                          
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content">       
@@ -506,18 +536,19 @@
             manualRowResize: false,
             manualColumnResize: false,
             contextMenu: [
-            'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column'
+                'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column'
             ],
             filters: true,
             dropdownMenu: true,
             allowInsertRow: false,
             allowRemoveRow: false,
             allowInsertColumn: false,
-            allowRemoveColumn: false,            
+            allowRemoveColumn: false,   
+            licenseKey: 'non-commercial-and-evaluation',         
             cells: function(row, col) {
                 var cellProperties = {};
-                cellProperties.renderer = compareColumnsRenderer;
-                return cellProperties;                
+                cellProperties.renderer = compareColumnsRenderer; 
+                return cellProperties;              
 
             },             
             afterChange: function(changes, source) {
@@ -542,7 +573,12 @@
         function oddRowRenderer(instance, td, row, col, prop, value, cellProperties) {
             Handsontable.renderers.TextRenderer.apply(this, arguments);
             td.style.backgroundColor = '#ffffff'; // Cor da linha ímpar
-        }   
+        }  
+        
+        function otxColumnRenderer(instance, td, row, col, prop, value, cellProperties) {
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            td.style.backgroundColor = '#e6f0ff'; // azul clarinho
+        }                
 
         function compareColumnsRenderer(instance, td, row, col, prop, value, cellProperties) {
             if (col === 30) { 
@@ -570,7 +606,20 @@
                     instance.setCellMeta(row, col2, 'className', '');
                 }
             });
-        }        
+
+            // Aplica fundo azul claro se for coluna .OTX
+            const otxColumns = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27];
+            if (otxColumns.includes(col)) {
+                td.style.backgroundColor = '#e6f0ff';
+            }              
+        }
+        
+        $('#checkAllValidate').click(function() {
+            const rowCount = hot.countRows();
+            for (let row = 0; row < rowCount; row++) {
+                hot.setDataAtCell(row, 30, true);
+            }
+        });         
 
         // Adiciona evento de clique ao botão "Validar"
         var btnValidate = document.getElementById('btn-validate');
@@ -788,7 +837,6 @@
         
         // Use o evento 'submit' no formulário corretamente identificado pelo ID
         $('#j-pro').on('submit', function(event) {
-            console.log('upload form');
             event.preventDefault();
             
             var formData = new FormData(this);
@@ -812,7 +860,6 @@
                     location.reload();                       
                 },
                 error: function(xhr, status, error) {
-                    console.log(xhr);
 
                     if (xhr.status === 500) {
                         alert('Erro ao processar arquivo');
@@ -832,25 +879,6 @@
         
         });
         
-        // Validation
-        /*
-        $( "#uploadForm" ).justFormsPro({
-            rules: {
-                csv_file: {
-                    validate: true,
-                    required: true,
-                    size: 10,
-                    extension: "xlsx"
-                }
-            },
-            messages: {
-                csv_file: {
-                    size_extension: "Somente arquivo XLSX. Máx: 10Mb",
-                }
-            }
-        });
-        */
-        
     }); 
     
     function hideDiv() {
@@ -860,16 +888,16 @@
         messagesDiv.style.opacity = '0'; // Define a opacidade para 0
         setTimeout(() => {
             messagesDiv.style.visibility = 'hidden'; // Define hidden após a transição
-        }, 500); // Tempo correspondente à duração da transição de opacidade
+        }, 50); // Tempo correspondente à duração da transição de opacidade
     } 
     
     function showDiv() {
         const messagesDiv = document.getElementById('messages');
-        $('#loaderUpload').hide();
-        messagesDiv.style.visibility = 'visible'; // Remove hidden
         setTimeout(() => {
             messagesDiv.style.opacity = '1'; // Define a opacidade para 1
-        }, 10); // Pequeno atraso para permitir que a transição funcione
+            $('#loaderUpload').hide();
+            messagesDiv.style.visibility = 'visible'; // Remove hidden            
+        }, 1000); // Pequeno atraso para permitir que a transição funcione
     }
 
     function clearDiv() {
@@ -878,7 +906,7 @@
         messagesDiv.style.opacity = '0'; // Define a opacidade para 0
         setTimeout(() => {
             messagesDiv.style.visibility = 'hidden'; // Define hidden após a transição
-        }, 500); // Tempo correspondente à duração da transição de opacidade
+        }, 50); // Tempo correspondente à duração da transição de opacidade
     }    
     
 </script>

@@ -29,7 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['oriontax.f5sys.com.br', '127.0.0.1', '174.138.73.68', 'beta-oriontax.f5sys.com.br']
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -88,6 +87,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'accounts.context_processors.active_module_context',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],

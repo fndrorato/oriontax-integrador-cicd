@@ -1,0 +1,40 @@
+{% load permissions_tags %}
+
+<nav class="pcoded-navbar">
+    <div class="pcoded-inner-navbar">
+        <ul class="pcoded-item pcoded-left-item"> 
+            {% if user|has_any_role:"administrador" or user|has_profile_permission:"pricing_permission" %}
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-cpu"></i></span>
+                    <span class="pcoded-mtext">Precificação</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">                      
+                    <li class=" ">
+                        <a href="{% url 'update_fixed_expenses' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Despesas Fixas</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>     
+                    <li class=" ">
+                        <a href="{% url 'pricing_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Listar Precificações</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                           
+                    <li class=" ">
+                        <a href="{% url 'pricing_simulation' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Nova Precificação</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                   
+                </ul>
+            </li>                    
+            {% endif %}                              
+        </ul>
+    </div>
+</nav>

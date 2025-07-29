@@ -48,13 +48,17 @@ class ItemModelSerializer(serializers.ModelSerializer):
     def get_icms_aliquota_reduzida(self, obj):
         # Converte a string para inteiro
         try:
-            return int(obj.icms_aliquota_reduzida)
+            return round(float(obj.icms_aliquota_reduzida), 2)
         except (ValueError, TypeError):
             return None  # Retorna None se a conversão falhar        
         
     def get_redbcde(self, obj):
         aliquota_id = obj.icms_aliquota_id  # ID do modelo relacionado  
-        icms_aliquota_reduzida = int(obj.icms_aliquota_reduzida)
+        try:
+            icms_aliquota_reduzida = round(float(obj.icms_aliquota_reduzida), 2)
+        except (TypeError, ValueError):
+            icms_aliquota_reduzida = 0.0
+        
         
         if aliquota_id == 0:
             return ''  # ou 0, dependendo do que você preferir
@@ -62,7 +66,10 @@ class ItemModelSerializer(serializers.ModelSerializer):
     
     def get_redbcpara(self, obj):
         aliquota_id = obj.icms_aliquota_id  # ID do modelo relacionado 
-        icms_aliquota_reduzida = int(obj.icms_aliquota_reduzida)
+        try:
+            icms_aliquota_reduzida = round(float(obj.icms_aliquota_reduzida), 2)
+        except (TypeError, ValueError):
+            icms_aliquota_reduzida = 0.0
          
         if aliquota_id == 0:
             return ''  # ou 0, dependendo do que você preferir

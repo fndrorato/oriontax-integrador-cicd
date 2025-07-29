@@ -37,28 +37,47 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                
-                # Obtém o nome do grupo do usuário
-                user_group = user.groups.first()  # Assume que o usuário pertence a apenas um grupo
+
+                user_group = user.groups.first()
                 if user_group:
-                    assign_role(user, user_group.name.lower())  # Atribui o papel com base no nome do grupo
+                    assign_role(user, user_group.name.lower())
 
-                # Se for cliente, redireciona conforme a permissão
-                if user_group.name.lower() == 'cliente':
-                    try:
-                        profile = user.profile
-                        if profile.cattle_permission:
-                            return JsonResponse({"success": True, "redirect_url": reverse_lazy('simulation_create_matrix_cattle')})
-                        elif profile.shop_simulation_permission:
-                            return JsonResponse({"success": True, "redirect_url": reverse_lazy('pricequote_create')})
-                        elif profile.pricing_permission:
-                            return JsonResponse({"success": True, "redirect_url": reverse_lazy('pricing_simulation')})
-                        else:
-                            return JsonResponse({"success": False, "errors": ["Você não tem permissões ativas para acesso."]})
-                    except Profile.DoesNotExist:
-                        return JsonResponse({"success": False, "errors": ["Perfil de usuário não encontrado."]})
+                try:
+                    profile = user.profile
 
-                                
+                    # Permissões padrão do profile
+                    permissions = {
+                        'cattle_permission': profile.cattle_permission,
+                        'shop_simulation_permission': profile.shop_simulation_permission,
+                        'pricing_permission': profile.pricing_permission,
+                        'tax_management_permission': profile.tax_management_permission,
+                    }
+
+                    # Se for administrador, considera todas as permissões como True
+                    if user_group.name.lower() == 'administrador':
+                        for key in permissions.keys():
+                            permissions[key] = True
+
+                    active_permissions = [key for key, value in permissions.items() if value]
+
+                    if len(active_permissions) == 0:
+                        return JsonResponse({"success": False, "errors": ["Você não tem permissões ativas para acesso."]})
+                    elif len(active_permissions) == 1:
+                        redirect_map = {
+                            'cattle_permission': reverse_lazy('simulation_create_matrix_cattle'),
+                            'shop_simulation_permission': reverse_lazy('pricequote_create'),
+                            'pricing_permission': reverse_lazy('pricing_simulation'),
+                            'tax_management_permission': reverse_lazy('tax_dashboard'),
+                        }
+                        return JsonResponse({"success": True, "redirect_url": redirect_map[active_permissions[0]]})
+                    else:
+                        # Armazena as permissões na sessão para o select_module
+                        request.session['available_permissions'] = active_permissions
+                        return JsonResponse({"success": True, "redirect_url": reverse_lazy('select_module')})
+
+                except Profile.DoesNotExist:
+                    return JsonResponse({"success": False, "errors": ["Perfil de usuário não encontrado."]})
+
                 return JsonResponse({"success": True, "redirect_url": reverse_lazy('home')})
             else:
                 return JsonResponse({"success": False, "errors": ["Email ou senha inválida."]})
@@ -67,6 +86,48 @@ def login_view(request):
             return JsonResponse({"success": False, "errors": errors})
 
     return render(request, 'login.html', {'login_form': AuthenticationForm()})
+
+
+
+# def login_view(request):
+#     if request.method == "POST":
+#         login_form = AuthenticationForm(request, data=request.POST)
+#         if login_form.is_valid():
+#             username = login_form.cleaned_data.get("username")
+#             password = login_form.cleaned_data.get("password")
+#             user = authenticate(request, username=username, password=password)
+#             if user is not None:
+#                 login(request, user)
+                
+#                 # Obtém o nome do grupo do usuário
+#                 user_group = user.groups.first()  # Assume que o usuário pertence a apenas um grupo
+#                 if user_group:
+#                     assign_role(user, user_group.name.lower())  # Atribui o papel com base no nome do grupo
+
+#                 # Se for cliente, redireciona conforme a permissão
+#                 if user_group.name.lower() == 'cliente':
+#                     try:
+#                         profile = user.profile
+#                         if profile.cattle_permission:
+#                             return JsonResponse({"success": True, "redirect_url": reverse_lazy('simulation_create_matrix_cattle')})
+#                         elif profile.shop_simulation_permission:
+#                             return JsonResponse({"success": True, "redirect_url": reverse_lazy('pricequote_create')})
+#                         elif profile.pricing_permission:
+#                             return JsonResponse({"success": True, "redirect_url": reverse_lazy('pricing_simulation')})
+#                         else:
+#                             return JsonResponse({"success": False, "errors": ["Você não tem permissões ativas para acesso."]})
+#                     except Profile.DoesNotExist:
+#                         return JsonResponse({"success": False, "errors": ["Perfil de usuário não encontrado."]})
+
+                                
+#                 return JsonResponse({"success": True, "redirect_url": reverse_lazy('home')})
+#             else:
+#                 return JsonResponse({"success": False, "errors": ["Email ou senha inválida."]})
+#         else:
+#             errors = [error for sublist in login_form.errors.values() for error in sublist]
+#             return JsonResponse({"success": False, "errors": errors})
+
+#     return render(request, 'login.html', {'login_form': AuthenticationForm()})
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
 @method_decorator(has_role_decorator(['administrador', 'gerente']), name='dispatch')

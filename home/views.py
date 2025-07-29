@@ -1,13 +1,14 @@
 import json
-from django.urls import reverse
-from django.shortcuts import render
+from django.urls import reverse, reverse_lazy
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.humanize.templatetags.humanize import intcomma
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
-from datetime import datetime, timezone
-from django.views.generic import TemplateView, ListView
+from datetime import datetime, timezone as dt_timezone
+from django.views.generic import TemplateView, ListView, View
 from django.core.paginator import Paginator  # Importando o Paginator
 from django.db.models import Q, Value, CharField, F, Subquery, OuterRef
 from django.db.models.functions import Concat, Cast
@@ -90,6 +91,24 @@ class HomeView(TemplateView):
             total_imported_itens += imported_itens_count
             total_items += item_count
             total_stores += store_count
+            
+            # Aqui vamos buscar os dados para o novo JSON
+            last_date_get = client.last_date_get.strftime('%d/%m/%Y %H:%M:%S') if client.last_date_get else None
+            last_date_send = client.last_date_send.strftime('%d/%m/%Y %H:%M:%S') if client.last_date_send else None            
+            
+            now = timezone.now()
+            
+            last_date_get_number = (now - client.last_date_get).days if client.last_date_get else None
+            last_date_send_number = (now - client.last_date_send).days if client.last_date_send else None
+            
+            if client.periodicity_exception:
+                periodicidade = client.periodicity_exception.description
+            elif client.erp:
+                periodicidade = client.erp.periodicity.description if client.erp.periodicity else ''
+            else:
+                periodicidade = ''
+
+
             clients_with_item_count.append({
                 'id': client.id,
                 'client_id': client.id,
@@ -103,11 +122,11 @@ class HomeView(TemplateView):
                 'produtos_com_descricao_divergente': imported_itens_count_with_description,
                 'produtos_com_divergencia': imported_itens_count_diver,
                 'produtos_aguardando_sync': itens_await_sync,
+                'method_integration': client.get_method_integration_display(),
+                'last_date_get': last_date_get_number,
+                'last_date_send': last_date_send_number,
+                'periodicity': periodicidade,
             })
-            
-            # Aqui vamos buscar os dados para o novo JSON
-            last_date_get = client.last_date_get.strftime('%d/%m/%Y %H:%M:%S') if client.last_date_get else None
-            last_date_send = client.last_date_send.strftime('%d/%m/%Y %H:%M:%S') if client.last_date_send else None
             
             clients_json_sync.append({
                 'client_id': client.id,
@@ -210,4 +229,51 @@ class SearchResultsView(ListView):
         delta = now - updated_at
         return timesince(updated_at, now=now).split(", ")[0]
 
-        
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class SelectModuleView(TemplateView):
+    template_name = "select_module.html"
+
+    def get_context_data(self, **kwargs):
+        print('ola select module')
+        context = super().get_context_data(**kwargs)
+        permissions = self.request.session.get('available_permissions', [])
+
+        if not permissions:
+            return redirect('home')  # ou lançar um erro se preferir
+
+        permission_labels = {
+            'cattle_permission': 'Simulação de Gado',
+            'shop_simulation_permission': 'Simulação de Compra',
+            'pricing_permission': 'Precificação',
+            'tax_management_permission': 'Gestão de Impostos',
+        }
+
+        permission_routes = {
+            'cattle_permission': reverse_lazy('simulation_create_matrix_cattle'),
+            'shop_simulation_permission': reverse_lazy('pricequote_create'),
+            'pricing_permission': reverse_lazy('pricing_simulation'),
+            'tax_management_permission': reverse_lazy('home'),
+        }
+
+        context["options"] = [
+            {"key": key, "label": permission_labels[key], "url": permission_routes[key]}
+            for key in permissions
+        ]
+        return context     
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class SetActiveModuleView(View):
+    def get(self, request, module_key):
+        request.session['active_module'] = module_key
+
+        redirect_map = {
+            'cattle_permission': 'simulation_create_matrix_cattle',
+            'shop_simulation_permission': 'pricequote_create',
+            'pricing_permission': 'pricing_simulation',
+            'tax_management_permission': 'home',
+        }
+
+        if module_key in redirect_map:
+            return redirect(redirect_map[module_key])
+        return redirect('home')
+   

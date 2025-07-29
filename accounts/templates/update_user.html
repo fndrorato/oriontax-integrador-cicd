@@ -175,6 +175,15 @@
                                             <div class="col-sm-8 col-lg-10">
                                                 <div class="checkbox-fade fade-in-primary">
                                                     <label>
+                                                        {{ profile_form.tax_management_permission|add_class:"form-check-input" }}
+                                                        <span class="cr">
+                                                            <i class="cr-icon icofont icofont-ui-check txt-primary"></i>
+                                                        </span>
+                                                        <span>Gerenciamento de Impostos</span>
+                                                    </label>
+                                                </div>                                                
+                                                <div class="checkbox-fade fade-in-primary">
+                                                    <label>
                                                         {{ profile_form.cattle_permission|add_class:"form-check-input" }}
                                                         <span class="cr">
                                                             <i class="cr-icon icofont icofont-ui-check txt-primary"></i>

@@ -1,0 +1,28 @@
+{% extends 'base_no_menu.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col text-center mb-4">
+            <h3>Escolha o módulo que deseja acessar</h3>
+        </div>
+    </div>
+    <div class="row">
+        {% for opt in options|dictsort:"label" %}
+        <div class="col-md-6 col-xl-3 mb-4 d-flex">
+            <div class="card border rounded-4 shadow-sm h-100 w-100 d-flex flex-column">
+                <div class="card-body d-flex flex-column justify-content-between text-center">
+                    <div class="flex-grow-1 d-flex align-items-center justify-content-center">
+                        <h5 class="card-title m-0">{{ opt.label }}</h5>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'set_active_module' opt.key %}" class="btn btn-primary w-100">Acessar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

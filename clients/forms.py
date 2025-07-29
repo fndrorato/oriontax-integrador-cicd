@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User, Group
-from erp.models import ERP
+from erp.models import ERP, ERPIntegrationSchedule
 from accountings.models import Accounting
 from django.utils import timezone
 from .models import Client, Store, Cities
@@ -11,13 +11,15 @@ class ClientForm(forms.ModelForm):
         fields = ['name', 'num_stores', 'date_contract', 'date_send', 'economic_benefit', 'erp', 
                   'accounting', 'commercial_responsible', 'owner', 'email', 'contact', 'user', 'is_active', 
                   'day_sent', 'first_load_date', 'connection_route', 'port_route', 'user_route', 'password_route', 
-                  'database_route', 'type_company', 'cnpj', 'client_status', 'last_date_get', 'last_date_send']
+                  'database_route', 'type_company', 'cnpj', 'client_status', 'last_date_get', 'last_date_send', 
+                  'method_integration', 'periodicity_exception']
 
     def __init__(self, *args, **kwargs):
         super(ClientForm, self).__init__(*args, **kwargs)
         # Ajuste os querysets com base no contexto
         self.fields['accounting'].queryset = Accounting.objects.all()
         self.fields['erp'].queryset = ERP.objects.all()
+        self.fields['periodicity_exception'].queryset = ERPIntegrationSchedule.objects.all()
         analysts_group = Group.objects.get(name='analista')
         self.fields['user'].queryset = User.objects.filter(groups=analysts_group)
         self.fields['type_company'].choices = Client.DATA_TYPE_COMPANY_CHOICES

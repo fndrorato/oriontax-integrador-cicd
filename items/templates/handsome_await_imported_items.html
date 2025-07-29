@@ -52,7 +52,20 @@
             font: 16px sans-serif;
             color: #fff;
           }        
+
+
+        .handsontable .htCore td { /* Targets all cells in the Handsontable */
+            font-size: 10px; /* Or your desired smaller font size */
+        }
+        /* Target all column headers */
+        .handsontable .ht_master th {
+            font-size: 12px; /* Adjust the size as needed */
+        }
         
+        /* Target row headers */
+        .handsontable .ht_clone_left .htCore th {
+            font-size: 12px; /* Adjust the size as needed */
+        }           
     </style>
    
 {% endblock customcss %}
@@ -76,8 +89,13 @@
 
                 <a href="{% url 'export_items_to_excel' client_id=client.id table='await' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
-                    Exportar Cadastros de Itens Aguardando Sincronização
+                    Exportar para Excel
                 </a>       
+
+                <button id="btn-inactive-items" class="btn btn-danger btn-outline-danger btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#confirmInactivateModal"> 
+                    <i class="icofont icofont-close-circled"></i>
+                    Inativar Produtos
+                </button>
                 
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
                     <i class="icofont icofont-filter"></i>
@@ -133,7 +151,15 @@
                                         </div>
                                         Aguardando Validação/Envio</a>
                                     <div class="slide"></div>
-                                </li>                                                                                                                                                                                         
+                                </li>  
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'inactive_item_list' client_id=client_id %}" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-exclamation-circle"></i>
+                                        </div>
+                                        Produtos Inativos</a>
+                                    <div class="slide"></div>
+                                </li>                                                                                                                                                                                                                          
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content">   
@@ -259,6 +285,27 @@
     </div>
 </div>
 
+<div class="modal fade" id="confirmInactivateModal" tabindex="-1" role="dialog" aria-labelledby="confirmInactivateLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="confirmInactivateLabel">Confirmar Ação</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Fechar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body text-center">
+          <p>Tem certeza que deseja inativar os produtos selecionados?</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btn-inactive-items-submit" data-dismiss="modal">Confirmar</button>
+        </div>
+      </div>
+    </div>
+</div>
+  
+
 <div class="modal fade stick-up" id="divergenceModal" tabindex="-1" role="dialog" aria-labelledby="divergenceModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -342,14 +389,13 @@
 
     var urlValidateCode = '{% url "validate_code_item" %}';
     var urlFixItem = '{% url "save_imported_item" %}';
+    var urlInactiveItem = '{% url "inactive_items_item_awaiting" %}';
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
     var unnecessary_fields = {{ client_erp_unnecessary_fields|safe }};
     
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('new-items-table');
-    
-
 
         var dataOrigin = [
             {% for item in imported_items %}
@@ -375,13 +421,14 @@
                     "{{ item.estado_destino }}",
                     "{{ item.await_sync_at|date:"d/m/y H:i" }}",
                     "{{ item.sync_at|date:"d/m/y H:i" }}",
+                    "{{ item.get_status_item_display }}",
+                    "{{ item.dif_days }}",                    
                     "{{ item.info }}",
                     "{{ item.divergent_columns }}",
-                    false // valor inicial do checkbox
+                    false, // valor inicial do checkbox
                 ],
             {% endfor %}
         ];
-
         var dataDivergent = [
         {% for item in additional_imported_items %}
             {
@@ -414,14 +461,14 @@
             data: dataOrigin,
             rowHeaders: true,
             colHeaders: [
-                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'A Enviar', 'Enviado em', 'Col.Div.', ' '
+                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'A Enviar', 'Enviado em', 'Status', 'Há dias', 'Col.Div.', ' '
             ],
             columns: [
                 { data: 0, readOnly: true , id:'code'},
                 { data: 1,  id:'barcode' },
                 { data: 2,  id:'description' },
                 { data: 3,  id:'ncm' },
-                { data: 4 ,  id:'cest' },
+                { data: 4 , id:'cest' },
                 { data: 5,  id:'cfop'},
                 { data: 6,  id:'icms_cst'},
                 { data: 7,  id:'icms_aliquota'},
@@ -434,8 +481,10 @@
                 { data: 14,  id:'naturezareceita'},
                 { data: 19, readOnly: true, id:'a_enviar' },
                 { data: 20, readOnly: true, id:'enviado_em' },
-                { data: 21, readOnly: true, id:'info' },
-                { data: 23, type: 'checkbox' }                                                                     
+                { data: 21, readOnly: true, id:'status_item' },
+                { data: 22, readOnly: true, id:'dif_days' },                
+                { data: 23, readOnly: true, id:'info' }, //era 21
+                { data: 25, type: 'checkbox' }    //era 23                                                                 
             ],     
             stretchH: 'all',
             autoWrapRow: true,
@@ -464,7 +513,7 @@
                     
                     for (var i = 0; i < dataOrigin.length; i++) {
                         if (dataOrigin[i][0] === code) {
-                            var divergentColumns = dataOrigin[i][22];
+                            var divergentColumns = dataOrigin[i][24];
         
                             // Itera pelos índices das colunas
                             for (var colIndex = 0; colIndex < colCount; colIndex++) {
@@ -482,24 +531,24 @@
                         }
                     }
                 }
-        
+
                 hotInstance.render();
-            },                       
+            },
             beforeOnCellMouseDown: function(event, coords, TD) {
-                if (event.button === 0 && coords.col >= 17 && coords.col <= 17) {
+                if (event.button === 0 && coords.col >= 19 && coords.col <= 19) {
                     event.stopImmediatePropagation(); // Impede a propagação do evento
                     var code = this.getDataAtCell(coords.row, 0);
                     fetchInfo(code)
                     return false; // Impede a seleção de células
                 }
-            },            
+            },
             afterCreateRow: function(index, amount) {
                 this.addChangeEventListenerToColumnSelects(11); 
               
                 var code = this.getDataAtCell(index, 0); // Pega o código da nova linha (coluna 0)
                 for (var i = 0; i < dataOrigin.length; i++) {
                   if (dataOrigin[i][0] === code) { // Encontrou o código em dataOrigin
-                    var divergentColumns = dataOrigin[i][22]; // Valor da última coluna (divergentColumns)
+                    var divergentColumns = dataOrigin[i][24]; // Valor da última coluna (divergentColumns)
                     this.colHeaders.forEach(function(header, colIndex) { // Itera sobre os cabeçalhos
                       var columnId = hot.getPlugin('columns').getColumn(colIndex).id; // Pega o ID da coluna
                       if (divergentColumns.includes(header) && columnId) { // Verifica se o cabeçalho está em divergentColumns e se existe um ID
@@ -539,26 +588,9 @@
                 return row['code'] === code;
             })
 
-            /*
-        
+            
             if (item && itemDivergent) {
-                var info = item[22]; // Obtém a informação da coluna 22
-                var problemColumns = info.split(', ');
-                var alertMessage = 'Colunas com problemas para o código ' + code + ': \n\n';
-
-                problemColumns.forEach(columnName => {
-                    if (itemDivergent.hasOwnProperty(columnName)) {
-                        alertMessage += columnName + ': ' + itemDivergent[columnName] + '\n';
-                    }
-                });
-        
-                alert(alertMessage);
-            } else {
-                alert('Código ' + code + ' não encontrado.');
-            }
-            */
-            if (item && itemDivergent) {
-                var info = item[22];
+                var info = item[24];
                 var problemColumns = info.split(', ');
                 
                 var alertMessage = 'Colunas com problemas para o código ' + code + ':';
@@ -598,7 +630,7 @@
         $('#checkAllValidate').click(function() {
             const rowCount = hot.countRows();
             for (let row = 0; row < rowCount; row++) {
-                hot.setDataAtCell(row, 18, true);
+                hot.setDataAtCell(row, 20, true);
             }
         });         
 
@@ -618,7 +650,7 @@
         function updateAliquotasPisCofins() {
             const rowCount = hot.countRows();
             for (let row = 0; row < rowCount; row++) {
-                var isChecked = hot.getDataAtCell(row, 18)
+                var isChecked = hot.getDataAtCell(row, 20)
                 var piscofins_cst = hot.getDataAtCell(row, 11)
                 if (isChecked === true || isChecked === 1) {
                     var aliquotas = getAliquotas(piscofins_cst); // Obtém as aliquotas baseado no novo valor
@@ -628,12 +660,17 @@
             }
         }
 
-        function validateTable() {
+        var btnInactiveItems = document.getElementById('btn-inactive-items-submit');
+        btnInactiveItems.addEventListener('click', function() {
+            inactiveSelectedItems();
+        }); 
+
+        function inactiveSelectedItems() {
             $('#loader').show();
             updateAliquotasPisCofins();
             var data = hot.getData();
             
-            data = data.filter(row => row[18] === true || row[18] === 1); // Filter based on boolean or 1
+            data = data.filter(row => row[20] === true || row[20] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
             validate_type_product = false;
@@ -656,7 +693,7 @@
                 validationPromise.then(function(result) {
                     var originalRowIndex = hot.toPhysicalRow(rowIndex);
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
-                    if (rowData[18] === true || rowData[18] === 1) { 
+                    if (rowData[20] === true || rowData[20] === 1) { 
                         // Percorre apenas as colunas das linhas com a última coluna marcada
                         for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
                             if (result.isValid) {
@@ -707,9 +744,9 @@
                     } else { // If all fields are valid, proceed with code validation
                         var dataToSend = hot.getData();
                         // Filter rows where checkbox is checked
-                        var filteredDataToSend = dataToSend.filter(row => row[18] === true || row[18] === 1); // Filter based on boolean or 1
+                        var filteredDataToSend = dataToSend.filter(row => row[20] === true || row[20] === 1); // Filter based on boolean or 1
                         // Remove specific columns from each row
-                        const columnsToRemove = [15,16,17,18];
+                        const columnsToRemove = [15,16,17,18,19,20];
                         filteredDataToSend = filteredDataToSend.map(row => {
                             return row.filter((_, index) => !columnsToRemove.includes(index));
                         });                        
@@ -734,6 +771,171 @@
                         });  
 
                         $.ajax({
+                            url: urlInactiveItem,
+                            type: 'POST',
+                            data: {
+                                items: JSON.stringify(filteredDataToSend), // Send entire table data as JSON
+                                csrfmiddlewaretoken: '{{ csrf_token }}' // Include CSRF token
+                            },
+                            success: function(response) {
+                                if (response.status === 'success') {
+                                    errorContainer.textContent = response.message;
+                                    errorContainer.classList.add('alert-success');
+                                    errorContainer.classList.remove('alert-danger');
+                                    $('#loader').hide();
+                                    $('#error-container').show();   
+                                    location.reload(); 
+                                    // Apply success class to all rows
+
+                                    var currentDateTime = new Date();
+                                    var formattedDateTime = formatDate(currentDateTime);
+
+                                    for (var i = 0; i < hot.countRows(); i++) {
+                                        if (dataToSend[i][20]) { // Check if the checkbox value is true
+                                            for (var j = 0; j < hot.countCols(); j++) {
+                                                hot.getCellMeta(i, j).className = 'success-row'; 
+                                                hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell
+                                            }
+                                            // Set the content of column 15 to the formatted date and time
+                                            hot.setDataAtCell(i, 15, formattedDateTime);
+                                            // Set the content of column 16 to be empty
+                                            hot.setDataAtCell(i, 16, '');                                            
+                                        }
+                                    }                                              
+                                } else {
+                                    // Handle errors from the Django view
+                                    errorContainer.textContent = response.message;
+                                    errorContainer.classList.remove('alert-success');
+                                    errorContainer.classList.add('alert-danger');
+                                    $('#loader').hide();
+                                    $('#error-container').show();   
+                                }
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                // Handle AJAX errors (display message to the user)
+                                errorContainer.textContent = 'Erro ao salvar os itens. Tente novamente.';
+                                errorContainer.classList.remove('alert-success');
+                                errorContainer.classList.add('alert-danger');
+                                $('#loader').hide();
+                            }
+                        });                        
+                    
+                    }                 
+                    
+                })
+                .catch(function(error) {
+                    console.error('Erro ao validar tabela:', error);
+                    $('#loader').hide();
+                });
+        }        
+
+        function validateTable() {
+            $('#loader').show();
+            updateAliquotasPisCofins();
+            var data = hot.getData();
+            
+            data = data.filter(row => row[20] === true || row[20] === 1); // Filter based on boolean or 1
+            var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
+            var promises = [];
+            validate_type_product = false;
+            data.forEach(function(rowData, rowIndex) {
+                var validationPromise = validateData({
+                    id: rowData[0], // Ajuste conforme a estrutura real dos dados na tabela
+                    client_id: client_id, // Certifique-se de ter accesso ao client_id aqui
+                    description: rowData[2],
+                    ncm: rowData[3],
+                    cest: rowData[4],
+                    cfop: rowData[5],
+                    icms_cst: rowData[6],
+                    icms_aliquota: rowData[7],
+                    icms_aliquota_reduzida: rowData[8],
+                    cbenef: rowData[9],
+                    piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
+                    naturezareceita: rowData[14]
+                }, client_id, unnecessary_fields, rowIndex, validate_type_product); // Passa o índice da linha para validar
+
+                validationPromise.then(function(result) {
+                    var originalRowIndex = hot.toPhysicalRow(rowIndex);
+                    // Aplica ou remove o estilo de erro na linha, dependendo da validação
+                    if (rowData[20] === true || rowData[20] === 1) { 
+                        // Percorre apenas as colunas das linhas com a última coluna marcada
+                        for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
+                            if (result.isValid) {
+                                hot.getCellMeta(originalRowIndex, colIndex).className = '';
+                            } else {
+                                hot.getCellMeta(originalRowIndex, colIndex).className = 'error-row';
+                                result.errors.forEach(function(error) {
+                                    var field = error.field;
+                                    var message = error.message;
+                                    hot.setDataAtRowProp(originalRowIndex, field, message);
+                                });
+                            }
+                        }
+                    }
+                });
+
+                promises.push(validationPromise);
+            });                
+        
+            Promise.all(promises)
+                .then(function(results) {
+                    // Limpa o container de erros antes de cada validação
+                    errorContainer.innerHTML = '';
+
+                    var allErrors = []; // Array para armazenar todos os erros
+
+                    results.forEach(function(result, index) {
+                        if (!result.isValid) {                    
+                            // Adiciona os erros da linha ao array geral
+                            allErrors.push(...result.errors.map(err => `Linha ${index + 1}: ${err.message}`));
+                        }
+                    });   
+                    
+                    // Exibe todos os erros no container
+                    if (allErrors.length > 0) {
+                        var errorList = document.createElement('ul');
+                        allErrors.forEach(function(error) {
+                            var listItem = document.createElement('li');
+                            listItem.classList.add('error'); // Adiciona a classe "error" ao item
+                            listItem.textContent = error;
+                            errorList.appendChild(listItem);
+                        });
+                        errorContainer.appendChild(errorList);
+                        errorContainer.classList.remove('alert-success'); // Remove a classe de sucesso
+                        errorContainer.classList.add('alert-danger');  
+                        $('#loader').hide();     
+                        $('#error-container').show();                 
+                    } else { // If all fields are valid, proceed with code validation
+                        var dataToSend = hot.getData();
+                        // Filter rows where checkbox is checked
+                        var filteredDataToSend = dataToSend.filter(row => row[20] === true || row[20] === 1); // Filter based on boolean or 1
+                        // Remove specific columns from each row
+                        const columnsToRemove = [15,16,17,18,19,20];
+                        filteredDataToSend = filteredDataToSend.map(row => {
+                            return row.filter((_, index) => !columnsToRemove.includes(index));
+                        });                        
+
+                        // Find the ID for each row based on piscofinsCst and code
+                        filteredDataToSend = filteredDataToSend.map(row => {
+                            var piscofinsCst = row[11];
+                            var code = row[14];
+                            var cod_produto = row[0];
+
+                            var matchingId = findIdByCodeAndPiscofinsCst(naturezareceitaData, code, piscofinsCst);
+                            var item = dataOrigin.find(function(rowDataOrigin) {
+                                return rowDataOrigin[0] === cod_produto;
+                            });
+                            var product_type = item[15]
+
+                            row.push(product_type)
+                            row.push('1'); // Add 'fix_item'
+                            row.push(matchingId || ''); // Add the found ID (or empty string if not found)
+                            row.push(client_id)
+                            return row;
+                        });  
+                        console.log(filteredDataToSend)
+
+                        $.ajax({
                             url: urlFixItem,
                             type: 'POST',
                             data: {
@@ -754,7 +956,7 @@
                                     var formattedDateTime = formatDate(currentDateTime);
 
                                     for (var i = 0; i < hot.countRows(); i++) {
-                                        if (dataToSend[i][18]) { // Check if the checkbox value is true
+                                        if (dataToSend[i][20]) { // Check if the checkbox value is true
                                             for (var j = 0; j < hot.countCols(); j++) {
                                                 hot.getCellMeta(i, j).className = 'success-row'; 
                                                 hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell
@@ -792,7 +994,6 @@
                 });
         }        
         
-
         function getColumnIndexByFieldName(field) {
             var headers = hot.getColHeader();
             for (var i = 0; i < headers.length; i++) {

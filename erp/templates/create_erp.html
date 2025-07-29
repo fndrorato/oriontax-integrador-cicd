@@ -37,6 +37,28 @@
                                     </div>
                                 </div>                                    
                             </div>
+                            <!-- Método de Integração -->
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Método de Integração</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.method_integration.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.method_integration|add_class:"form-control" }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Periodicidade -->
+                            <div class="row">
+                                <label class="col-sm-4 col-lg-2 col-form-label">Periodicidade</label>
+                                <div class="col-sm-8 col-lg-10">
+                                    <span class="messages text-danger">{{ form.periodicity.errors }}</span>
+                                    <div class="input-group">
+                                        {{ form.periodicity|add_class:"form-control" }}
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="row">
                                 <label class="col-sm-4 col-lg-2 col-form-label">Descrição</label>
                                 <div class="col-sm-8 col-lg-10">

@@ -138,11 +138,14 @@
                                                 <i class="feather icon-user"></i> Meus Dados
                                             </a>
                                         </li>
-                                        {% comment %} <li>
-                                            <a href="auth-lock-screen.htm">
-                                                <i class="feather icon-lock"></i> Lock Screen
-                                            </a>
-                                        </li> {% endcomment %}
+                                        {% if active_permissions|length > 1 %}
+                                            <li>
+                                                <a href="{% url 'select_module' %}">
+                                                    <i class="feather icon-menu"></i> Trocar de Módulo
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    
                                         <li>
                                             <a href="{% url 'logout' %}">
                                                 <i class="feather icon-log-out"></i> Sair
@@ -158,7 +161,17 @@
             <!-- Menu header end -->
             <div class="pcoded-main-container">
                 <!-- Menu Horizontal -->
-                {% include 'menu.html' %}
+                {% if active_module == 'cattle_permission' %}
+                    {% include 'menus/menu_cattle.html' %}
+                {% elif active_module == 'shop_simulation_permission' %}
+                    {% include 'menus/menu_shop.html' %}
+                {% elif active_module == 'pricing_permission' %}
+                    {% include 'menus/menu_pricing.html' %}
+                {% elif active_module == 'tax_management_permission' %}
+                    {% include 'menus/menu_tax.html' %}
+                {% else %}
+                    {% include 'menus/menu_default.html' %}
+                {% endif %}
                 <div class="pcoded-wrapper">
                     <div class="pcoded-content">
                         <div class="pcoded-inner-content">

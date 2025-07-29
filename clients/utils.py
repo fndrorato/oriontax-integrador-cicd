@@ -790,7 +790,14 @@ def validateSelect(client_id, items_df, df, initial_log=None):
     # ANTES PASSAVA TUDO COMO INT - AGORA TESTE PARA VALIDAR SE FUNCIONA COM FLOAT
     df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float).astype(int)
     # df['icms_aliquota'] = pd.to_numeric(df['icms_aliquota'], errors='coerce').fillna(0).astype(float)
-    df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
+    # df['icms_aliquota_reduzida'] = pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce').fillna(0).astype(float).astype(int)
+    df['icms_aliquota_reduzida'] = (
+    pd.to_numeric(df['icms_aliquota_reduzida'], errors='coerce')
+        .fillna(0)
+        .astype(float)
+        .round(2)
+    )
+    
     df['pis_aliquota'] = pd.to_numeric(df['pis_aliquota'], errors='coerce').fillna(0.0).astype(float)
     df['cofins_aliquota'] = pd.to_numeric(df['cofins_aliquota'], errors='coerce').fillna(0.0).astype(float)    
     # Preenchendo com 0 a esquerda para o código do piscofins cst

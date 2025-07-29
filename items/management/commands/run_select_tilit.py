@@ -217,6 +217,9 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
     df_final['cfop'] = df_final['cfop'].astype('Int64')
     df_final['icms_cst'] = df_final['icms_cst'].astype('Int64')
     df_final['icms_aliquota'] = df_final['icms_aliquota'].astype('Int64')
+    df_final['icms_aliquota_reduzida'] = pd.to_numeric(
+        df_final['icms_aliquota_reduzida'], errors='coerce'
+    ).round(2)
 
     # Converte 'piscofins_cst' para string e adiciona zero à frente se necessário
     df_final['piscofins_cst'] = df_final['piscofins_cst'].astype(int).astype(str)
@@ -224,7 +227,7 @@ def convert_df_client_to_df_otx_version(df_client, initial_log, client_id):
     
     pd.set_option('display.max_columns', None)
     # print(df_final.head())
-    print(df_final.info())
+    # print(df_final.info())
     # df_final.to_csv('nome_do_arquivo.csv', sep='|', index=False)    
     return df_final, initial_log    
 
@@ -467,6 +470,9 @@ if __name__ == "__main__":
             )        
             if items_queryset:
                 items_df = pd.DataFrame(list(items_queryset.values()))
+                
+                items_df = items_df.astype({'icms_aliquota_reduzida': 'float'})
+                items_df['icms_aliquota_reduzida'] = items_df['icms_aliquota_reduzida'].fillna(0).round(2)
             else: 
                 # Lista das colunas desejadas
                 colunas_desejadas = [
@@ -479,9 +485,14 @@ if __name__ == "__main__":
 
                 # Criar um DataFrame vazio com as colunas desejadas
                 items_df = pd.DataFrame(columns=colunas_desejadas)
+            
                            
             items_df.drop(columns=['id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 'is_pending_sync', 'history', 'other_information'], inplace=True)            
+            # print('items_df')
             # print(items_df.info())
+            # print('df_client_converted')
+            # print(df_client_converted.info())
+            # sys.exit(0)  # Sair com código de sucesso 0
             try:
                 # Chama a função de validação
                 validation_result = validateSelect(client_id, items_df, df_client_converted, initial_log)

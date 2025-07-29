@@ -18,8 +18,8 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.db import models
 from django.db import transaction, connection
-from django.db.models import Value, CharField, OuterRef,  Subquery
-from django.db.models.functions import Trim
+from django.db.models import Value, CharField, OuterRef,  Subquery, Case, When, Value, IntegerField, ExpressionWrapper, DurationField
+from django.db.models.functions import Trim, Now, Extract
 from django.db.utils import DataError
 from django.db.models import Q, F
 from django.contrib.auth.decorators import login_required
@@ -695,7 +695,6 @@ class ImportedItemListViewNewItem(ListView):
 class ImportedItemListViewAwaitSyncItem(ListView):
     model = ImportedItem
     template_name = 'handsome_await_imported_items.html'
-    # template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
     paginate_by = 100  # Defina quantos itens você quer por página
 
@@ -709,7 +708,28 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         else:
             client = get_object_or_404(Client, id=client_id)  
 
-        queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).order_by('description')  
+        # queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).order_by('description')
+        # Escolhe a data de referência de acordo com status_item
+        data_ref = Case(
+            When(status_item=1, then=F('await_sync_at')),
+            When(status_item=2, then=F('sync_at')),
+            default=Value(None)
+        )
+
+        # Calcula diferença entre agora e a data selecionada
+        duration = ExpressionWrapper(
+            Now() - data_ref,
+            output_field=DurationField()
+        )
+
+        # Extrai a duração em segundos (epoch) e divide por 86400 para obter dias
+        queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).order_by('description').annotate(
+            duration_seconds=Extract(duration, 'epoch'),
+            dif_days=ExpressionWrapper(
+                F('duration_seconds') / Value(86400),
+                output_field=IntegerField()
+            )
+        )   
         
         # Adicionar filtros baseados nos parâmetros GET, exceto 'page'
         filters = self.request.GET.dict()
@@ -737,14 +757,13 @@ class ImportedItemListViewAwaitSyncItem(ListView):
                 default=models.F('divergent_columns'),
             ),
             info=Value('info', output_field=CharField()) 
-            
         )                
                 
         # Salva o total de itens no queryset combinado
         self.total_items = queryset.count()
         
         # Salva o queryset principal para uso no contexto
-        self.primary_queryset = queryset        
+        self.primary_queryset = queryset 
 
         return queryset
 
@@ -759,7 +778,6 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         context['client_erp_unnecessary_fields'] = client.erp.unnecessary_fields
         icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
         cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
-        # Adicionando cbenef ao contexto
         context['cbenef_choices'] = CBENEF.objects.all()         
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
@@ -788,7 +806,7 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
         context['icmsaliquotareduzida_codes'] = set(icmsaliquotareduzida_codes)
         context['form'] = ImportedItemForm()
-        # Adiciona os cálculos de paginação
+
         paginator = context['paginator']
         page_obj = context['page_obj']
         total_pages = paginator.num_pages
@@ -808,8 +826,6 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         
         # Obter o segundo queryset (imported_items)
         codes_in_primary_queryset = self.primary_queryset.values_list('code', flat=True)
-        print('faltando o imported_items_queryset')
-        print(list(codes_in_primary_queryset))
         imported_items_queryset = ImportedItem.objects.filter(
             client=client, code__in=codes_in_primary_queryset
         )
@@ -817,7 +833,6 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         context['additional_imported_items'] = imported_items_queryset
         
         return context
-
 
 @csrf_exempt
 def save_imported_item(request):
@@ -973,14 +988,16 @@ def comparar_item_filtrado(erp, variaveis, itens_filtrados_dict):
 
     return 3  # Retorna True se todos os campos forem iguais    
 
-
+# ===================================================
+# Função que atualiza os dados corrigidos manualmente
+# nas planilhas existentes
+# ===================================================
 @csrf_exempt
 def save_bulk_imported_item(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.POST.get('items', '[]'))
-            print('entrou aqui')
-            
+
             # Validate each item and collect errors if any
             # Lista para armazenar todos os itens
             items_list = []            
@@ -1005,7 +1022,7 @@ def save_bulk_imported_item(request):
                     'type_product': row[15],
                     'fix_item': row[16],  # Get fix_item from the last column
                     'client_id': row[18]
-                }              
+                }        
                 errors = validate_item_data(item_data)
                 if errors:
                     all_errors.extend([f"Linha {i + 1}: {err}" for err in errors])
@@ -2026,7 +2043,6 @@ class XLSXUploadDivergentView(View):
     def post(self, request, client_id):
         start_time = time.time()
         user = self.request.user
-        print(f'Cliente ID:{client_id}')
         
         if has_role(user, 'analista'):
             client = get_object_or_404(Client, id=client_id, user_id=user)
@@ -2072,8 +2088,40 @@ class XLSXUploadDivergentView(View):
                         return x[:-2]
                     return x                
 
+                # Verificando se a coluna Cliente existe
+                # e também se ela não está vazia
+                # e se todos os valores são iguais
+                # e se Cliente = client.name
+                # se for diferente de client.name, retorna erro
+                error_client = False
+                if 'Cliente' not in df.columns:
+                    error_client = True
+                    error_message = "Erro: A coluna 'Cliente' não está dentro do arquivo."
+                    self.logger.error(error_message)
+                
+                # verificando se a coluna 'Cliente' está toda preenchida
+                if not df['Cliente'].isnull().all():
+                    if not df['Cliente'].eq(client.name).all():
+                        error_client = True
+                        error_message = "Erro: A coluna 'Cliente' deve conter apenas o nome do cliente atual."
+                        self.logger.error(error_message)
+                else:
+                    error_client = True
+                    error_message = "Erro: A coluna 'Cliente' possui células vazias."
+                    self.logger.error(error_message)
+                
+                if error_client:
+                    end_time = time.time()
+                    elapsed_time = round(end_time - start_time, 3)
+                     
+                    return JsonResponse({
+                        'message': 'Erro na coluna Cliente.',
+                        'errors': [error_message],
+                        'elapsed_time': elapsed_time
+                    }, status=400)                                      
+                
                 # 1. Remover colunas específicas
-                print(df.columns)
+                # print(df.columns)
                 columns_to_remove = [col for col in df.columns if col.endswith('_cliente')]
                 columns_to_remove.append('Cliente')  
                 df = df.drop(columns=columns_to_remove)
@@ -2416,3 +2464,223 @@ class XLSXUploadDivergentView(View):
 
         self.logger.error(f"Form inválido: {form.errors}")
         return JsonResponse({'errors': form.errors}, status=400)
+
+@csrf_exempt
+def inactive_items_item_awaiting(request):
+    if request.method == 'POST':
+        print('Vai inactivar algum item...')
+        try:
+            data = json.loads(request.POST.get('items', '[]'))
+
+            # Lista para armazenar todos os itens
+            items_list = []            
+            all_errors = []
+            for i, row in enumerate(data):
+                item_data = {
+                    'code': row[0],
+                    'client_id': row[18]
+                }        
+                items_list.append(item_data)            
+
+            if all_errors:
+                return JsonResponse({'status': 'error', 'message': '\n'.join(all_errors)})
+            
+            # Criando os dados para verificar se é para atualizar apenas na base da oriontax
+            client_id_unicos = set()
+            codes_unicos = set()
+            fix_item_unicos = set()
+
+            # Itera sobre cada item na lista de itens
+            for item in items_list:
+                try:
+                    # Converte client_id para inteiro antes de adicionar ao conjunto
+                    client_id = int(item['client_id'])
+                    client_id_unicos.add(client_id)
+                    codes_unicos.add(item['code'])
+                    fix_item_unicos.add(item['fix_item'])
+                except KeyError as e:
+                    # Lida com a exceção se a chave não existir no dicionário
+                    print(f"KeyError: {e} is missing in item {item}")
+                except ValueError as e:
+                    # Lida com a exceção se client_id não puder ser convertido para inteiro
+                    print(f"ValueError: {e} for client_id {item['client_id']} in item {item}")
+
+            
+            # If all items are valid, process them
+            with transaction.atomic():
+                for row in data:
+                    code = row[0]
+                    client_id = row[18]
+                    current_time = timezone.now() 
+                    
+                    user = request.user 
+                    client = get_object_or_404(Client, id=client_id)
+                    var_status_item = 4
+                    
+                    # Atualiza o item existente se tipo_produto for igual a 1
+                    item = get_object_or_404(Item, code=code, client=client)
+                    item.status_item = var_status_item  # Verifique se precisa atualizar o status do item
+                    item.updated_at= current_time
+                    item.await_sync_at = None
+                    item.user_updated = user   
+                    
+                    # Define o campo sync_at como None para deixá-lo vazio
+                    item.sync_at = None
+                                                                    
+                    item.save()
+
+                    # Update the ImportedItem model
+                    ImportedItem.objects.filter(code=code, client=client).update(is_pending=False)
+                    
+
+            # Return a success response
+            return JsonResponse({'status': 'success', 'message': 'Itens salvos com sucesso'})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data format'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class ImportedItemListViewInactiveItem(ListView):
+    model = ImportedItem
+    template_name = 'handsome_inactive_imported_items.html'
+    # template_name = 'list_imported_items.html'
+    context_object_name = 'imported_items'
+    paginate_by = 50  # Defina quantos itens você quer por página
+
+    def get_queryset(self):
+        
+        client_id = self.kwargs.get('client_id')
+        user = self.request.user
+        
+        if has_role(user, 'analista'):
+            client = get_object_or_404(Client, id=client_id, user_id=user)
+        else:
+            client = get_object_or_404(Client, id=client_id)  
+
+        # queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).order_by('description')
+        # Escolhe a data de referência de acordo com status_item
+        data_ref = Case(
+            When(status_item=4, then=F('updated_at')),
+            default=Value(None)
+        )
+
+        # Calcula diferença entre agora e a data selecionada
+        duration = ExpressionWrapper(
+            Now() - data_ref,
+            output_field=DurationField()
+        )
+
+        # Extrai a duração em segundos (epoch) e divide por 86400 para obter dias
+        queryset = Item.objects.filter(client=client, status_item=4).order_by('description').annotate(
+            duration_seconds=Extract(duration, 'epoch'),
+            dif_days=ExpressionWrapper(
+                F('duration_seconds') / Value(86400),
+                output_field=IntegerField()
+            )
+        )   
+        
+        # Adicionar filtros baseados nos parâmetros GET, exceto 'page'
+        filters = self.request.GET.dict()
+        filters.pop('page', None)  # Remover o parâmetro 'page' dos filtros
+        for key, value in filters.items():
+            if key and value:
+                if key == 'description':
+                    queryset = queryset.filter(Q(**{f'{key}__icontains': value}))
+                else:
+                    queryset = queryset.filter(Q(**{key: value}))                
+                
+        # Subquery para obter divergent_columns de ImportedItem
+        imported_item_subquery = ImportedItem.objects.filter(
+            code=OuterRef('code'), client_id=client_id
+        ).values('divergent_columns')
+
+        # Anotar o queryset com divergent_columns (ou valor vazio se não existir)
+        queryset = queryset.annotate(
+            divergent_columns=Subquery(
+                imported_item_subquery, output_field=CharField()
+            )
+        ).annotate(
+            divergent_columns=models.Case(
+                models.When(divergent_columns__isnull=True, then=Value('')),
+                default=models.F('divergent_columns'),
+            ),
+            info=Value('info', output_field=CharField()) 
+        )                
+                
+        # Salva o total de itens no queryset combinado
+        self.total_items = queryset.count()
+        
+        # Salva o queryset principal para uso no contexto
+        self.primary_queryset = queryset 
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
+        context['client'] = client
+        context['client_name'] = client.name
+        context['client_id'] = client.id
+        context['filter_params'] = self.request.GET
+        context['total_items'] = self.total_items
+        context['client_erp_unnecessary_fields'] = client.erp.unnecessary_fields
+        icms_cst_choices = list(IcmsCst.objects.values_list('code', 'code'))  
+        cfop_choices = list(Cfop.objects.values_list('cfop', 'description'))
+        context['cbenef_choices'] = CBENEF.objects.all()         
+        context['icms_cst_choices'] = icms_cst_choices        
+        context['cfop_choices'] = cfop_choices
+        context['protege_choices'] = Protege.objects.all()
+        piscofins_qs = PisCofinsCst.objects.all()
+        type_company = client.type_company
+
+        piscofins_custom = []
+        for item in piscofins_qs:
+            # Se empresa é do tipo 2, substitui os valores
+            if type_company == '2':
+                pis_aliquota = item.pis_aliquota_company_2 if item.pis_aliquota_company_2 is not None else item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota_company_2 if item.cofins_aliquota_company_2 is not None else item.cofins_aliquota
+            else:
+                pis_aliquota = item.pis_aliquota
+                cofins_aliquota = item.cofins_aliquota
+
+            piscofins_custom.append({
+                'code': item.code,
+                'pis_aliquota': pis_aliquota,
+                'cofins_aliquota': cofins_aliquota,
+            })
+        context['piscofins_choices'] = piscofins_custom
+        context['naturezareceita_choices'] = NaturezaReceita.objects.all()
+        context['icmsaliquota_choices'] = IcmsAliquota.objects.all()
+        icmsaliquotareduzida_codes = IcmsAliquotaReduzida.objects.values_list('code', flat=True)
+        context['icmsaliquotareduzida_codes'] = set(icmsaliquotareduzida_codes)
+        context['form'] = ImportedItemForm()
+
+        paginator = context['paginator']
+        page_obj = context['page_obj']
+        total_pages = paginator.num_pages
+        current_page = page_obj.number
+
+        if total_pages <= 10:
+            page_range = range(1, total_pages + 1)
+        else:
+            if current_page <= 4:
+                page_range = list(range(1, 6)) + ['...'] + [total_pages - 1, total_pages]
+            elif current_page > total_pages - 4:
+                page_range = [1, 2, '...'] + list(range(total_pages - 4, total_pages + 1))
+            else:
+                page_range = [1, 2, '...'] + list(range(current_page - 2, current_page + 3)) + ['...'] + [total_pages - 1, total_pages]
+
+        context['page_range'] = page_range
+        
+        # Obter o segundo queryset (imported_items)
+        codes_in_primary_queryset = self.primary_queryset.values_list('code', flat=True)
+        imported_items_queryset = ImportedItem.objects.filter(
+            client=client, code__in=codes_in_primary_queryset
+        )
+
+        context['additional_imported_items'] = imported_items_queryset
+        
+        return context
+  

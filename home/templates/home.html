@@ -169,6 +169,66 @@
     var rowDataDashboard = {{ clients_json|safe }};
     var rowDataSyncStores = {{ clients_json_sync|safe }};
 
+    class CustomActionHeader {
+        init(params) {
+          this.params = params;
+          this.filterActive = false;
+      
+          this.eGui = document.createElement('div');
+          this.eGui.innerHTML = `
+          <button 
+            class="btn btn-sm" 
+            id="toggle-filter-btn"
+            style="
+              font-size: 14px;
+              font-weight: 600;
+              border: none;
+              outline: none;
+              box-shadow: none;
+            "
+          >
+            Pendentes
+          </button>
+        `;
+            
+      
+          this.eGui.querySelector('#toggle-filter-btn').addEventListener('click', () => {
+            this.filterActive = !this.filterActive;
+            if (this.filterActive) {
+              this.applyCustomFilter();
+              this.eGui.querySelector('#toggle-filter-btn').classList.add('btn-dark');
+            } else {
+              this.clearFilter();
+              this.eGui.querySelector('#toggle-filter-btn').classList.remove('btn-dark');
+            }
+          });
+        }
+      
+        getGui() {
+          return this.eGui;
+        }
+      
+        applyCustomFilter() {
+          const gridApi = this.params.api;
+      
+          gridApi.setFilterModel({
+            pendentes: {
+              type: 'greaterThan',
+              filter: 0
+            }
+          });
+      
+          gridApi.onFilterChanged();
+        }
+      
+        clearFilter() {
+          const gridApi = this.params.api;
+      
+          gridApi.setFilterModel(null);
+          gridApi.onFilterChanged();
+        }
+    }    
+
     const localeText = {
         page: "Página",
         more: "Mais",
@@ -242,6 +302,60 @@
             maxWidth: 120,           
         },
         { 
+            headerName: "Integração", 
+            headerClass: 'small-header',
+            field: "method_integration", 
+            filter: true, 
+            sortable: true,
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },              
+            width: 75,
+            minWidth: 70,
+            maxWidth: 100,            
+        }, 
+        { 
+            headerName: "Recebido há", 
+            field: "last_date_get", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '0',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 70,
+            minWidth: 50,
+            maxWidth: 70, 
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },                         
+        }, 
+        { 
+            headerName: "Enviado há", 
+            field: "last_date_send", 
+            filter: "agNumberColumnFilter", 
+            valueFormatter: params => params.value ? params.value.toLocaleString('pt-BR') : '',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 70,
+            minWidth: 50,
+            maxWidth: 70, 
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },                         
+        },
+        { 
+            headerName: "Periodicidade", 
+            field: "periodicity", 
+            headerClass: 'small-header',
+            sortable: true, 
+            cellClass: 'text-center',
+            width: 70,
+            minWidth: 50,
+            maxWidth: 70, 
+            cellStyle: {
+                fontSize: '11px'  // Tamanho da fonte menor
+            },                         
+        },                                
+        { 
             headerName: "Analista", 
             headerClass: 'small-header',
             field: "analyst", 
@@ -253,7 +367,8 @@
             width: 95,
             minWidth: 90,
             maxWidth: 120,            
-        },
+        },       
+
         { 
             headerName: "Cadastrados", 
             field: "item_count", 
@@ -341,8 +456,10 @@
         { 
             headerName: "Ação", 
             field: "client_id", 
-            filter: false, 
+            filter: true, 
             sortable: false, 
+            floatingFilter: false,
+            headerComponent: CustomActionHeader,
             cellClass: 'text-center', 
             cellRenderer: function(params) {
                 // let itensPendentes = params.data.pendentes.replace(/\./g, ''); // Removendo separador de milhares para garantir que seja numérico
@@ -359,7 +476,7 @@
                     </a>
                 `;
             },
-            floatingFilter: false,
+            
             width: 110,
             minWidth: 100,
             maxWidth: 120,            
@@ -383,8 +500,12 @@
         autoSizeStrategy: {
             type: "fitCellContents",
         },
-        localeText: localeText,       
+        localeText: localeText,    
+        components: {
+            CustomActionHeader: CustomActionHeader
+        },           
     };
+      
 
     const syncColumnDefs = [
         { 
@@ -491,16 +612,8 @@
           defaultMinWidth: 100,
           columnLimits: [{ key: "client_name", minWidth: 900 }],
         });
-      }    
-  /*
-    document.addEventListener("DOMContentLoaded", () => {
-        const gridDiv = document.querySelector("#myGrid");
-        gridApi = agGrid.createGrid(gridDiv, gridOptions);
+    }    
 
-        const syncGridDiv = document.querySelector("#gridSyncStores");
-        syncGridApi = agGrid.createGrid(syncGridDiv, syncGridOptions);
-    });
-    */
     document.addEventListener("DOMContentLoaded", () => {
         const gridDiv = document.querySelector("#myGrid");
         gridApi = agGrid.createGrid(gridDiv, gridOptions);

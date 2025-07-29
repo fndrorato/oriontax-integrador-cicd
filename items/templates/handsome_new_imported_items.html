@@ -71,7 +71,7 @@
 
                 <a href="{% url 'export_items_to_excel' client_id=client.id table='new' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
-                    Exportar Cadastros de Itens Novos
+                    Exportar para Excel
                 </a>    
                 
                 <button type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#searchModal"> 
@@ -137,7 +137,15 @@
                                         </div>
                                         Aguardando Validação/Envio</a>
                                     <div class="slide"></div>
-                                </li>                                                                                                                                                          
+                                </li> 
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'inactive_item_list' client_id=client_id %}" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-exclamation-circle"></i>
+                                        </div>
+                                        Produtos Inativos</a>
+                                    <div class="slide"></div>
+                                </li>                                                                                                                                                                                         
                             </ul>
                             <!-- Tab panes -->
                             <div class="tab-content">       
@@ -340,11 +348,12 @@
 {% block anotherjs %}
     <!-- Handson table js 
     <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>  
-    -->
-    
     <script src="
     https://cdn.jsdelivr.net/npm/handsontable@14.4.0/dist/handsontable.full.min.js
-    "></script>    
+    "></script>  
+    -->  
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@16.0.1/dist/handsontable.full.min.js" integrity="sha256-L78vHxcmyGzLPp8qo/sciazhXl60Bu0/X44FZKSlAO8=" crossorigin="anonymous"></script>    
+
     <!-- notification js -->
     <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script> 
     
@@ -414,7 +423,7 @@ naturezareceitaData.push({
                 [
                     "{{ item.code }}",
                     "{{ item.barcode|zero_to_empty|default_if_none:'' }}",
-                    "{{ item.description|safe }}",
+                    "{{ item.description|safe|escapejs }}",
                     "{{ item.ncm }}",
                     "{{ item.cest|zero_to_empty|default_if_none:'' }}",
                     "{{ item.cfop }}",
@@ -812,50 +821,51 @@ naturezareceitaData.push({
 <script>
     $(document).ready(function(){
         var formUrl = "{% url 'items_divergent_upload' client_id=client.id %}";
-        
+
         // Use o evento 'submit' no formulário corretamente identificado pelo ID
         $('#j-pro').on('submit', function(event) {
-            event.preventDefault();
+            event.preventDefault();           
             
-            var formData = new FormData(this);
-            formData.append('new_items', true); 
             hideDiv();
-            
-            $.ajax({
-                url: formUrl,
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    // Manipula a resposta de sucesso
-                    showDiv();
-                    var resp = '<ul class="alert alert-success">';
-                    resp += '<li class="success">' + response.message + '</li>';
-                    resp += '<li class="success">Tempo de processamento: ' + response.elapsed_time + ' segundos</li>';
-                    resp += '<li class="success">Linhas processadas:' + response.processed_rows + '</li>';
-                    resp += '</ul>';
-                    $('.j-response').html(resp);  
-                    location.reload();                      
-                },
-                error: function(xhr, status, error) {
-                    console.log(xhr);
-
-                    if (xhr.status === 500) {
-                        alert('Erro ao processar arquivo');
+            setTimeout(function() {
+                var formData = new FormData(event.target);
+                formData.append('new_items', true); 
+        
+                $.ajax({
+                    url: formUrl,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
                         showDiv();
-                    }                        
-
-                    var errors = '<ul class="alert alert-danger">';
-                    errors += '<li class="error">Tempo de processamento: ' + xhr.responseJSON.elapsed_time + ' segundos</li>';                            
-                    $.each(xhr.responseJSON.errors, function(key, value) {
-                        errors += '<li class="error">' + value + '</li>';
-                    });
-                    errors += '</ul>';
-                    $('.j-response').html(errors);
-                    showDiv();
-                }
-            });
+                        var resp = '<ul class="alert alert-success">';
+                        resp += '<li class="success">' + response.message + '</li>';
+                        resp += '<li class="success">Tempo de processamento: ' + response.elapsed_time + ' segundos</li>';
+                        resp += '<li class="success">Linhas processadas:' + response.processed_rows + '</li>';
+                        resp += '</ul>';
+                        $('.j-response').html(resp);  
+        
+                        setTimeout(() => {
+                            location.reload();
+                        }, 3000);
+                    },
+                    error: function(xhr, status, error) {
+                        if (xhr.status === 500 ) {
+                            alert('Erro ao processar arquivo');
+                            showDiv();
+                        }                        
+                        var errors = '<ul class="alert alert-danger">';
+                        errors += '<li class="error">Tempo de processamento: ' + xhr.responseJSON.elapsed_time + ' segundos</li>';                            
+                        $.each(xhr.responseJSON.errors, function(key, value) {
+                            errors += '<li class="error">' + value + '</li>';
+                        });
+                        errors += '</ul>';
+                        $('.j-response').html(errors);
+                        showDiv();
+                    }
+                });
+            }, 1000); 
         
         });
     }); 
@@ -876,7 +886,7 @@ naturezareceitaData.push({
         messagesDiv.style.visibility = 'visible'; // Remove hidden
         setTimeout(() => {
             messagesDiv.style.opacity = '1'; // Define a opacidade para 1
-        }, 10); // Pequeno atraso para permitir que a transição funcione
+        }, 100); // Pequeno atraso para permitir que a transição funcione
     }
 
     function clearDiv() {

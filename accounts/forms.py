@@ -81,7 +81,7 @@ class UserModelForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ('birth_date', 'phone', 'supervisor', 'manager', 'cattle_permission', 'shop_simulation_permission', 'pricing_permission')
+        fields = ('birth_date', 'phone', 'supervisor', 'manager', 'tax_management_permission', 'cattle_permission', 'shop_simulation_permission', 'pricing_permission')
         
     def __init__(self, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)

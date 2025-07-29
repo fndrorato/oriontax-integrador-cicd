@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
-from erp.models import ERP
+from erp.models import ERP, ERPIntegrationSchedule
 from auditlog.registry import auditlog
 
 class Cities(models.Model):
@@ -74,6 +74,7 @@ class Client(models.Model):
     last_date_get = models.DateTimeField(blank=True, null=True, verbose_name="Último Recebimento")
     last_date_send = models.DateTimeField(blank=True, null=True, verbose_name="Último Envio")
     method_integration = models.CharField(max_length=2, choices=DATA_METHOD_INTEGRATION_CHOICES, blank=True, null=True)
+    periodicity_exception = models.ForeignKey('erp.ERPIntegrationSchedule', on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.name  

@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% load widget_tweaks %}
+<!-- ABA AGUARDANDO VALIDAÇÃO/ENVIO -->
+{% block title %}
+    <h4>Produtos Novos/Divergentes</h4>
+    <span>Listagem de produtos importados com pendências</span>
+{% endblock title %}
+
+{% block customcss %}
+    <!-- Handson table css start -->
+    <link rel="stylesheet" type="text/css" href="https://docs.handsontable.com/pro/bower_components/handsontable-pro/dist/handsontable.full.min.css">
+    <!-- Notification.css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/notification/notification.css' %}">
+    <!-- Animate.css -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/animate.css/css/animate.css' %}">    
+    <style>
+        .limit-field {
+            max-width: 80px !important;
+        }
+        .success-row {
+            background-color: #d9f9d9 !important;
+        }
+        .error-row {
+            background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
+        }
+
+        .error-cell {
+            background-color: #ffe6e6 !important; /* Cor de fundo vermelha */
+        }        
+
+        .info-button {
+            background-color: #4CAF50; /* Cor de fundo verde */
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }      
+        
+        .myBt {
+            width: 99%;
+            height: 100%;
+            background: #345ee0;
+            box-sizing: border-box;
+            text-align: center;
+            font: 16px sans-serif;
+            color: #fff;
+          }        
+
+
+        .handsontable .htCore td { /* Targets all cells in the Handsontable */
+            font-size: 10px; /* Or your desired smaller font size */
+        }
+        /* Target all column headers */
+        .handsontable .ht_master th {
+            font-size: 12px; /* Adjust the size as needed */
+        }
+        
+        /* Target row headers */
+        .handsontable .ht_clone_left .htCore th {
+            font-size: 12px; /* Adjust the size as needed */
+        }           
+    </style>
+   
+{% endblock customcss %}
+
+
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="{% url 'clients_list' %}">Clientes</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">Produtos com divergências</a>
+    </li>    
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <!-- Zero config.table start -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Lista de Produtos Inativos: <a href="{% url 'client_update' client.id %}">{{ client_name }} </a></h5>
+
+                <a href="{% url 'export_items_to_excel' client_id=client.id table='inactive' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                    <i class="icofont icofont-save m-r-5"></i>
+                    Exportar para Excel
+                </a>                       
+                                                                   
+                <span class="text-danger">Total de produtos inativos e retornaram: {{ total_items }}</span>
+
+            </div>
+            <div class="card-block"> 
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="product-edit">
+                            <ul class="nav nav-tabs nav-justified md-tabs " id="client-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link " href="{% url 'imported_item_list' client_id=client_id %}" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-exclamation-circle"></i>
+                                        </div>
+                                        Novos Itens</a>
+                                    <div class="slide"></div>
+                                </li>  
+                                <li class="nav-item">
+                                    <a class="nav-link" href={% url 'imported_descricao_item_list' client_id=client_id %} role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-error"></i>
+                                        </div>
+                                        Descrição Divergente</a>
+                                    <div class="slide"></div>
+                                </li>                                  
+                                <li class="nav-item">
+                                    <a class="nav-link" href={% url 'imported_divergent_item_list' client_id=client_id %} role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-error"></i>
+                                        </div>
+                                        Produtos Divergentes</a>
+                                    <div class="slide"></div>
+                                </li>  
+                                <li class="nav-item">
+                                    <a class="nav-link" href={% url 'awaiting_item_list' client_id=client_id %} role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-history"></i>
+                                        </div>
+                                        Aguardando Validação/Envio</a>
+                                    <div class="slide"></div>
+                                </li>      
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="{% url 'inactive_item_list' client_id=client_id %}" role="tab">
+                                        <div class="f-20">
+                                            <i class="icofont icofont-exclamation-circle"></i>
+                                        </div>
+                                        Produtos Inativos</a>
+                                    <div class="slide" style="width: calc(100%/5)"></div>
+                                </li>                                                                                                                                                                                                                      
+                            </ul>
+                            <!-- Tab panes -->
+                            <div class="tab-content">   
+                                <!-- Inicio Tab Novos Produtos -->
+                                <div class="tab-pane active" id="new-items" role="tabpanel">                                   
+                                    <div class="card">
+                                        <div class="card-block">   
+                                            <div id="loader" class="preloader5 loader-block" style="
+                                                position: absolute;
+                                                top: 0;
+                                                left: 0;
+                                                z-index: 9900;
+                                                width: 100%;
+                                                height: 100%;
+                                                justify-content: center;
+                                                background-color: rgba(255, 255, 255, 0.8);
+                                                margin: 0 !important;
+                                                display: none;
+                                            ">
+                                                <div class="circle-5 l"></div>
+                                                <div class="circle-5 m"></div>
+                                                <div class="circle-5 r"></div>
+                                                
+                                            </div>                                                                                
+                                            <div id="new-items-table" class="handsontable"></div>
+                                            
+                                            <!-- Paginação -->  
+                                            <div class="col-lg-12 col-md-12 col-sm-12 d-flex justify-content-center m-t-2">
+                                                <ul class="pagination">
+                                                    {% if page_obj.has_previous %}
+                                                        <li class="page-item">
+                                                            <a class="page-link" tabindex="-1" href="?page={{ page_obj.previous_page_number }}&{{ request|cleaned_query_params:'page' }}">Anterior</a>
+                                                        </li>
+                                                    {% else %}
+                                                        <li class="page-item disabled">
+                                                            <a class="page-link" tabindex="-1" href="?page=1&{{ request|cleaned_query_params:'page' }}">Anterior</a>
+                                                        </li>                        
+                                                    {% endif %}  
+                            
+                                                    
+                                            
+                                                    {% for page_num in page_range %}
+                                                        {% if page_num == '...' %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="#">{{ page_num }}</a>
+                                                            </li>
+                                                        {% elif page_obj.number == page_num %}
+                                                            <li class="page-item active">
+                                                                <a class="page-link" href="#">{{ page_num }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item">
+                                                                <a class="page-link" href="?page={{ page_num }}&{{ request|cleaned_query_params:'page' }}">{{ page_num }}</a>
+                                                            </li>
+                                                        {% endif %}
+                                                    {% endfor %}                      
+                            
+                            
+                                                    {% if page_obj.has_next %}
+                                                        <li class="page-item">
+                                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request|cleaned_query_params:'page' }}">Próxima</a>
+                                                        </li>
+                                                    {% endif %}                            
+                                                </ul> 
+                                                 
+                                            </div>  
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Tab Novos Produtos -->                                                                                             
+                            </div>
+                        </div>
+                    </div>
+                </div>                                 
+              
+            </div>
+        </div>
+        <!-- Zero config.table end -->
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header p-t-5 p-b-5 color-inverse text-white">
+                <h5 class="modal-title" id="searchModalLabel">Filtrar Itens</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" class="text-white">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="form-container" class="container mt-2">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="select_filtros">Campo</label>
+                            <select class="form-control" id="select_filtros">
+                                <option value="code">Código</option>
+                                <option value="description">Descrição</option>                                
+                                <option value="cfop">CFOP</option>
+                                <option value="icms_cst">CST ICMS</option>
+                                <option value="icms_aliquota">Aliq ICMS</option>
+                                <option value="cbenef">CBENEF</option>
+                                <option value="piscofins_cst">CST PIS/COFINS</option>
+                                <option value="naturezareceita">Natureza Receita</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="input1">Valor</label>
+                            <input type="text" class="form-control" id="valor_filtro" placeholder="valor">
+                        </div>
+                        <div class="form-group col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary" onclick="addRow(this)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-t-5 p-b-5">
+                <a href="#" class="btn btn-secondary btn-sm" id="clearSearch">Limpar Filtros</a>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-primary  btn-sm" id="applySearch">Filtrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <!-- Cabeçalho com bg-warning -->
+        <div class="modal-header clearfix text-left bg-warning">
+          <h5 class="modal-title text-white" id="divergenceModalLabel">Título aqui</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-hidden="true">
+            <i class="pg-close"></i>
+          </button>
+        </div>
+        
+        <!-- Corpo -->
+        <div class="modal-body">
+          <p id="divergenceModalContent" style="white-space: pre-wrap;"></p>
+        </div>
+  
+        <!-- Rodapé -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary btn-cons" data-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
+{% endblock content %}
+
+{% block anotherjs %}
+    <!-- Handson table js -->
+    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
+    <!-- notification js -->
+    <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>  
+    <!-- Validações -->
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/validate.js' %}"></script>
+    <!-- Filtros -->
+    <script type="text/javascript" src="{% static 'assets/pages/validate-items/filter-new-await.js' %}"></script>      
+<script>
+    
+    
+    var piscofinsData = {};
+    // Adicionar os dados ao objeto
+{% for piscofins in piscofins_choices %}
+    piscofinsData['{{ piscofins.code }}'] = {
+        'pis_aliquota': '{{ piscofins.pis_aliquota }}',
+        'cofins_aliquota': '{{ piscofins.cofins_aliquota }}'  
+    };
+{% endfor %}
+
+    var icmsAliquotaData = {};
+// Populate the icmsAliquotaData object
+{% for aliq in icmsaliquota_choices %}
+    icmsAliquotaData['{{ aliq.code }}'] = {
+        code: '{{ aliq.code }}',
+        dataCode: {% if aliq.code in icmsaliquotareduzida_codes %}1{% else %}0{% endif %},
+    };
+{% endfor %}
+
+    var cbenefData = {};
+// Populate the cbenefData object
+{% for cbenef in cbenef_choices %}
+    cbenefData['{{ cbenef.code }}'] = {
+        code: '{{ cbenef.code }}',
+        icmsCst: {% if cbenef.icms_cst %}'{{ cbenef.icms_cst.code }}'{% else %}null{% endif %},
+    };
+{% endfor %}
+
+    var urlValidateCode = '{% url "validate_code_item" %}';
+    var urlNewItem = '{% url "save_imported_item" %}';
+    var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
+    var client_id = {{ client_id }};
+
+    var naturezareceitaData = [];
+    // Populate the naturezareceitaData array
+    {% for naturezareceita in naturezareceita_choices %}
+    naturezareceitaData.push({
+        id: '{{ naturezareceita.id }}',
+        code: '{{ naturezareceita.code }}',
+        piscofinsCst: {% if naturezareceita.piscofins_cst %}'{{ naturezareceita.piscofins_cst.code }}'{% else %}null{% endif %}
+    });
+    {% endfor %}
+
+    var urlValidateCode = '{% url "validate_code_item" %}';
+    var urlFixItem = '{% url "save_imported_item" %}';
+    var urlInactiveItem = '{% url "inactive_items_item_awaiting" %}';
+    var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
+    var client_id = {{ client_id }};
+    var unnecessary_fields = {{ client_erp_unnecessary_fields|safe }};
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        var container = document.getElementById('new-items-table');
+
+        var dataOrigin = [
+            {% for item in imported_items %}
+                [
+                    "{{ item.code }}",
+                    "{{ item.barcode|zero_to_empty|default_if_none:'' }}",
+                    "{{ item.description|safe|escapejs }}",
+                    "{{ item.ncm }}",
+                    "{{ item.cest|zero_to_empty|default_if_none:'' }}",
+                    "{{ item.cfop }}",
+                    "{{ item.icms_cst }}",
+                    "{{ item.icms_aliquota }}",
+                    "{{ item.icms_aliquota_reduzida }}",
+                    "{{ item.cbenef|default_if_none:'' }}",
+                    "{{ item.protege }}",
+                    "{{ item.piscofins_cst.code }}".padStart(2, '0'),
+                    "{{ item.pis_aliquota }}",
+                    "{{ item.cofins_aliquota }}",
+                    "{{ item.naturezareceita|default_if_none:'' }}",
+                    "{{ item.type_product }}",
+                    "{{ item.sequencial }}",
+                    "{{ item.estado_origem }}",
+                    "{{ item.estado_destino }}",
+                    "{{ item.updated_at|date:"d/m/y H:i" }}",
+                    "{{ item.get_status_item_display }}",
+                    "{{ item.dif_days }}"
+                ],
+            {% endfor %}
+        ];
+        var dataDivergent = [
+        {% for item in additional_imported_items %}
+            {
+                "code": "{{ item.code }}",
+                "barcode": "{{ item.barcode|zero_to_empty|default_if_none:'' }}",
+                "description": "{{ item.description|safe|escapejs }}",
+                "ncm": "{{ item.ncm }}",
+                "cest": "{{ item.cest|zero_to_empty|default_if_none:'' }}",
+                "cfop": "{{ item.cfop }}",
+                "icms_cst": "{{ item.icms_cst }}",
+                "icms_aliquota": "{{ item.icms_aliquota }}",
+                "icms_aliquota_reduzida": "{{ item.icms_aliquota_reduzida }}",
+                "cbenef": "{{ item.cbenef|default_if_none:'' }}",
+                "protege": "{{ item.protege }}",
+                "piscofins_cst": "{{ item.piscofins_cst }}".padStart(2, '0'),
+                "pis_aliquota": "{{ item.pis_aliquota }}",
+                "cofins_aliquota": "{{ item.cofins_aliquota }}",
+                "naturezareceita": "{{ item.naturezareceita|default_if_none:'' }}",
+                "divergent_columns": "{{ item.divergent_columns }}"
+            },
+        {% endfor %}
+        ];        
+    
+        var typeProductOptions = [
+            {% for value, label in form.type_product.field.choices %}
+                {value: '{{ value }}', label: '{{ label }}'},
+            {% endfor %}
+        ];        
+        var hot = new Handsontable(container, {
+            data: dataOrigin,
+            rowHeaders: true,
+            colHeaders: [
+                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'Inativo em', 'Status', 'Há dias'
+            ],
+            columns: [
+                { data: 0, readOnly: true , id:'code'},
+                { data: 1,  readOnly: true, id:'barcode' },
+                { data: 2,  readOnly: true, id:'description' },
+                { data: 3,  readOnly: true, id:'ncm' },
+                { data: 4 , readOnly: true, id:'cest' },
+                { data: 5,  readOnly: true, id:'cfop'},
+                { data: 6,  readOnly: true, id:'icms_cst'},
+                { data: 7,  readOnly: true, id:'icms_aliquota'},
+                { data: 8,  readOnly: true, id:'icms_aliquota_reduzida'},
+                { data: 9,  readOnly: true, id:'cbenef'},
+                { data: 10, readOnly: true, id:'protege'},
+                { data: 11, readOnly: true, id:'piscofins_cst'},
+                { data: 12, readOnly: true, id:'pis_aliquota'},
+                { data: 13, readOnly: true, id:'cofins_aliquota' },
+                { data: 14, readOnly: true, id:'naturezareceita'},
+                { data: 19, readOnly: true, id:'updated_at' },
+                { data: 20, readOnly: true, id:'status_item' },
+                { data: 21, readOnly: true, id:'dif_days' }                
+            ],     
+            stretchH: 'all',
+            autoWrapRow: true,
+            height: 500,
+            manualRowResize: false,
+            manualColumnResize: false,
+            contextMenu: [
+            'row_above', 'row_below', 'remove_row',  'make_read_only', 'alignment', 'copy', 'freeze_column', 'unfreeze_column'
+            ],
+            filters: true,
+            hiddenColumns: true,
+            dropdownMenu: true,
+            allowInsertRow: false,
+            allowRemoveRow: false,
+            allowInsertColumn: false,
+            allowRemoveColumn: false,  
+            selectionMode: 'single',            
+            cells: function(row, col) {
+                var cellProperties = {};
+            
+                if (row % 2 === 0) {
+                    cellProperties.renderer = evenRowRenderer;
+                } else {
+                    cellProperties.renderer = oddRowRenderer;
+                }
+                return cellProperties;
+            },  
+            
+            beforeOnCellMouseDown: function(event, coords, TD) {
+                if (event.button === 0 && coords.col >= 19 && coords.col <= 19) {
+                    event.stopImmediatePropagation(); // Impede a propagação do evento
+                    var code = this.getDataAtCell(coords.row, 0);
+                    fetchInfo(code)
+                    return false; // Impede a seleção de células
+                }
+            },                 
+            afterChange: function(changes, source) {
+                if (source === 'edit' || source === 'CopyPaste.paste') {
+                    changes.forEach(([row, prop, oldValue, newValue]) => {
+                        if (prop === 11) { // Verifica se a mudança ocorreu na coluna 11 (piscofins_cst)
+                            var aliquotas = getAliquotas(newValue); // Obtém as aliquotas baseado no novo valor
+                            this.setDataAtCell(row, 12, aliquotas ? aliquotas.pis_aliquota : ''); // Define pis_aliquota na coluna 12
+                            this.setDataAtCell(row, 13, aliquotas ? aliquotas.cofins_aliquota : ''); // Define cofins_aliquota na coluna 13
+                        } 
+                    });
+                }
+            }   
+                        
+        });     
+
+        function evenRowRenderer(instance, td, row, col, prop, value, cellProperties) {
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            td.style.backgroundColor = '#f2f2f2'; // Cor da linha par
+        }
+    
+        function oddRowRenderer(instance, td, row, col, prop, value, cellProperties) {
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            td.style.backgroundColor = '#ffffff'; // Cor da linha ímpar
+        }
+      
+        
+        var tableContainer = document.getElementById('new-items-table'); // Obtém a referência da div da tabela
+        var errorContainer = document.createElement('div');
+        errorContainer.id = 'error-container';
+        errorContainer.classList.add('alert', 'alert-danger', 'alert-success'); // Adiciona as classes Bootstrap
+        tableContainer.parentNode.insertBefore(errorContainer, tableContainer.nextSibling); 
+        $('#error-container').hide();             
+        
+        function getColumnIndexByFieldName(field) {
+            var headers = hot.getColHeader();
+            for (var i = 0; i < headers.length; i++) {
+                if (headers[i] === field) {
+                    return i;
+                }
+            }
+            return -1; // Retorna -1 se o campo não for encontrado
+        }         
+        
+        function formatDate(date) {
+            var day = ("0" + date.getDate()).slice(-2);
+            var month = ("0" + (date.getMonth() + 1)).slice(-2);
+            var year = date.getFullYear().toString().slice(-2);
+            var hours = ("0" + date.getHours()).slice(-2);
+            var minutes = ("0" + date.getMinutes()).slice(-2);
+        
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }        
+
+
+
+    });
+    
+    
+
+</script>
+
+    <!-- Custom js -->
+    <script type="text/javascript" src="{% static 'assets/pages/handson-table/new-items.js' %}"></script>
+    
+
+    
+
+{% endblock anotherjs %}
+
+
+

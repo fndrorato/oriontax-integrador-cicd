@@ -205,7 +205,19 @@
                                                     </select>
                                                 </div>                                                
                                             </div>                                            
-                                        </div>  
+                                        </div> 
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="col-sm-12 col-lg-12 col-form-label">Periodicidade Integração</label>
+                                                <div class="col-sm-8 col-lg-12">
+                                                    <span class="messages text-danger">{{ form.periodicity_exception.errors }}</span>
+                                                    <div class="input-group">
+                                                        {{ form.periodicity_exception|add_class:"form-control" }}
+                                                    </div>
+                                                </div>                                                
+                                            </div>                                          
+                                        </div>                                         
 
                                         <hr>
                                         <h5>Informações para conexão</h5>

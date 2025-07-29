@@ -37,6 +37,8 @@
                         <tr>
                             <th>#</th>
                             <th class="text-center">Nome</th>
+                            <th class="text-center">Método Integração</th>
+                            <th class="text-center">Periodicidade</th>
                             <th class="text-center">Ação</th>
                         </tr>
                         </thead>
@@ -46,6 +48,8 @@
                                     <tr>
                                         <td>{{ forloop.counter }}</td>
                                         <td class="text-center">{{ erp.name }}</td>
+                                        <td class="text-center">{{ erp.get_method_integration_display }}</td>
+                                        <td class="text-center">{{ erp.periodicity.description }}</td>
                                         <td class="text-center">
                                             <a href="{% url 'erp_update' erp.pk %}" type="button" class="btn btn-primary btn-mini waves-effect waves-light text-white">
                                                 <i class="icofont icofont-ui-edit"></i>

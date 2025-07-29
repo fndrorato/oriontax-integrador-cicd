@@ -1,0 +1,48 @@
+{% load permissions_tags %}
+
+<nav class="pcoded-navbar">
+    <div class="pcoded-inner-navbar">
+        <ul class="pcoded-item pcoded-left-item">
+            {% if user|has_any_role:"administrador" or user|has_profile_permission:"cattle_permission" %}
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-cpu"></i></span>
+                    <span class="pcoded-mtext">Operação Gado</span>
+                    <span class="pcoded-mcaret"></span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class=" ">
+                        <a href="{% url 'operation_gado' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Guia da Operação</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                       
+                    <li class=" ">
+                        <a href="{% url 'simulation_list' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Listar Simulações</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                    
+                    <li class=" ">
+                        <a href="{% url 'simulation_create_matrix_cattle' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Nova Simulação</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>
+                    <li class=" ">
+                        <a href="{% url 'update_butchery' %}" data-i18n="nav.animations.main">
+                            <span class="pcoded-micon"><i class="ti-reload rotate-refresh"></i></span>
+                            <span class="pcoded-mtext">Dianteiro x Traseiro</span>
+                            <span class="pcoded-mcaret"></span>
+                        </a>
+                    </li>                    
+                </ul>
+            </li> 
+            {% endif %}  
+                                
+        </ul>
+    </div>
+</nav>
