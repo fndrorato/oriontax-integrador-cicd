@@ -116,7 +116,11 @@ class ImportItemView(APIView):
                 naturezareceita_code=F('naturezareceita__code')
             )        
             if items_queryset:
-                items_df = pd.DataFrame(list(items_queryset.values()))             
+                items_df = pd.DataFrame(list(items_queryset.values()))  
+                items_df = items_df.astype({'icms_aliquota_reduzida': 'float'})
+
+                # Opcional: se quiser preencher com zeros inicialmente
+                items_df['icms_aliquota_reduzida'] = items_df['icms_aliquota_reduzida'].fillna(0).round(2)                           
             else: 
                 # Lista das colunas desejadas
                 colunas_desejadas = [
