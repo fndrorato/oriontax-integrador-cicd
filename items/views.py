@@ -1356,7 +1356,26 @@ class XLSXUploadView(View):
                 df['cfop'] = df['cfop'].astype(int)
                 df['icms_cst'] = df['icms_cst'].astype(str)
                 df['icms_aliquota'] = df['icms_aliquota'].astype(int)
-                df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(float).round(1)                
+                
+                try:
+                    df['icms_aliquota_reduzida'] = (
+                        df['icms_aliquota_reduzida']
+                        .astype(str)  # garante que é string
+                        .str.replace(',', '.', regex=False)  # troca vírgula por ponto
+                        .astype(float)
+                        .round(1)
+                    )
+                except Exception as e:
+                    invalid_details = [f"Erro ao converter 'icms_aliquota_reduzida': {e}"]
+                    end_time = time.time()
+                    elapsed_time = round(end_time - start_time, 3)
+                    return JsonResponse({
+                        'message': 'Linhas inválidas encontradas.',
+                        'errors': invalid_details,
+                        'elapsed_time': elapsed_time
+                    }, status=400)  
+              
+                # df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(float).round(1)                
                 df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
                 df['naturezareceita'] = df['naturezareceita'].fillna('').astype(str).str.zfill(3).replace(['000', 'nan'], None)
                 df['protege'] = df['protege'].astype(int)
@@ -2198,7 +2217,26 @@ class XLSXUploadDivergentView(View):
                 df['icms_cst'] = df['icms_cst'].astype(str)
                 df['icms_aliquota'] = df['icms_aliquota'].astype(int)
                 print('caiu aqui8')
-                df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(float).round(1)
+                
+                try:
+                    df['icms_aliquota_reduzida'] = (
+                        df['icms_aliquota_reduzida']
+                        .astype(str)  # garante que é string
+                        .str.replace(',', '.', regex=False)  # troca vírgula por ponto
+                        .astype(float)
+                        .round(1)
+                    )
+                except Exception as e:
+                    invalid_details = [f"Erro ao converter 'icms_aliquota_reduzida': {e}"]
+                    end_time = time.time()
+                    elapsed_time = round(end_time - start_time, 3)
+                    return JsonResponse({
+                        'message': 'Linhas inválidas encontradas.',
+                        'errors': invalid_details,
+                        'elapsed_time': elapsed_time
+                    }, status=400)  
+                
+                # df['icms_aliquota_reduzida'] = df['icms_aliquota_reduzida'].astype(float).round(1)
                 print('caiu aqui9')
                 df['piscofins_cst'] = df['piscofins_cst'].astype(str).str.zfill(2)
                 print('caiu aqui10')

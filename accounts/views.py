@@ -67,7 +67,7 @@ def login_view(request):
                             'cattle_permission': reverse_lazy('simulation_create_matrix_cattle'),
                             'shop_simulation_permission': reverse_lazy('pricequote_create'),
                             'pricing_permission': reverse_lazy('pricing_simulation'),
-                            'tax_management_permission': reverse_lazy('tax_dashboard'),
+                            'tax_management_permission': reverse_lazy('home'),
                         }
                         return JsonResponse({"success": True, "redirect_url": redirect_map[active_permissions[0]]})
                     else:
