@@ -59,6 +59,13 @@ class PriceQuoteForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'}),
         label="Produto é tributado PIS/COFINS?"
     )
+    
+    product_imported = forms.TypedChoiceField(
+        choices=BOOLEAN_CHOICES,
+        coerce=lambda x: x == 'True',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Produto é importado?"
+    )    
 
     state_option_01 = forms.ModelChoiceField(
         queryset=States.objects.all(),
@@ -132,6 +139,7 @@ class PriceQuoteForm(forms.ModelForm):
             'simulation_description',
             'tax_icms_sale',
             'product_pis_cofins',
+            'product_imported',
             'product_description',
             'state_option_01',
             'supplier_profile_01',

@@ -22,6 +22,7 @@ class PriceQuote(models.Model):
     tax_icms_sale = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     product_icms_7 = models.BooleanField(verbose_name="Is product taxed at 7% ICMS?", null=True, blank=True)
     product_pis_cofins = models.BooleanField(verbose_name="Is product taxed for PIS/COFINS?")
+    product_imported = models.BooleanField(verbose_name="Is product imported?")
     product_description = models.CharField(max_length=255)
     state_option_01 = models.ForeignKey(States, on_delete=models.CASCADE, related_name='state_option_01', verbose_name="State Option 01")
     state_option_02 = models.ForeignKey(States, on_delete=models.CASCADE, related_name='state_option_02', verbose_name="State Option 02")

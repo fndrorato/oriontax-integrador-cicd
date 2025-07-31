@@ -244,7 +244,11 @@
                                 <td colspan="2" class="text-center">
                                     {% render_field form.tax_icms_sale %}
                                 </td>
-                            </tr>            
+                            </tr>  
+                            <tr>
+                                <th>Produto importado?</th>
+                                <td colspan="2" class="text-center">{% render_field form.product_imported %}</td>
+                            </tr>                                      
                             <tr>
                                 <th>Produto é tributado PIS/COFINS?</th>
                                 <td colspan="2" class="text-center">{% render_field form.product_pis_cofins %}</td>
@@ -436,6 +440,7 @@
         const supplierSelect = document.getElementById(`id_supplier_profile_0${tipo}`);
         const displayInput = document.getElementById(`id_aliquota_inter_display_0${tipo}`);
         const taxIcmsSaleValue = document.getElementById('id_tax_icms_sale').value;
+        const productImported = document.getElementById('id_product_imported').value;
             
         if (!stateSelect || !supplierSelect || !displayInput || !taxIcmsSaleValue) return;
 
@@ -451,13 +456,20 @@
         const stateInfo = stateAliquotas[stateId] || { code: '', aliquota: 0 }; // <-- Mudado para 'aliquota'
         const taxValueState = parseFloat(stateInfo.aliquota || 0);               // <-- Mudado para 'aliquota'
         const stateCode = stateInfo.code;
+        
             
         let result = 0;
     
         if (taxValueSupplier === 0) {
             result = 0;
         }  else {
-            result = stateCode === 'GO' ? taxValueSupplier : taxValueState;
+            if (productImported === 'True' && stateCode !== 'GO') {
+                // Se o produto é importado, usa a alíquota do fornecedor
+                result = 4; // Alíquota padrão para importados
+            } else {
+                result = stateCode === 'GO' ? taxValueSupplier : taxValueState;                
+            }
+            
         }
 
         if (result > icmsNumeric) {
@@ -471,6 +483,7 @@
             console.warn(`AutoNumeric instance not found for ${displayInput.id}`);
             displayInput.value = result.toFixed(2) + '%';
         }
+        console.log(`Aliquota for tipo ${tipo}: ${result} (Supplier: ${taxValueSupplier}, State: ${taxValueState})`);
     }
 
     function calcularPISCOFINSCredit(tipo) {
@@ -585,7 +598,6 @@
             (bestSupplierText ? ` (${bestSupplierText})` : ''); // Adiciona o texto do fornecedor se existir
     }
 
-
     function registrarEventosCalculoICMS(tipo) {
         const campos = [
             `#id_product_price_0${tipo}`,
@@ -653,6 +665,15 @@
         });
         determinarMelhorOpcao();
     });
+
+    document.getElementById('id_product_imported').addEventListener('change', () => {
+        [1, 2].forEach(tipo => {
+            calcularAliquota(tipo);
+            calcularICMSCredit(tipo);
+            calcularCustoTotalProduto(tipo);
+        });
+        determinarMelhorOpcao();
+    });    
     
 </script>
 
