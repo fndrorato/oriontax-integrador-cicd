@@ -71,9 +71,15 @@
                         <a class="mobile-menu" id="mobile-collapse" href="#!">
                             <i class="feather icon-menu"></i>
                         </a>
-                        <a href="{% url 'home' %}">
-                            <img lass="img-fluid" src="{% static 'assets/images/logo.png' %}" alt="Logo">
-                        </a>
+                        {% if active_module == 'shop_simulation_permission' %}
+                            <a href="{% url 'pricequote_create' %}">
+                                <img lass="img-fluid" src="{% static 'assets/images/logo_pharma.png' %}" alt="Logo">
+                            </a>                        
+                        {% else %}
+                            <a href="{% url 'home' %}">
+                                <img lass="img-fluid" src="{% static 'assets/images/logo.png' %}" alt="Logo">
+                            </a>                        
+                        {% endif %}
                         <a class="mobile-options">
                             <i class="feather icon-more-horizontal"></i>
                         </a>
