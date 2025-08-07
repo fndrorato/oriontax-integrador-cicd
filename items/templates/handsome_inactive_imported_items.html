@@ -87,7 +87,7 @@
             <div class="card-header">
                 <h5>Lista de Produtos Inativos: <a href="{% url 'client_update' client.id %}">{{ client_name }} </a></h5>
 
-                <a href="{% url 'export_items_to_excel' client_id=client.id table='inactive' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
+                <a href="{% url 'export_items_to_excel' client_id=client.id table='inactives' %}" type="button" class="btn btn-inverse btn-sm btn-outline-inverse waves-effect waves-light f-right d-inline-block md-trigger m-r-5"> 
                     <i class="icofont icofont-save m-r-5"></i>
                     Exportar para Excel
                 </a>                       
