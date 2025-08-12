@@ -15,6 +15,7 @@ class ERP(models.Model):
     unnecessary_fields = models.JSONField(default=list, blank=True, null=True)
     method_integration = models.CharField(max_length=2, choices=DATA_METHOD_INTEGRATION_CHOICES, blank=True, null=True)
     periodicity = models.ForeignKey('ERPIntegrationSchedule', on_delete=models.CASCADE, blank=True, null=True)
+    use_float_redbc = models.BooleanField(default=False, help_text="Use float for redbcde and redbcpara fields")
 
     def __str__(self):
         return self.name

@@ -7,6 +7,7 @@ import logging
 import os
 import zipfile
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db import transaction, connection, IntegrityError
@@ -182,8 +183,8 @@ class ClientItemView(APIView):
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Total de itens retornados {total_items} para o cliente através da API.\n"
         save_imported_logs(client.id, initial_log) 
         update_client_data_send(client.id, '1')        
-        return Response(serializer.data, status=status.HTTP_200_OK)  
-    
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+   
 class ClientOneItemView(APIView):
     authentication_classes = [ClientTokenAuthentication]
     permission_classes = [IsAuthenticatedClient]
@@ -463,6 +464,9 @@ class ProcessZipView(APIView):
             for det in det_nodes:
                 prod = det.find('prod', namespaces=ns)
                 imposto = det.find('imposto', namespaces=ns)
+                imposto_icms = imposto.find('ICMS', namespaces=ns) if imposto is not None else None
+                imposto_pis = imposto.find('PIS', namespaces=ns) if imposto is not None else None
+                imposto_cofins = imposto.find('COFINS', namespaces=ns) if imposto is not None else None
 
                 detalhe = SalesDetalhe(
                     pedido=pedido,
@@ -491,7 +495,7 @@ class ProcessZipView(APIView):
                     orig=safe_int(safe_node_text(imposto, './/orig', ns)),
                     CST_ICMS=safe_node_text(imposto, './/CST', ns),
                     modBC=safe_int(safe_node_text(imposto, './/modBC', ns)),
-                    vBC=safe_float(safe_node_text(imposto, './/vBC', ns)),
+                    vBC=safe_float(safe_node_text(imposto_icms, './/vBC', ns)), #AQUI É DO ICMS APENAS
                     pICMS=safe_float(safe_node_text(imposto, './/pICMS', ns)),
                     vICMS=safe_float(safe_node_text(imposto, './/vICMS', ns)),
                     vICMSDeson=safe_float(safe_node_text(imposto, './/vICMSDeson', ns), 0.0),
@@ -503,11 +507,11 @@ class ProcessZipView(APIView):
                     vPIS=safe_float(safe_node_text(imposto, './/vPIS', ns)),
                     CST_PIS=safe_node_text(imposto, './/CST', ns),
                     pPIS=safe_float(safe_node_text(imposto, './/pPIS', ns)),
-                    vBC_PIS=safe_float(safe_node_text(imposto, './/vBC', ns)),
+                    vBC_PIS=safe_float(safe_node_text(imposto_pis, './/vBC', ns)),
                     vCOFINS=safe_float(safe_node_text(imposto, './/vCOFINS', ns)),
                     CST_COFINS=safe_node_text(imposto, './/CST', ns),
                     pCOFINS=safe_float(safe_node_text(imposto, './/pCOFINS', ns)),
-                    vBC_COFINS=safe_float(safe_node_text(imposto, './/vBC', ns)),
+                    vBC_COFINS=safe_float(safe_node_text(imposto_cofins, './/vBC', ns)),
 
                     motDesICMS = safe_int(safe_node_text(imposto, './/motDesICMS', ns), 0),
                     vFCPST = safe_float(safe_node_text(imposto, './/vFCPST', ns), 0.0),
@@ -704,8 +708,30 @@ class GenerateCSVDetail(APIView):
                 with open(file_path, mode='w', newline='', encoding='utf-8') as file:
                     writer = csv.writer(file, delimiter=';')
                     writer.writerow(headers)  # Escrevendo o cabeçalho
-                    writer.writerows(rows)   # Escrevendo os dados
-            
+                    for row in rows:
+                        formatted_row = []
+                        for col_name, value in zip(headers, row):
+                            if isinstance(value, (float, Decimal)):
+                                if col_name in ["base_icms", "base_pis", "base_cofins"]:
+                                    # Sempre 2 casas decimais
+                                    value = Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                                    formatted_value = f"{value:.2f}"
+                                else:
+                                    # Máximo 3 casas decimais
+                                    value = Decimal(str(value)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+                                    # Se for inteiro, mostra sem casas; senão, remove zeros à direita
+                                    if value == value.to_integral():
+                                        formatted_value = f"{int(value)}"
+                                    else:
+                                        formatted_value = f"{value}".rstrip('0').rstrip('.')
+
+                                # Troca ponto por vírgula
+                                formatted_value = formatted_value.replace('.', ',')
+                                formatted_row.append(formatted_value)
+                            else:
+                                formatted_row.append(value)
+                        writer.writerow(formatted_row)
+
         except Exception as e:
             logger.error(f"Erro ao gerar CSV: {e}")
             return JsonResponse({'error': f'Erro ao gerar CSV: {str(e)}'}, status=500)

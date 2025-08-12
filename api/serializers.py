@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from items.models import Item, ImportedItem
 
+
 class ItemModelSerializer(serializers.ModelSerializer):
     codigo = serializers.CharField(source='code')
     codigo_barras = serializers.CharField(source='barcode')
@@ -61,7 +62,7 @@ class ItemModelSerializer(serializers.ModelSerializer):
         
         
         if aliquota_id == 0:
-            return ''  # ou 0, dependendo do que você preferir
+            return 0.0 if getattr(obj.client.erp, 'use_float_redbc', False) else ''
         return round((1 - (icms_aliquota_reduzida / aliquota_id)) * 100, 2)
     
     def get_redbcpara(self, obj):
@@ -72,7 +73,7 @@ class ItemModelSerializer(serializers.ModelSerializer):
             icms_aliquota_reduzida = 0.0
          
         if aliquota_id == 0:
-            return ''  # ou 0, dependendo do que você preferir
+            return 0.0 if getattr(obj.client.erp, 'use_float_redbc', False) else ''
         return round((icms_aliquota_reduzida / aliquota_id) * 100, 2)
     
     def get_cofins_cst(self, obj):
@@ -88,8 +89,7 @@ class ItemModelSerializer(serializers.ModelSerializer):
     
     def get_natureza_receita(self, obj):
         return obj.naturezareceita.code if obj.naturezareceita else ''        
-    
-        
+
 class ItemImportedModelSerializer(serializers.ModelSerializer):
     percentual_redbcde = serializers.FloatField(required=False, allow_null=True)
 
