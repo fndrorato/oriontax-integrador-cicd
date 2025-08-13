@@ -460,6 +460,7 @@ class ProcessZipView(APIView):
 
             # Processa os itens da NF-e (SalesDetalhe)
             detalhes = []
+            import xml.etree.ElementTree as ET
             det_nodes = root.findall('.//det', namespaces=ns)
             for det in det_nodes:
                 prod = det.find('prod', namespaces=ns)
@@ -467,6 +468,19 @@ class ProcessZipView(APIView):
                 imposto_icms = imposto.find('ICMS', namespaces=ns) if imposto is not None else None
                 imposto_pis = imposto.find('PIS', namespaces=ns) if imposto is not None else None
                 imposto_cofins = imposto.find('COFINS', namespaces=ns) if imposto is not None else None
+                
+                # Use ET.tostring() para imprimir o conteúdo XML
+                print("--- ICMS ---")
+                if imposto_icms is not None:
+                    print(ET.tostring(imposto_icms, encoding='unicode'))
+
+                print("--- PIS ---")
+                if imposto_pis is not None:
+                    print(ET.tostring(imposto_pis, encoding='unicode'))
+
+                print("--- COFINS ---")
+                if imposto_cofins is not None:
+                    print(ET.tostring(imposto_cofins, encoding='unicode'))
 
                 detalhe = SalesDetalhe(
                     pedido=pedido,
@@ -493,7 +507,7 @@ class ProcessZipView(APIView):
                     vOutro=safe_float(safe_node_text(prod, './/vOutro', ns), 0.0),
                     indTot=safe_int(safe_node_text(prod, './/indTot', ns)),
                     orig=safe_int(safe_node_text(imposto, './/orig', ns)),
-                    CST_ICMS=safe_node_text(imposto, './/CST', ns),
+                    CST_ICMS=safe_node_text(imposto_icms, './/CST', ns),
                     modBC=safe_int(safe_node_text(imposto, './/modBC', ns)),
                     vBC=safe_float(safe_node_text(imposto_icms, './/vBC', ns)), #AQUI É DO ICMS APENAS
                     pICMS=safe_float(safe_node_text(imposto, './/pICMS', ns)),
@@ -505,11 +519,11 @@ class ProcessZipView(APIView):
                     pICMSST=safe_float(safe_node_text(imposto, './/pICMSST', ns), 0.0),
                     vICMSST=safe_float(safe_node_text(imposto, './/vICMSST', ns), 0.0),
                     vPIS=safe_float(safe_node_text(imposto, './/vPIS', ns)),
-                    CST_PIS=safe_node_text(imposto, './/CST', ns),
+                    CST_PIS=safe_node_text(imposto_pis, './/CST', ns),
                     pPIS=safe_float(safe_node_text(imposto, './/pPIS', ns)),
                     vBC_PIS=safe_float(safe_node_text(imposto_pis, './/vBC', ns)),
                     vCOFINS=safe_float(safe_node_text(imposto, './/vCOFINS', ns)),
-                    CST_COFINS=safe_node_text(imposto, './/CST', ns),
+                    CST_COFINS=safe_node_text(imposto_cofins, './/CST', ns),
                     pCOFINS=safe_float(safe_node_text(imposto, './/pCOFINS', ns)),
                     vBC_COFINS=safe_float(safe_node_text(imposto_cofins, './/vBC', ns)),
 
@@ -664,7 +678,7 @@ class GenerateCSVDetail(APIView):
                 b."CST_ICMS" AS cst_icms,
                 b."vBC" AS base_icms,
                 b."pRedBC" AS percentual_reducao,
-                ROUND(((b."vFCP" / NULLIF(b."vBC", 0)) * 100) + b."pICMS", 2) AS aliquota_icms,
+                COALESCE(ROUND(((b."vFCP" / NULLIF(b."vBC", 0)) * 100) + b."pICMS", 2), 0) AS aliquota_icms,
                 (b."vICMS" + b."vFCP") AS valor_icms,
                 0 AS iva,
                 b."vBCST" AS base_icms_st,
