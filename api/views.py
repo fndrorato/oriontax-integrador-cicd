@@ -31,12 +31,11 @@ from items.models import Item, ImportedItem
 from api.authentication import ClientTokenAuthentication, IsAuthenticatedClient
 from api.serializers import ItemModelSerializer, ItemImportedModelSerializer
 from sales.models import SalesPedido, SalesDetalhe
-
-
-
 from django.db import connection
 from rest_framework.views import APIView
 from django.conf import settings
+from api.tasks import process_import_job
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,8 @@ class ImportItemView(APIView):
         client = request.user
         initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Cliente: {client.name} enviando dados através da API\n"
         data_json = request.data
-        # Mapeia os campos do JSON recebido para os campos esperados pelo serializer
+
+        # ---- mapping igual ao seu ----
         def rename_fields(data):
             return {
                 'code': data.get('codigo'),
@@ -69,90 +69,189 @@ class ImportItemView(APIView):
                 'percentual_redbcde': data.get('percentual_redbcde'),
             }
 
-        # Renomeia os campos em todos os itens da lista
-        renamed_data = [rename_fields(item) for item in request.data]        
-        
-        # Serializa os dados recebidos
+        renamed_data = [rename_fields(item) for item in request.data]
         serializer = ItemImportedModelSerializer(data=renamed_data, many=True)
-        
-        if not serializer.is_valid():        
-            # Consolida os erros em um único objeto
+
+        if not serializer.is_valid():
             error_dict = {}
             for i, errors in enumerate(serializer.errors):
                 for field, error in errors.items():
-                    if field not in error_dict:
-                        error_dict[field] = []
-                    error_dict[field].extend(error)
+                    error_dict.setdefault(field, []).extend(error)
+            return Response({"errors": error_dict}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({"errors": error_dict}, status=status.HTTP_400_BAD_REQUEST)            
-     
-        if serializer.is_valid():
-            # Transforma os dados validados em um dataframe
-            df_json_recebido = pd.DataFrame(serializer.validated_data)
-            # Obtendo a data e hora atual para o timestamp
-            now = datetime.now()
-            timestamp = now.strftime("%Y%m%d_%H%M%S")  # Formato yyyymmdd_hhmmss
-            
-            # Diretório para salvar os arquivos
-            save_dir = "logs/api"
-            os.makedirs(save_dir, exist_ok=True)  # Cria o diretório se não existir
-            
-            # Criando o nome do arquivo dinâmico (sem a extensão)
-            file_base_name = f"{client.id}_{timestamp}"
-            
-            # Caminho completo para o arquivo JSON
-            json_file_path = os.path.join(save_dir, f"{file_base_name}.json")
-            with open(json_file_path, 'w') as json_file:
-                json.dump(data_json, json_file, indent=4)           
-            
-            df_json_recebido['sequencial'] = 0
-            df_json_recebido['estado_origem'] = ''
-            df_json_recebido['estado_destino'] = ''            
-            
-            # Pega todos os itens relacionados a esse cliente
-            items_queryset = Item.objects.filter(client=client).values(
-                'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
-                'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
-                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'type_product',
-                naturezareceita_code=F('naturezareceita__code')
-            )        
-            if items_queryset:
-                items_df = pd.DataFrame(list(items_queryset.values()))  
-                items_df = items_df.astype({'icms_aliquota_reduzida': 'float'})
+        # --------- A PARTIR DAQUI: salva arquivos para o watcher ---------
+        df_json_recebido = pd.DataFrame(serializer.validated_data)
 
-                # Opcional: se quiser preencher com zeros inicialmente
-                items_df['icms_aliquota_reduzida'] = items_df['icms_aliquota_reduzida'].fillna(0).round(2)                           
-            else: 
-                # Lista das colunas desejadas
-                colunas_desejadas = [
-                    'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
-                    'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
-                    'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_code',
-                    'id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 
-                    'is_pending_sync', 'history', 'other_information', 'type_product'
-                ]
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_dir   = os.path.join("logs", "api")
+        inbox_dir  = os.path.join(base_dir, "inbox")
+        os.makedirs(inbox_dir, exist_ok=True)
 
-                # Criar um DataFrame vazio com as colunas desejadas
-                items_df = pd.DataFrame(columns=colunas_desejadas)
-                           
-            items_df.drop(columns=['id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 'is_pending_sync', 'history', 'other_information'], inplace=True)            
+        file_base = f"{client.id}_{timestamp}"  # <- o watcher extrai o client_id daqui
 
-            try:
-                # Chama a função de validação
-                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Validando dados recebidos através da API\n"
-                validation_result = validateSelect(client.id, items_df, df_json_recebido, initial_log)
-                
-            except Exception as e:  # Catch any unexpected exceptions
-                initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client.name}: {e}\n"
-                save_imported_logs(client.id, initial_log)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Finalizando recepção através da API\n"
-            save_imported_logs(client.id, initial_log)
-            update_client_data_get(client.id, '1')
-            return Response({"message": "Dados recebidos e processados com sucesso."}, status=status.HTTP_201_CREATED)
+        # 1) JSON bruto
+        json_path = os.path.join(inbox_dir, f"{file_base}.json")
+        with open(json_path, "w", encoding="utf-8") as jf:
+            json.dump(data_json, jf, indent=4, ensure_ascii=False)
+
+        # 2) Payload validado (df_json_recebido)
+        df_json_recebido['sequencial'] = 0
+        df_json_recebido['estado_origem'] = ''
+        df_json_recebido['estado_destino'] = ''
+
+        # 3) items_df do cliente
+        items_queryset = Item.objects.filter(client=client).values(
+            'code','barcode','description','ncm','cest','cfop','icms_cst',
+            'icms_aliquota','icms_aliquota_reduzida','protege','cbenef',
+            'piscofins_cst','pis_aliquota','cofins_aliquota','type_product',
+            naturezareceita_code=F('naturezareceita__code')
+        )
+
+        if items_queryset:
+            items_df = pd.DataFrame(list(items_queryset))
+            if 'icms_aliquota_reduzida' in items_df.columns:
+                items_df['icms_aliquota_reduzida'] = pd.to_numeric(
+                    items_df['icms_aliquota_reduzida'], errors='coerce'
+                ).fillna(0).round(2)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            items_df = pd.DataFrame(columns=[
+                'code','barcode','description','ncm','cest','cfop','icms_cst',
+                'icms_aliquota','icms_aliquota_reduzida','protege','cbenef',
+                'piscofins_cst','pis_aliquota','cofins_aliquota',
+                'naturezareceita_code','type_product'
+            ])
+
+        # 4) Escreve CSVs de forma atômica (.tmp -> rename) para o watcher não pegar arquivo incompleto
+        items_tmp   = os.path.join(inbox_dir, f"{file_base}_items.csv.tmp")
+        payload_tmp = os.path.join(inbox_dir, f"{file_base}_payload.csv.tmp")
+
+        items_df.to_csv(items_tmp, index=False, encoding="utf-8")
+        df_json_recebido.to_csv(payload_tmp, index=False, encoding="utf-8")
+
+        os.replace(items_tmp,   items_tmp.replace(".tmp", ""))
+        os.replace(payload_tmp, payload_tmp.replace(".tmp", ""))
+        # log de recebimento
+        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Arquivos gravados em {inbox_dir}\n"
+        save_imported_logs(client.id, initial_log)
+        # Responde ASSÍNCRONO
+        return Response(
+            {"message": "Arquivo recebido. Processamento em background.", "job_id": file_base},
+            status=status.HTTP_201_CREATED
+        )
+
+# class ImportItemView(APIView):
+#     authentication_classes = [ClientTokenAuthentication]
+#     permission_classes = [IsAuthenticatedClient]
+
+#     def post(self, request):
+#         client = request.user
+#         initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Cliente: {client.name} enviando dados através da API\n"
+#         data_json = request.data
+#         # Mapeia os campos do JSON recebido para os campos esperados pelo serializer
+#         def rename_fields(data):
+#             return {
+#                 'code': data.get('codigo'),
+#                 'barcode': data.get('codigo_barras'),
+#                 'description': data.get('descricao'),
+#                 'ncm': data.get('ncm'),
+#                 'cest': data.get('cest'),
+#                 'cfop': data.get('cfop'),
+#                 'icms_cst': data.get('icms_cst'),
+#                 'icms_aliquota': data.get('icms_aliquota'),
+#                 'icms_aliquota_reduzida': data.get('icms_aliquota_reduzida'),
+#                 'cbenef': data.get('cbenef'),
+#                 'protege': data.get('protege'),
+#                 'piscofins_cst': data.get('pis_cst'),
+#                 'pis_aliquota': data.get('pis_aliquota'),
+#                 'cofins_aliquota': data.get('cofins_aliquota'),
+#                 'naturezareceita': data.get('natureza_receita'),
+#                 'percentual_redbcde': data.get('percentual_redbcde'),
+#             }
+
+#         # Renomeia os campos em todos os itens da lista
+#         renamed_data = [rename_fields(item) for item in request.data]        
+        
+#         # Serializa os dados recebidos
+#         serializer = ItemImportedModelSerializer(data=renamed_data, many=True)
+        
+#         if not serializer.is_valid():        
+#             # Consolida os erros em um único objeto
+#             error_dict = {}
+#             for i, errors in enumerate(serializer.errors):
+#                 for field, error in errors.items():
+#                     if field not in error_dict:
+#                         error_dict[field] = []
+#                     error_dict[field].extend(error)
+
+#             return Response({"errors": error_dict}, status=status.HTTP_400_BAD_REQUEST)            
+     
+#         if serializer.is_valid():
+#             # Transforma os dados validados em um dataframe
+#             df_json_recebido = pd.DataFrame(serializer.validated_data)
+#             # Obtendo a data e hora atual para o timestamp
+#             now = datetime.now()
+#             timestamp = now.strftime("%Y%m%d_%H%M%S")  # Formato yyyymmdd_hhmmss
+            
+#             # Diretório para salvar os arquivos
+#             save_dir = "logs/api"
+#             os.makedirs(save_dir, exist_ok=True)  # Cria o diretório se não existir
+            
+#             # Criando o nome do arquivo dinâmico (sem a extensão)
+#             file_base_name = f"{client.id}_{timestamp}"
+            
+#             # Caminho completo para o arquivo JSON
+#             json_file_path = os.path.join(save_dir, f"{file_base_name}.json")
+#             with open(json_file_path, 'w') as json_file:
+#                 json.dump(data_json, json_file, indent=4)           
+            
+#             df_json_recebido['sequencial'] = 0
+#             df_json_recebido['estado_origem'] = ''
+#             df_json_recebido['estado_destino'] = ''            
+            
+#             # Pega todos os itens relacionados a esse cliente
+#             items_queryset = Item.objects.filter(client=client).values(
+#                 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
+#                 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
+#                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'type_product',
+#                 naturezareceita_code=F('naturezareceita__code')
+#             )        
+#             if items_queryset:
+#                 items_df = pd.DataFrame(list(items_queryset.values()))  
+#                 items_df = items_df.astype({'icms_aliquota_reduzida': 'float'})
+
+#                 # Opcional: se quiser preencher com zeros inicialmente
+#                 items_df['icms_aliquota_reduzida'] = items_df['icms_aliquota_reduzida'].fillna(0).round(2)                           
+#             else: 
+#                 # Lista das colunas desejadas
+#                 colunas_desejadas = [
+#                     'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
+#                     'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
+#                     'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_code',
+#                     'id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 
+#                     'is_pending_sync', 'history', 'other_information', 'type_product'
+#                 ]
+
+#                 # Criar um DataFrame vazio com as colunas desejadas
+#                 items_df = pd.DataFrame(columns=colunas_desejadas)
+                           
+#             items_df.drop(columns=['id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 'is_pending_sync', 'history', 'other_information'], inplace=True)            
+
+#             try:
+#                 # Chama a função de validação
+#                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Validando dados recebidos através da API\n"
+#                 validation_result = validateSelect(client.id, items_df, df_json_recebido, initial_log)
+                
+#             except Exception as e:  # Catch any unexpected exceptions
+#                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client.name}: {e}\n"
+#                 save_imported_logs(client.id, initial_log)
+#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+#             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Finalizando recepção através da API\n"
+#             save_imported_logs(client.id, initial_log)
+#             update_client_data_get(client.id, '1')
+#             return Response({"message": "Dados recebidos e processados com sucesso."}, status=status.HTTP_201_CREATED)
+#         else:
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class ClientItemView(APIView):
     authentication_classes = [ClientTokenAuthentication]

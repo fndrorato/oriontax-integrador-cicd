@@ -2083,6 +2083,7 @@ class XLSXUploadDivergentView(View):
             try:
                 if new_items:
                     df = pd.read_excel(xlsx_file, dtype={
+                        'description': str,
                         'codigo': str, 
                         'ncm': str, 
                         'cest': str, 
@@ -2092,6 +2093,7 @@ class XLSXUploadDivergentView(View):
                     })                    
                 else:
                     df = pd.read_excel(xlsx_file, dtype={
+                        'description': str,
                         'code': str,
                         'ncm_base': str, 
                         'cest_base': str, 
@@ -2140,7 +2142,6 @@ class XLSXUploadDivergentView(View):
                     }, status=400)                                      
                 
                 # 1. Remover colunas específicas
-                # print(df.columns)
                 columns_to_remove = [col for col in df.columns if col.endswith('_cliente')]
                 columns_to_remove.append('Cliente')  
                 df = df.drop(columns=columns_to_remove)
@@ -2273,7 +2274,19 @@ class XLSXUploadDivergentView(View):
                 invalid_details = []
                 print('caiu aqui102')
                 def check_invalid_rows(df, column_name, valid_set=None, length=None, allow_empty=False):
+                    if column_name == 'description':
+                        print(f'chegou o description0: {length}-{allow_empty}')
+                    if valid_set == 'not_empty':
+                        col_str = df[column_name].fillna('').astype(str)
+                        invalid_rows = df[col_str.str.strip() == '']  # vazios ou só espaços
+                        for index, row in invalid_rows.iterrows():
+                            invalid_details.append(
+                                f"Erro na linha {index + 2} [{column_name}]: valor vazio não é permitido."
+                            )
+                        return invalid_rows
                     if length is not None:
+                        if column_name == 'description':
+                            print(f'chegou o description1: {length}-{allow_empty}')                        
                         if allow_empty:
                             invalid_rows = df[(df[column_name].apply(lambda x: len(x) != length and x != ''))]
                         else:
@@ -2283,6 +2296,8 @@ class XLSXUploadDivergentView(View):
                             error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]} não tem {length} dígitos."
                             invalid_details.append(error_message)
                     elif valid_set is not None:
+                        if column_name == 'description':
+                            print(f'chegou o description2: {length}-{allow_empty}')                        
                         invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
                         for index, row in invalid_rows.iterrows():
                             valor = row[column_name]
@@ -2294,9 +2309,13 @@ class XLSXUploadDivergentView(View):
                         #     error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]}  é um valor inválido."
                         #     invalid_details.append(error_message)
                     elif length is None and valid_set is None and allow_empty == False:
+                        if column_name == 'description':
+                            print(f'chegou o description3: {length}-{allow_empty}')                        
                         invalid_rows = df[df[column_name].apply(lambda x: len(x) != length)]
                         
                     else:
+                        if column_name == 'description':
+                            print(f'chegou o description4: {length}-{allow_empty}')                        
                         invalid_rows = pd.DataFrame()
                     return invalid_rows
 
@@ -2311,16 +2330,23 @@ class XLSXUploadDivergentView(View):
                     ('cbenef', valid_cbenefs),
                     ('ncm', None, 8),
                     ('cest', None, 7, True),
-                    ('description', None, None, False) 
+                    ('description', 'not_empty')   
                 ]
-                
+                # ('description', None, None, False) 
                 for column_name, valid_set, *length in columns_to_check:
+                    print(f'Validando coluna: {column_name}')
                     if len(length) == 2:  # Se fornecidos length e allow_empty
+                        print(f'length: {length}')
                         invalid_rows = check_invalid_rows(df, column_name, valid_set, length[0], length[1])
+                        print('passou no invalid_rows')
                     elif length:  # Se fornecido apenas length
+                        print(f'length2: {length}')
                         invalid_rows = check_invalid_rows(df, column_name, valid_set, length[0])
+                        print('passou no invalid_rows2')
                     else:  # Se não fornecido length
+                        print(f'Else: {column_name}')
                         invalid_rows = check_invalid_rows(df, column_name, valid_set)
+                        print('passou no invalid_rows3')
                     
                     if not invalid_rows.empty:
                         break

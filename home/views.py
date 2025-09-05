@@ -101,12 +101,23 @@ class HomeView(TemplateView):
             last_date_get_number = (now - client.last_date_get).days if client.last_date_get else None
             last_date_send_number = (now - client.last_date_send).days if client.last_date_send else None
             
+            print(f'Periodicidade: {client.periodicity_exception} - ERP: {client.erp.periodicity}')
+            print(f'Method Integration Method: {client.get_method_integration_display()}')
+            
             if client.periodicity_exception:
                 periodicidade = client.periodicity_exception.description
             elif client.erp:
                 periodicidade = client.erp.periodicity.description if client.erp.periodicity else ''
             else:
                 periodicidade = ''
+            
+            
+            if client.method_integration:
+                method_integration = client.get_method_integration_display()
+            elif client.erp.method_integration:
+                method_integration = client.erp.get_method_integration_display()
+            else:
+                method_integration = ''
 
 
             clients_with_item_count.append({
@@ -122,7 +133,7 @@ class HomeView(TemplateView):
                 'produtos_com_descricao_divergente': imported_itens_count_with_description,
                 'produtos_com_divergencia': imported_itens_count_diver,
                 'produtos_aguardando_sync': itens_await_sync,
-                'method_integration': client.get_method_integration_display(),
+                'method_integration': method_integration,
                 'last_date_get': last_date_get_number,
                 'last_date_send': last_date_send_number,
                 'periodicity': periodicidade,
@@ -135,7 +146,7 @@ class HomeView(TemplateView):
                 'analyst': custom_full_name(client.user.get_full_name()),
                 'last_date_get': last_date_get,
                 'last_date_send': last_date_send,
-                'method_integration': client.get_method_integration_display(),
+                'method_integration': method_integration,
             })
            
         context['total_stores'] = total_stores

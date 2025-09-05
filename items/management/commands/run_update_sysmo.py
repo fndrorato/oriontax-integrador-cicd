@@ -344,4 +344,3 @@ if __name__ == "__main__":
                 print(f"Ocorreu um erro ao inserir as validações")  
                 if args.client_id:                     
                     sys.exit(1)  # Sair com código de erro 1                       
-                       

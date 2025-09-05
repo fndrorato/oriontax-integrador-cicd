@@ -206,6 +206,16 @@ DEFAULT_FROM_EMAIL = 'contato@f5sys.com.br'
 logs_dir = os.path.join(BASE_DIR, 'logs')
 os.makedirs(logs_dir, exist_ok=True)
 
+API_JOBS_DIR = BASE_DIR / "logs" / "api"
+API_JOBS_INBOX = API_JOBS_DIR / "inbox"
+API_JOBS_PROCESSING = API_JOBS_DIR / "processing"
+API_JOBS_DONE = API_JOBS_DIR / "done"
+API_JOBS_ERROR = API_JOBS_DIR / "error"
+
+# Cria diretórios na inicialização do Django (sem crash se já existirem)
+for _p in [API_JOBS_DIR, API_JOBS_INBOX, API_JOBS_PROCESSING, API_JOBS_DONE, API_JOBS_ERROR]:
+    _p.mkdir(parents=True, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -244,5 +254,4 @@ LOGGING = {
 }
 
 ROLEPERMISSIONS_MODULE = 'app.permissions.roles'
-
 
