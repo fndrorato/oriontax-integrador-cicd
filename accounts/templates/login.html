@@ -73,8 +73,10 @@
                                         <input type="text" name="username" class="form-control" required="" placeholder="E-mail">
                                         <span class="form-bar"></span>
                                     </div>
-                                    <div class="form-group form-primary">
-                                        <input type="password" name="password" class="form-control" required="" placeholder="Senha">
+                                    <div class="form-group form-primary" style="position: relative;">
+                                        <input type="password" name="password" id="id_password" class="form-control" required="" placeholder="Senha">
+                                        <span class="form-bar"></span>
+                                        <i id="togglePassword" class="ti-eye" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 100;"></i>
                                         {{ form.password.errors }}
                                     </div>
                                     <div class="row m-t-25 text-left">
@@ -211,6 +213,18 @@
                     }                    
                 });
             });
+
+            const togglePassword = document.querySelector('#togglePassword');
+            const passwordInput = document.querySelector('#id_password');
+
+            togglePassword.addEventListener('click', function (e) {
+                // Alterna o tipo de 'password' para 'text' e vice-versa
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // Altera o ícone: ti-eye (olho aberto) <-> ti-eye-off (olho riscado)
+                this.classList.toggle('ti-eye-off');
+            });            
         });
     </script>
 </body>

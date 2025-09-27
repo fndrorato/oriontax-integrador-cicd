@@ -119,6 +119,8 @@ def convert_df_otx_version_to_df_client(df_client):
  
     # Realizar o merge entre df_merged e df_client
     df_final = df_merged
+    pd.set_option('display.max_columns', None)
+    print(df_final.head())
     # Drop redundant columns from the final DataFrame
     df_final.drop(columns=['piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'cfop', 'icms_cst', 'protege'], inplace=True)
 
@@ -128,7 +130,6 @@ def convert_df_otx_version_to_df_client(df_client):
     df_final['cbenef'] = df_final['cbenef'].fillna('')
 
     # Ajuste as configurações de exibição para mostrar todas as colunas
-    pd.set_option('display.max_columns', None)
 
     # Imprime as primeiras 5 linhas do DataFrame
     # print(df_final.head())
@@ -452,6 +453,7 @@ if __name__ == "__main__":
                 sys.exit(2)  # Sair com código de erro 1 
         else:               
             items_df = items_df.drop(columns=columns_to_remove)  
+            items_df = items_df[items_df["code"] == "036916"]
             print('Convertendo o DF para a versao do clinte')
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             initial_log += f'[{timestamp}] - Iniciando conversão  dos dados para o cliente: {client.name} \n'

@@ -260,8 +260,16 @@ class ClientItemView(APIView):
     def get(self, request):
         client = request.user
         initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Verificando se há atualizações para o cliente: {client.name}... executando API\n"  
- 
-        items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2])
+        print("=== Primeiro Log ===")
+        print(initial_log)
+        # items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2])
+        items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).select_related(
+            'piscofins_cst',  # Para get_cofins_cst e get_pis_cst
+            'cbenef',         # Para get_cbenef
+            'naturezareceita',# Para get_natureza_receita
+            'client',         # Se 'client' for acessado diretamente no ItemModelSerializer ou em .client.erp
+            'client__erp',    # Para acessar obj.client.erp em get_redbcde e get_redbcpara
+        )        
         
         current_time = timezone.now()
         num_updated = Item.objects.filter(
@@ -277,11 +285,17 @@ class ClientItemView(APIView):
         else:
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"      
         
+        print("=== Segundo Log ===")
+        print(initial_log)
         serializer = ItemModelSerializer(items_queryset, many=True)
         total_items = len(serializer.data)
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Total de itens retornados {total_items} para o cliente através da API.\n"
+        print("=== Terceiro Log ===")
+        print(initial_log)
         save_imported_logs(client.id, initial_log) 
-        update_client_data_send(client.id, '1')        
+        update_client_data_send(client.id, '1')   
+        print("=== Quarto Log ===")     
+        print(initial_log)
         return Response(serializer.data, status=status.HTTP_200_OK) 
    
 class ClientOneItemView(APIView):

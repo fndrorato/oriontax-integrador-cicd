@@ -5,6 +5,7 @@ import time
 import json
 import logging
 import pandas as pd
+import re
 from decimal import Decimal
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
@@ -54,6 +55,12 @@ ACTION_MAPPING = {
     LogEntry.Action.UPDATE: 'Atualização',
     LogEntry.Action.DELETE: 'Exclusão'
 }
+
+def clean_excel_string(value):
+    if isinstance(value, str):
+        # remove caracteres de controle não permitidos
+        return re.sub(r'[\x00-\x08\x0B-\x1F\x7F]', '', value)
+    return value
 
 def convert_to_decimal(number_str):
     try:
@@ -354,6 +361,8 @@ def export_items_to_excel(request, client_id, table):
     else:
         response['Content-Disposition'] = f'attachment; filename=items_{client.name}.xlsx'
         
+    df = df.applymap(clean_excel_string)
+
     df.to_excel(response, index=False, sheet_name='Items')
 
     return response
