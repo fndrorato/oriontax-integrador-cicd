@@ -88,6 +88,11 @@
                     Validar Todos
                 </button>  
 
+                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#columnControlModal"> 
+                    <i class="icofont icofont-eye-alt"></i>
+                    Ocultar Colunas
+                </button>                
+
                 <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" id="checkAllRevenda"> 
                     <i class="icofont icofont-verification-check"></i>
                     Marcar todos como Revenda
@@ -342,6 +347,50 @@
     </div>
 </div>
 
+<div class="modal fade" id="columnControlModal" tabindex="-1" role="dialog" aria-labelledby="columnControlModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header p-t-5 p-b-5 color-inverse text-white">
+                <h5 class="modal-title" id="columnControlModalLabel">Controle de Visualização de Colunas</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" class="text-white">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="checkbox-fade fade-in-primary">
+                        <label>
+                            <input type="checkbox" value="ICMS" id="toggle-icms" checked>
+                            <span class="cr"><i class="cr-icon icofont icofont-ui-check txt-primary"></i></span>
+                            <span>Colunas ICMS</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-fade fade-in-primary">
+                        <label>
+                            <input type="checkbox" value="PIS/COFINS" id="toggle-piscofins" checked>
+                            <span class="cr"><i class="cr-icon icofont icofont-ui-check txt-primary"></i></span>
+                            <span>Colunas PIS/COFINS</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-fade fade-in-primary">
+                        <label>
+                            <input type="checkbox" value="IBS/CBS" id="toggle-ibscbs" checked>
+                            <span class="cr"><i class="cr-icon icofont icofont-ui-check txt-primary"></i></span>
+                            <span>Colunas IBS/CBS (Reforma Tributária)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-t-5 p-b-5">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock content %}
 
@@ -414,6 +463,7 @@ naturezareceitaData.push({
     var urlGetPisCofins = '{% url "get_piscofins_aliquota" %}';
     var client_id = {{ client_id }};
     var unnecessary_fields = {{ client_erp_unnecessary_fields|safe }};
+    var hot; 
 
     document.addEventListener("DOMContentLoaded", function() {
         var container = document.getElementById('divergent-items-table');
@@ -440,7 +490,13 @@ naturezareceitaData.push({
                     "{{ item.sequencial }}",
                     "{{ item.estado_origem }}",
                     "{{ item.estado_destino }}",
-                    false
+                    false,
+                    "{{ item.cst_ibs_cbs|default_if_none:'' }}",
+                    "{{ item.c_class_trib|default_if_none:'' }}",
+                    "{{ item.aliquota_ibs|default_if_none:'' }}",
+                    "{{ item.aliquota_cbs|default_if_none:'' }}",
+                    "{{ item.p_red_aliq_ibs|default_if_none:'' }}",
+                    "{{ item.p_red_aliq_cbs|default_if_none:'' }}"
                 ],
             {% endfor %}
         ];
@@ -450,22 +506,31 @@ naturezareceitaData.push({
                 {value: '{{ value }}', label: '{{ label }}'},
             {% endfor %}
         ];        
-        var hot = new Handsontable(container, {
+        hot = new Handsontable(container, {
             data: dataOrigin,
             rowHeaders: true,
+            hiddenColumns: {
+                // A lista inicial de colunas ocultas deve ficar vazia
+                columns: [], 
+                // Útil para mostrar setas que indicam colunas ocultas
+                indicators: true 
+            },            
             nestedHeaders: [
                 [
-                    { label: '', colspan: 5 },
+                    { label: '', colspan: 6 },
                     { label: 'ICMS', colspan: 3 },
-                    { label: '', colspan: 3 },
+                    { label: '', colspan: 2 },
                     { label: 'PIS/COFINS', colspan: 3 },
+                    { label: 'IBS/CBS', colspan: 6 },                    
                     { label: '', colspan: 3 }
                 ],
                 [
                     'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 
                     'CFOP', 'CST', 'Al.', 'Al.Red', 
                     'CBENEF', 'Prot', 'CST', 'Al.PIS', 
-                    'Al.COFINS', 'Nat.Rec', 'T.Prod.', 'Val.'
+                    'Al.COFINS', 
+                    'CST', 'C.Class', 'Al.IBS', 'Al.CBS', 'P.Red. IBS', 'P.Red. CBS',
+                    'Nat.Rec', 'T.Prod.', 'Val.'
                 ] 
             ],             
             columns: [
@@ -516,6 +581,12 @@ naturezareceitaData.push({
                 },
                 { data: 12, width: 10, readOnly: true },
                 { data: 13, width: 10, readOnly: true },
+                { data: 20, width: 10 },
+                { data: 21, width: 10 },
+                { data: 22, width: 10 },
+                { data: 23, width: 10 },
+                { data: 24, width: 10 },
+                { data: 25, width: 10 },
                 { 
                     data: 14, 
                     editor: 'select', 
@@ -547,7 +618,7 @@ naturezareceitaData.push({
             cells: function(row, col) {
                 var cellProperties = {};
 
-                if (col === 16) {
+                if (col === 22) {
                     // Não aplicar nenhum renderizador ou estilo às células da coluna 16 (checkbox)
                     return cellProperties;
                 }
@@ -582,19 +653,72 @@ naturezareceitaData.push({
             td.style.backgroundColor = '#ffffff'; // Cor da linha ímpar
         }   
 
+        // Variável de estado para controlar se a Revenda está ativa
+        let isAllRevenda = false;
         $('#checkAllRevenda').click(function() {
             const rowCount = hot.countRows();
-            for (let row = 0; row < rowCount; row++) {
-                hot.setDataAtCell(row, 15, 'Revenda');
-            }
-        });      
+            const $button = $(this); // Armazena o botão em uma variável jQuery
 
+            if (!isAllRevenda) {
+                // ESTADO ATUAL: MARCAR TODOS COMO REVENDA
+                // Ação: Definir a coluna 15 (Tipo de Cliente) como 'Revenda'
+                for (let row = 0; row < rowCount; row++) {
+                    hot.setDataAtCell(row, 21, 'Revenda');
+                }
+
+                // Mudar o botão para o novo estado (DESMARCAR)
+                // Usando 'icofont-close-squared-alt' para indicar a ação de desmarcar
+                $button.html('<i class="icofont icofont-close-squared-alt"></i> Desmarcar Todos');
+                
+                isAllRevenda = true; // Atualiza o estado
+                
+            } else {
+                // ESTADO ATUAL: DESMARCAR TODOS
+                // Ação: Limpar o valor da coluna 15 (Tipo de Cliente)
+                for (let row = 0; row < rowCount; row++) {
+                    hot.setDataAtCell(row, 21, ''); // Define como vazio
+                }
+
+                // Mudar o botão de volta para o estado inicial (MARCAR REVENDA)
+                // Usando 'icofont-verification-check' para indicar a ação de marcar
+                $button.html('<i class="icofont icofont-verification-check"></i> Marcar todos como Revenda');
+
+                isAllRevenda = false; // Atualiza o estado
+            }
+        });     
+
+        // Variável de estado para controlar se a validação está ativa
+        let isAllValidated = false;
         $('#checkAllValidate').click(function() {
             const rowCount = hot.countRows();
-            for (let row = 0; row < rowCount; row++) {
-                hot.setDataAtCell(row, 16, true);
+            const $button = $(this); // Armazena o botão em uma variável jQuery para facilitar o acesso
+
+            if (!isAllValidated) {
+                // ESTADO ATUAL: VALIDAR TODOS
+                // Ação: Marcar todos como 'true'
+                for (let row = 0; row < rowCount; row++) {
+                    hot.setDataAtCell(row, 22, true);
+                }
+
+                // Mudar o botão para o novo estado (DESMARCAR)
+                $button.html('<i class="icofont icofont-close-squared-alt"></i> Desmarcar Todos');
+                
+                isAllValidated = true; // Atualiza o estado
+                
+            } else {
+                // ESTADO ATUAL: DESMARCAR TODOS
+                // Ação: Desmarcar todos como 'false'
+                for (let row = 0; row < rowCount; row++) {
+                    hot.setDataAtCell(row, 22, false);
+                }
+
+                // Mudar o botão de volta para o estado inicial (VALIDAR)
+                $button.html('<i class="icofont icofont-verification-check"></i> Validar Todos');
+
+                isAllValidated = false; // Atualiza o estado
             }
-        });    
+        }); 
+ 
 
         // Adiciona evento de clique ao botão "Validar"
         var btnValidate = document.getElementById('btn-validate');
@@ -612,7 +736,7 @@ naturezareceitaData.push({
         function updateAliquotasPisCofins() {
             const rowCount = hot.countRows();
             for (let row = 0; row < rowCount; row++) {
-                var isChecked = hot.getDataAtCell(row, 16)
+                var isChecked = hot.getDataAtCell(row, 22)
                 var piscofins_cst = hot.getDataAtCell(row, 11)
                 if (isChecked === true || isChecked === 1) {
                     var aliquotas = getAliquotas(piscofins_cst); // Obtém as aliquotas baseado no novo valor
@@ -628,12 +752,12 @@ naturezareceitaData.push({
             var data = hot.getData();
             var filteredRowIndices = [];
             data.forEach((row, index) => {
-                if (row[16] === true || row[16] === 1) {
+                if (row[22] === true || row[22] === 1) {
                     filteredRowIndices.push(index);
                 }
             });
 
-            data = data.filter(row => row[16] === true || row[16] === 1); // Filter based on boolean or 1
+            data = data.filter(row => row[22] === true || row[22] === 1); // Filter based on boolean or 1
 
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
@@ -654,7 +778,7 @@ naturezareceitaData.push({
                     cbenef: rowData[9],
                     piscofins_cst: rowData[11], // Ajuste conforme a estrutura real dos dados na tabela
                     naturezareceita: rowData[14],
-                    type_product: rowData[15] // Ajuste conforme a estrutura real dos dados na tabela
+                    type_product: rowData[21] // Ajuste conforme a estrutura real dos dados na tabela
                 }, client_id, unnecessary_fields, originalIndex); // Passa o índice da linha para validar
 
                 validationPromise.then(function(result) {
@@ -681,8 +805,7 @@ naturezareceitaData.push({
             hot.updateSettings({
                 cells: function(row, col) {
                     var cellProperties = {};
-                    if (col === 16) {
-                        // Não aplicar nenhum renderizador ou estilo às células da coluna 16 (checkbox)
+                    if (col === 22) {
                         return cellProperties;
                     }                    
                     if (row % 2 === 0) {
@@ -726,9 +849,9 @@ naturezareceitaData.push({
                     } else { // If all fields are valid, proceed with code validation
                         var dataToSend = hot.getData();
                         // Filter rows where checkbox is checked
-                        var filteredDataToSend = dataToSend.filter(row => row[16] === true || row[16] === 1); // Filter based on boolean or 1
+                        var filteredDataToSend = dataToSend.filter(row => row[22] === true || row[22] === 1); // Filter based on boolean or 1
 
-                        const columnsToRemove = [16];
+                        const columnsToRemove = [22];
                         filteredDataToSend = filteredDataToSend.map(row => {
                             return row.filter((_, index) => !columnsToRemove.includes(index));
                         });                        
@@ -750,6 +873,8 @@ naturezareceitaData.push({
                             row.push(matchingRow[18]);                              
                             return row;
                         });                                     
+                        
+                        console.log(filteredDataToSend); // Log the filtered data to be sent
 
                         $.ajax({
                             url: urlNewItem,
@@ -768,7 +893,7 @@ naturezareceitaData.push({
                                     $('#error-container').show();
                                     // Apply success class to all rows
                                     for (var i = 0; i < hot.countRows(); i++) {
-                                        if (dataToSend[i][16]) { // Check if the checkbox value is true
+                                        if (dataToSend[i][22]) { // Check if the checkbox value is true
                                             for (var j = 0; j < hot.countCols(); j++) {
                                                 hot.getCellMeta(i, j).className = 'success-row'; 
                                                 hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell
@@ -812,7 +937,36 @@ naturezareceitaData.push({
                 }
             }
             return -1; // Retorna -1 se o campo não for encontrado
-        }     
+        } 
+        
+        // NOVA LÓGICA: Controle de Colunas
+        const columnsMap = {
+            'toggle-icms': { start: 7, end: 9 },
+            'toggle-piscofins': { start: 11, end: 13 },
+            'toggle-ibscbs': { start: 14, end: 19 }
+        };
+
+        // Adiciona um listener para cada checkbox
+        $('#columnControlModal input[type="checkbox"]').on('change', function() {
+            const checkboxId = this.id;
+            const isChecked = this.checked;
+            const map = columnsMap[checkboxId];
+
+            if (!map) return;
+
+            // Adicione esta linha ANTES de usar hiddenColumnsPlugin
+            const hiddenColumnsPlugin = hot.getPlugin('hiddenColumns');
+
+            for (let col = map.start; col <= map.end; col++) {
+                if (isChecked) {
+                    hiddenColumnsPlugin.showColumn(col);
+                } else {
+                    hiddenColumnsPlugin.hideColumn(col);
+                }
+            }
+            hot.render();
+        });
+        
 
     });
        

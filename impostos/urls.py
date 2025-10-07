@@ -50,6 +50,32 @@ urlpatterns = [
     path('impostos/natureza-receita/detail/<int:pk>/', views.NaturezaReceitaDetailView.as_view(), name='naturezareceita_detail'),
     path('impostos/natureza-receita/<int:pk>/update/', views.NaturezaReceitaUpdateView.as_view(), name='naturezareceita_update'),
     path('impostos/natureza-receita/delete/<int:pk>', views.NaturezaReceitaDeleteView.as_view(), name='naturezareceita_delete'),    
+
+    # 1. Listagem (GET) e Criação de Formulário (GET)
+    path('impostos/reforma-tributaria/', 
+         views.ReformaTributariaListView.as_view(), 
+         name='reformatributaria_list'),
+         
+    # 2. Criação de Novo Item (POST AJAX)
+    # Nota: No template, o AJAX POST aponta para 'reformatributaria_list' + 'new/'
+    path('impostos/reforma-tributaria/new/', 
+         views.ReformaTributariaCreateView.as_view(), 
+         name='reformatributaria_create'),
+         
+    # 3. Detalhe / Carregamento para Edição (GET AJAX)
+    path('impostos/reforma-tributaria/detail/<int:pk>/', 
+         views.ReformaTributariaDetailView.as_view(), 
+         name='reformatributaria_detail'),
+         
+    # 4. Atualização (POST AJAX)
+    path('impostos/reforma-tributaria/<int:pk>/update/', 
+         views.ReformaTributariaUpdateView.as_view(), 
+         name='reformatributaria_update'),
+         
+    # 5. Exclusão (DELETE AJAX)
+    path('impostos/reforma-tributaria/delete/<int:pk>/', # Adicionei a barra final (/) por consistência
+         views.ReformaTributariaDeleteView.as_view(), 
+         name='reformatributaria_delete'),
     
     path('get-piscofins-aliquota/', views.get_piscofins_aliquota, name='get_piscofins_aliquota'),
     

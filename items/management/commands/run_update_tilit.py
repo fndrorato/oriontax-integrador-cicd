@@ -83,13 +83,23 @@ def convert_df_otx_version_to_df_client(df_client, client_id):
     df_client['cfop'] = df_client['cfop'].astype(str)
     df_client['icms_cst'] = df_client['icms_cst'].astype(str)
     df_client['icms_aliquota'] = df_client['icms_aliquota'].astype(str)
-    df_client['icms_aliquota_reduzida'] = df_client['icms_aliquota_reduzida'].astype(str)
+    df_client['icms_aliquota_reduzida'] = pd.to_numeric(
+        df_client['icms_aliquota_reduzida'],
+        errors='coerce' # Força valores inválidos (como strings de texto) a se tornarem NaN
+    )
+
+    df_client['icms_aliquota_reduzida'] = (
+        df_client['icms_aliquota_reduzida']
+        .round(0)
+        .astype('Int64') 
+        .astype(str)
+    )
 
     df_icms['cfop'] = df_icms['cfop'].astype(str)
     df_icms['icms_cst'] = df_icms['icms_cst'].astype(str)
     df_icms['icms_aliquota'] = df_icms['icms_aliquota'].astype(str)
     df_icms['icms_aliquota_reduzida'] = df_icms['icms_aliquota_reduzida'].astype(str)
-
+    
     # Realizando o merge entre os DataFrames com base nas colunas especificadas
     df_final = df_client.merge(
         df_icms[['icms', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida']],
@@ -114,7 +124,6 @@ def convert_df_otx_version_to_df_client(df_client, client_id):
         'CEST',
         'NATUREZARECEITAPIS',
         'CODBENEFICIOFISCAL',
-        
     ]
     
     # Reordenando as colunas do DataFrame df_final
@@ -343,6 +352,7 @@ if __name__ == "__main__":
             initial_log += f'[{timestamp}] - Iniciando conversão  dos dados para o cliente: {client.name} \n'
             items_df_original = items_df
             items_df = convert_df_otx_version_to_df_client(items_df, client_id)  
+            # salvando o csv para conferência
 
             try:
                 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')

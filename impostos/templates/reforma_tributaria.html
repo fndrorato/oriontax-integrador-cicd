@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+{% load permissions_tags %}
+
+{% block title %}
+    <h4>Reforma Tributária</h4>
+    <span>Listagem das Classificações da Reforma Tributária</span>
+{% endblock title %}
+
+{% block customcss %}
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/datatables.net-bs4/css/dataTables.bootstrap4.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/data-table/css/buttons.dataTables.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css' %}">  
+    <link rel="stylesheet" type="text/css" href="{% static 'bower_components/sweetalert/css/sweetalert.css' %}">    
+{% endblock customcss %}
+
+
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item"><a href="#!">Impostos</a>
+    </li>
+    <li class="breadcrumb-item"><a href="#!">Reforma Tributária</a>
+    </li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Lista da Reforma Tributária</h5>
+                <span>Lista das classificações cadastradas para a Reforma Tributária.</span>
+            </div>
+            <div class="card-block">
+                {% if user|has_role:"administrador" %}
+                <div class="text-right m-b-20">
+                    <button type="button" class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target="#data-modal">
+                        <i class="icofont icofont-plus-circle"></i>
+                        Novo Registro
+                    </button>
+                </div>                  
+                {% endif %}
+                <div class="dt-responsive table-responsive">
+                    <table id="simpletable" class="table compact table-striped table-bordered nowrap">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="text-center">CST IBS/CBS</th>
+                            <th class="text-center">Classif. Tributária</th>
+                            <th class="text-center">Nome Classif.</th>
+                            <th class="text-center">Alíq. IBS</th>
+                            <th class="text-center">Alíq. CBS</th>
+                            {% if user|has_role:"administrador" %}
+                            <th class="text-center">Ação</th>
+                            {% endif %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% if reformas_tributarias %}
+                                {% for item in reformas_tributarias %}
+                                    <tr>
+                                        <td class="align-middle">{{ forloop.counter }}</td>
+                                        <td class="text-center align-middle">{{ item.cst_ibs_cbs }}</td>
+                                        <td class="text-center align-middle">{{ item.c_class_trib }}</td>
+                                        <td class="text-center align-middle text-break" style="white-space: break-spaces;">{{ item.name_c_class_trib|linebreaks }}</td>
+                                        <td class="text-center align-middle">{{ item.aliquota_ibs|default_if_none:"-" }}</td>
+                                        <td class="text-center align-middle">{{ item.aliquota_cbs|default_if_none:"-" }}</td>
+                                        {% if user|has_role:"administrador" %}
+                                        <td class="text-center align-middle">
+                                            <button onclick="loadData({{ item.id }})" data-toggle="modal" data-target="#data-modal" type="button" class="btn btn-primary btn-md waves-effect waves-light text-white text-center">
+                                                <i class="icofont icofont-ui-edit"></i>
+                                            </button> 
+
+                                            <button type="button" class="btn btn-danger btn-md waves-effect waves-light text-white text-center btn-delete" data-id="{{ item.id }}">
+                                                <i class="icofont icofont-trash"></i>
+                                            </button>  
+                                        </td>
+                                        {% endif %}
+                                    </tr>                                    
+                                {% endfor %}
+                            {% endif %}
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        </div>
+</div>
+<div id="data-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Dados da Classificação Tributária</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="message" class="text-center"></div>
+                <form class="md-float-material" id="tax-form" method="POST" action="{% url 'reformatributaria_list' %}">
+                    {% csrf_token %}       
+                    <input type="hidden" id="reformatributaria_id" name="reformatributaria_id">      
+                    
+                    <div class="row">
+                        <label class="col-sm-12 col-lg-3 col-form-label">CST do IBS/CBS</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.cst_ibs_cbs|add_class:"form-control"|attr:"placeholder:Ex: 01" }}
+                        </div>
+                        <label class="col-sm-12 col-lg-3 col-form-label">Descrição do CST</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.description_cst_ibs_cbs|add_class:"form-control"|attr:"placeholder:Descrição do CST" }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-12 col-lg-3 col-form-label">Classif. Tributária</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.c_class_trib|add_class:"form-control"|attr:"placeholder:Ex: 01.01.01" }}
+                        </div>
+                        <label class="col-sm-12 col-lg-3 col-form-label">Nome da Classificação</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.name_c_class_trib|add_class:"form-control"|attr:"placeholder:Nome da Classif. Tributária" }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-12 col-lg-3 col-form-label">Tipo de Alíquota</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.tipo_aliquota|add_class:"form-control"|attr:"placeholder:Padrão/Reduzida" }}
+                        </div>
+                        <label class="col-sm-12 col-lg-3 col-form-label">Descrição da Classificação</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.description_c_class_trib|add_class:"form-control"|attr:"placeholder:Descrição detalhada" }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-12 col-lg-3 col-form-label">Alíquota IBS (%)</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.aliquota_ibs|add_class:"form-control"|attr:"placeholder:Ex: 5.00" }}
+                        </div>
+                        <label class="col-sm-12 col-lg-3 col-form-label">Alíquota CBS (%)</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.aliquota_cbs|add_class:"form-control"|attr:"placeholder:Ex: 5.00" }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-12 col-lg-3 col-form-label">Redução Alíq. IBS (%)</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.p_red_aliq_ibs|add_class:"form-control"|attr:"placeholder:Ex: 60.00" }}
+                        </div>
+                        <label class="col-sm-12 col-lg-3 col-form-label">Redução Alíq. CBS (%)</label>
+                        <div class="col-sm-12 col-lg-3">
+                            {{ form.p_red_aliq_cbs|add_class:"form-control"|attr:"placeholder:Ex: 60.00" }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-12 col-lg-3 col-form-label">Texto da EC</label>
+                        <div class="col-sm-12 col-lg-9">
+                            {{ form.text_ec|add_class:"form-control"|attr:"placeholder:Texto da Emenda Constitucional" }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="col-sm-12 col-lg-3 col-form-label">Texto da LC</label>
+                        <div class="col-sm-12 col-lg-9">
+                            {{ form.text_lc|add_class:"form-control"|attr:"placeholder:Texto da Lei Complementar" }}
+                        </div>
+                    </div>
+
+                    <div class="row m-t-15">
+                        <div class="col-md-12">
+                            <input type="submit" id="btn-reg" class="btn btn-primary btn-md btn-block waves-effect text-center btn-register" value="Salvar Dados">
+                            <input type="submit" id="btn-up" class="btn btn-primary btn-md btn-block waves-effect text-center btn-update" value="Atualizar Dados">
+                        </div>
+                    </div>                    
+                </form>
+                </div>
+            
+            
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block anotherjs %}
+    <script src="{% static 'bower_components/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+    <script src="{% static 'bower_components/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js' %}"></script>
+    <script src="https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt_BR.json"></script>
+
+    <script type="text/javascript" src="{% static 'bower_components/sweetalert/js/sweetalert.min.js' %}"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#simpletable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/2.0.7/i18n/pt-BR.json',
+                },
+                scrollX: false, // Habilita a rolagem horizontal
+                fixedColumns: {
+                    leftColumns: 4 // Número de colunas a serem fixadas do lado esquerdo
+                },
+                columnDefs: [
+                    { targets: 3, className: 'wrap-text' } // Aplica a classe wrap-text à quarta coluna (nome da classificação)
+                ]                                
+            }); 
+            
+            $('.btn-register').click(function(event) {
+                event.preventDefault();
+                $('#message').html('');
+                var form = $('#tax-form');
+                var formData = form.serialize();
+                
+                $.ajax({
+                    type: 'POST',
+                    // URL adaptada
+                    url: form.attr('action') + 'new/', 
+                    data: formData,
+                    beforeSend: function() {
+                        $('.theme-loader').show();
+                        $('.theme-loader').animate({
+                            'opacity': '1',
+                        }, 200);                        
+                    },                  
+                    success: function(response) {
+                        swal(
+                            'Parabéns!',
+                            'Nova Classificação Tributária cadastrada.',
+                            'success'
+                        );   
+                        location.reload();                     
+                    },
+                    error: function(xhr) {
+                        var errors = xhr.responseJSON;
+                        var errorMessages = '';
+                        $.each(errors, function(key, value) {
+                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
+                        });
+                        $('#message').html(errorMessages);
+                    },
+                    complete: function() {
+                        $('.theme-loader').animate({
+                            'opacity': '0',
+                        }, 200);  
+                        $('.theme-loader').hide(); 
+                    }                 
+                });
+            });   
+            
+            $('.btn-update').click(function(event) {
+                event.preventDefault();
+                $('#message').html('');
+                var form = $('#tax-form');
+                var formData = form.serialize();
+                // ID adaptado
+                var codeId = $('#tax-form').find('input[name="reformatributaria_id"]').val();
+                
+                $.ajax({
+                    type: 'POST',
+                    // URL adaptada
+                    url: form.attr('action') + codeId + '/update/',
+                    data: formData,
+                    beforeSend: function() {
+                        $('.theme-loader').show();
+                        $('.theme-loader').animate({
+                            'opacity': '1',
+                        }, 200);                        
+                    },                  
+                    success: function(response) {   
+                        
+                        $('#message').html('<div class="alert alert-success" style="margin-bottom: 0rem;">' + response.message + '</div>');
+                        form[0].reset();
+                        // Remover linha abaixo se o novo modelo não tiver 'id_city'
+                        // $('#id_city').val(null).trigger('change'); 
+                        swal(
+                            'Parabéns!',
+                            'Classificação Tributária foi atualizada.',
+                            'success'
+                        );   
+                        
+                        location.reload(); 
+                    },
+                    error: function(xhr) {
+                        var errors = xhr.responseJSON;
+                        var errorMessages = '';
+                        $.each(errors, function(key, value) {
+                            errorMessages += '<div class="alert alert-danger" style="margin-bottom: 0rem;">' + value[0] + '</div>';
+                        });
+                        $('#message').html(errorMessages);
+                    },
+                    complete: function() {
+                        $('.theme-loader').animate({
+                            'opacity': '0',
+                        }, 200);  
+                        $('.theme-loader').hide(); 
+                    }                 
+                });
+            });            
+            
+            // Preencher o campo hidden com o ID ao abrir o modal
+            $('#data-modal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var modal = $(this);
+                var form = $('#tax-form');
+                form[0].reset();           
+                modal.find('#message').html('');
+
+                $("#btn-up").hide();
+                $('#btn-up').prop('disabled', true);
+                $("#btn-reg").show();     
+                $('#btn-up').prop('disabled', false);           
+            });
+
+            // Handler para o botão de exclusão
+            $('.btn-delete').click(function() {
+                var codeId = $(this).data('id');
+                var row = $(this).closest('tr');
+
+                swal({
+                    title: 'Tem certeza?',
+                    text: 'Você não poderá reverter isso!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Sim, excluir!',
+                    cancelButtonText: 'Cancelar'
+                    }, 
+                    function(isConfirm) {
+                        if (isConfirm) {
+                            // showLoading('form-create-user')
+                            // URL adaptada
+                            var load_url = "{% url 'reformatributaria_list' %}delete/" + codeId;
+                            var token = '{% csrf_token %}'
+                            var match = token.match(/value="([^"]*)"/);
+                            var csrfToken = match ? match[1] : null;
+                            $.ajax({
+                                url: load_url,
+                                type: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': csrfToken  // Inclui o token CSRF no cabeçalho da requisição
+                                },                                
+                                data: {
+                                    'csrfmiddlewaretoken': csrfToken // Inclua o token CSRF
+                                },
+                                beforeSend: function() {
+                                    $('.theme-loader').show();
+                                    $('.theme-loader').animate({
+                                        'opacity': '1',
+                                    }, 200);                        
+                                },                                
+                                success: function(response) {
+                                    if (response.success) {
+    
+                                        swal(
+                                            'Excluído!',
+                                            'Classificação Tributária foi excluída.',
+                                            'success'
+                                        );
+                                        location.reload(); 
+                                    } else {
+                                        swal(
+                                            'Erro!',
+                                            'Ocorreu um erro ao excluir a Classificação Tributária.',
+                                            'error'
+                                        );
+                                    }
+                                },
+                                complete: function() {
+                                    $('.theme-loader').animate({
+                                        'opacity': '0',
+                                    }, 200);  
+                                    $('.theme-loader').hide(); 
+                                },
+                                error: function(xhr, status, error) {
+                                    swal(
+                                        'Erro!',
+                                        'Ocorreu um erro ao excluir.',
+                                        'error'
+                                    );
+                                }                                  
+                            });
+                        } else {
+                            swal("Cancelado", "Classificação Tributária não excluída.", "error");
+                        }
+                    }
+                );                
+            });             
+        });
+
+        // Função para carregar dados do registro e preencher o modal
+        function loadData(codeId) {
+            var form = $('#tax-form');
+
+            $('.theme-loader').show(); 
+            $('.theme-loader').animate({
+                'opacity': '1',
+            }, 200);              
+
+            // URL adaptada
+            var load_url = "{% url 'reformatributaria_list' %}detail/" + codeId;
+            $.ajax({
+                url: load_url,
+                dataType: 'json',
+                success: function (data) {
+                    // Preenche os campos do formulário com os dados do item (ReformaTributaria)
+                    $('.theme-loader').hide(); 
+                    $('#reformatributaria_id').val(codeId); // ID adaptado
+
+                    // Campos do novo modelo
+                    $('input[name="cst_ibs_cbs"]').val(data.cst_ibs_cbs);
+                    $('input[name="description_cst_ibs_cbs"]').val(data.description_cst_ibs_cbs);
+                    $('input[name="c_class_trib"]').val(data.c_class_trib);
+                    $('input[name="name_c_class_trib"]').val(data.name_c_class_trib);
+                    // text areas
+                    $('textarea[name="description_c_class_trib"]').val(data.description_c_class_trib);
+                    $('input[name="text_ec"]').val(data.text_ec);
+                    $('textarea[name="text_lc"]').val(data.text_lc);
+                    
+                    $('select[name="tipo_aliquota"]').val(data.tipo_aliquota);
+                    // DecimalFields
+                    $('input[name="aliquota_ibs"]').val(data.aliquota_ibs);
+                    $('input[name="aliquota_cbs"]').val(data.aliquota_cbs);
+                    $('input[name="p_red_aliq_ibs"]').val(data.p_red_aliq_ibs);
+                    $('input[name="p_red_aliq_cbs"]').val(data.p_red_aliq_cbs);
+
+                    $("#btn-up").show();
+                    $('#btn-up').prop('disabled', false);
+                    $("#btn-reg").hide();
+                    $('#btn-reg').prop('disabled', true);
+
+                }
+            });
+        }         
+    </script>
+{% endblock anotherjs %}

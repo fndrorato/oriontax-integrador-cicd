@@ -30,11 +30,22 @@ from django.core.exceptions import FieldDoesNotExist
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.models import User
+import numpy as np
 from psycopg2 import OperationalError
 from clients.models import Client
 from .models import Item, ImportedItem
 from .forms import ItemForm, CSVUploadForm, ImportedItemForm
-from impostos.models import IcmsCst, IcmsAliquota, IcmsAliquotaReduzida, Protege, CBENEF, PisCofinsCst, NaturezaReceita, Cfop
+from impostos.models import (
+    IcmsCst, 
+    IcmsAliquota, 
+    IcmsAliquotaReduzida, 
+    Protege, 
+    CBENEF, 
+    PisCofinsCst, 
+    NaturezaReceita, 
+    Cfop,
+    ReformaTributaria
+)
 from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from rolepermissions.decorators import has_role_decorator
@@ -134,26 +145,26 @@ def export_items_to_excel(request, client_id, table):
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
             'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information'
+            'cofins_aliquota', 
+            'cst_ibs_cbs', 'c_class_trib',
+            'aliquota_ibs', 'aliquota_cbs',
+            'p_red_aliq_ibs', 'p_red_aliq_cbs',            
+            'naturezareceita__code', 'type_product', 
+            'other_information'
         )
     elif table == 'inactives':
         items = Item.objects.filter(client=client).values(
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
             'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information'
+            'cofins_aliquota', 
+            'cst_ibs_cbs', 'c_class_trib',
+            'aliquota_ibs', 'aliquota_cbs',
+            'p_red_aliq_ibs', 'p_red_aliq_cbs',             
+            'naturezareceita__code', 'type_product',            
+            'other_information'
         )    
     elif table == 'await':
-        
-        # items = Item.objects.filter(
-        #     client=client, 
-        #     status_item__in=[1, 2],
-        # ).values(
-        #     'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
-        #     'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
-        #     'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
-        #     'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information', 'await_sync_at', 'sync_at'
-        # )
 
         # Calcula diferença entre agora e a data selecionada
         data_ref = Case(
@@ -180,7 +191,12 @@ def export_items_to_excel(request, client_id, table):
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop__cfop', 'icms_cst__code', 'icms_aliquota__code', 'icms_aliquota_reduzida',
             'protege__code', 'cbenef__code', 'piscofins_cst__code', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita__code', 'type_product', 'other_information',
+            'cofins_aliquota', 
+            'cst_ibs_cbs', 'c_class_trib',
+            'aliquota_ibs', 'aliquota_cbs',
+            'p_red_aliq_ibs', 'p_red_aliq_cbs',             
+            'naturezareceita__code', 'type_product',            
+            'other_information',
             'await_sync_at', 'sync_at',
             'status_item',     
             'dif_days'         
@@ -205,7 +221,14 @@ def export_items_to_excel(request, client_id, table):
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita' 
+            'cofins_aliquota', 
+            'cst_ibs_cbs', 
+            'c_class_trib',
+            'aliquota_ibs', 
+            'aliquota_cbs',
+            'p_red_aliq_ibs', 
+            'p_red_aliq_cbs',            
+            'naturezareceita' 
         )
     elif table == 'divergent' or table == 'desc_divergent':
         # Queryset de itens importados
@@ -217,8 +240,16 @@ def export_items_to_excel(request, client_id, table):
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita'
+            'cofins_aliquota', 
+            'cst_ibs_cbs', 
+            'c_class_trib',
+            'aliquota_ibs', 
+            'aliquota_cbs',
+            'p_red_aliq_ibs', 
+            'p_red_aliq_cbs',            
+            'naturezareceita'
         )
+        print('passou pelo imported_items_queryset')
 
         # Subquery para obter os dados da base de itens correspondentes
         items_subquery = Item.objects.filter(
@@ -229,8 +260,16 @@ def export_items_to_excel(request, client_id, table):
             'barcode', 'description', 'ncm', 'cest', 'cfop__cfop', 'icms_cst__code',
             'icms_aliquota__code', 'icms_aliquota_reduzida', 'protege__code',
             'cbenef__code', 'piscofins_cst_code', 'pis_aliquota', 'cofins_aliquota',
-            'naturezareceita__code', 'type_product', 'other_information'
+            'cst_ibs_cbs', 
+            'c_class_trib',
+            'aliquota_ibs', 
+            'aliquota_cbs',
+            'p_red_aliq_ibs', 
+            'p_red_aliq_cbs',             
+            'naturezareceita__code', 'type_product',            
+            'other_information'
         )
+        print('passou pelo items_subquery')
 
         # Combinar os querysets usando um left outer join
         combined_queryset = imported_items_queryset.annotate(
@@ -249,7 +288,14 @@ def export_items_to_excel(request, client_id, table):
             cofins_aliquota_base=Subquery(items_subquery.values('cofins_aliquota')[:1]),
             naturezareceita_base=Subquery(items_subquery.values('naturezareceita__code')[:1]), 
             type_product=Subquery(items_subquery.values('type_product')[:1]),
-            other_information=Subquery(items_subquery.values('other_information')[:1])
+            other_information=Subquery(items_subquery.values('other_information')[:1]),
+            cst_ibs_cbs_base=Subquery(items_subquery.values('cst_ibs_cbs')[:1]),
+            c_class_trib_base=Subquery(items_subquery.values('c_class_trib')[:1]),
+            aliquota_ibs_base=Subquery(items_subquery.values('aliquota_ibs')[:1]),
+            aliquota_cbs_base=Subquery(items_subquery.values('aliquota_cbs')[:1]),
+            p_red_aliq_ibs_base=Subquery(items_subquery.values('p_red_aliq_ibs')[:1]),
+            p_red_aliq_cbs_base=Subquery(items_subquery.values('p_red_aliq_cbs')[:1]),
+                        
         ).order_by('description', 'origem')
 
         if table == 'desc_divergent':
@@ -275,12 +321,14 @@ def export_items_to_excel(request, client_id, table):
             'icms_aliquota_base', 'icms_aliquota', 'icms_aliquota_reduzida_base', 'icms_aliquota_reduzida', 
             'protege_base', 'protege', 'cbenef_base', 'cbenef', 'piscofins_cst_base', 'piscofins_cst', 
             'pis_aliquota_base', 'pis_aliquota', 'cofins_aliquota_base', 'cofins_aliquota',
+            'cst_ibs_cbs_base', 'cst_ibs_cbs', 'c_class_trib_base', 'c_class_trib', 
+            'aliquota_ibs_base', 'aliquota_ibs', 'aliquota_cbs_base', 'aliquota_cbs',
+            'p_red_aliq_ibs_base', 'p_red_aliq_ibs', 'p_red_aliq_cbs_base', 'p_red_aliq_cbs',                
             'naturezareceita_base', 'naturezareceita', 'type_product', 'other_information'
         ]
 
         # Reorganizando as colunas
         df = df.reindex(columns=desired_order)
-        
         
         # Renomear colunas adicionando sufixo _cliente, exceto para code e client__name
         new_column_names = {col: (col + '_cliente' if '_base' not in col and col not in ['code', 'client__name'] else col) for col in df.columns}
@@ -310,9 +358,7 @@ def export_items_to_excel(request, client_id, table):
         if table == 'inactives':
             df = pd.DataFrame(list(items))            
         
-        if table == 'await':
-            # Transformar os resultados em DataFrame
-            # df = pd.DataFrame(rows, columns=[col[0] for col in cursor.description])            
+        if table == 'await':           
             # Transformar em DataFrame
             df_items = pd.DataFrame(list(items))
             df_subquery = pd.DataFrame(list(subquery_values))
@@ -328,11 +374,13 @@ def export_items_to_excel(request, client_id, table):
             df.columns = [
                 'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
                 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
-                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
+                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 
+                'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs',
+                'p_red_aliq_ibs', 'p_red_aliq_cbs',
+                'naturezareceita',
                 'tipo_produto', 'outros_detalhes', 'a_enviar', 'enviado_em', 'status', 'há x dias', 
                 'colunas_divergentes'
             ]  
-            
 
             # Ajustar os horários para o fuso horário de Brasília (UTC-3)
             if 'a_enviar' in df.columns:
@@ -344,7 +392,10 @@ def export_items_to_excel(request, client_id, table):
             df.columns = [
                 'Cliente', 'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop',
                 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
-                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita',
+                'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 
+                'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs',
+                'p_red_aliq_ibs', 'p_red_aliq_cbs',
+                'naturezareceita',
                 'tipo_produto', 'outros_detalhes'
             ]
             df['outros_detalhes'].fillna('', inplace=True)        
@@ -604,7 +655,6 @@ class ItemDeleteView(DeleteView):
 class ImportedItemListViewNewItem(ListView):
     model = ImportedItem
     template_name = 'handsome_new_imported_items.html'
-    # template_name = 'list_imported_items.html'
     context_object_name = 'imported_items'
     paginate_by = 50  # Defina quantos itens você quer por página
 
@@ -623,21 +673,30 @@ class ImportedItemListViewNewItem(ListView):
             is_pending=True
         ).order_by('description')
 
-        
         # Adicionar filtros baseados nos parâmetros GET, exceto 'page'
         filters = self.request.GET.dict()
-        filters.pop('page', None)  # Remover o parâmetro 'page' dos filtros
+        filters.pop('page', None)
         for key, value in filters.items():
             if key and value:
                 if key == 'description':
                     queryset = queryset.filter(Q(**{f'{key}__icontains': value}))
                 else:
                     queryset = queryset.filter(Q(**{key: value}))
-                
+
+        # Converte para lista antes de iterar (evita múltiplos hits no banco)
+        items = list(queryset)
+
+        # Converter icms_aliquota_reduzida para inteiro quando possível
+        for item in items:
+            val = item.icms_aliquota_reduzida
+            if val is not None:
+                val = float(val)
+                item.icms_aliquota_reduzida = int(val) if val.is_integer() else val
+
         # Salva o total de itens no queryset combinado
-        self.total_items = queryset.count()
-        
-        return queryset
+        self.total_items = len(items)
+
+        return items
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -655,7 +714,7 @@ class ImportedItemListViewNewItem(ListView):
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
         context['protege_choices'] = Protege.objects.all()
-        # context['piscofins_choices'] = PisCofinsCst.objects.all()
+        context['reforma_tributaria'] = ReformaTributaria.objects.all()
         piscofins_qs = PisCofinsCst.objects.all()
         type_company = client.type_company
 
@@ -791,6 +850,7 @@ class ImportedItemListViewAwaitSyncItem(ListView):
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
         context['protege_choices'] = Protege.objects.all()
+        context['reforma_tributaria'] = ReformaTributaria.objects.all()
         piscofins_qs = PisCofinsCst.objects.all()
         type_company = client.type_company
 
@@ -970,16 +1030,16 @@ def comparar_item_filtrado(erp, variaveis, itens_filtrados_dict):
     # Acesse o primeiro elemento da lista (o dicionário)
     item_filtrado = itens_filtrados_dict[0]
 
-    # # Verifique os campos e tipos das variáveis
-    # print(f"Campos e tipos em variaveis:")
-    # for campo, valor in variaveis.items():
-    #     print(f"{campo}: {valor} (Tipo: {type(valor)})")
+    # Verifique os campos e tipos das variáveis
+    print(f"Campos e tipos em variaveis:")
+    for campo, valor in variaveis.items():
+        print(f"{campo}: {valor} (Tipo: {type(valor)})")
 
-    # # Verifique os campos e tipos do item_filtrado
-    # print(f"Campos e tipos em item_filtrado:")
-    # for campo in variaveis.keys():
-    #     valor_item = item_filtrado.get(campo, None)
-    #     print(f"{campo}: {valor_item} (Tipo: {type(valor_item)})")
+    # Verifique os campos e tipos do item_filtrado
+    print(f"Campos e tipos em item_filtrado:")
+    for campo in variaveis.keys():
+        valor_item = item_filtrado.get(campo, None)
+        print(f"{campo}: {valor_item} (Tipo: {type(valor_item)})")
 
     for campo, valor_variavel in variaveis.items():
         valor_item = item_filtrado.get(campo, None)
@@ -1006,6 +1066,7 @@ def save_bulk_imported_item(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.POST.get('items', '[]'))
+            print(data)
 
             # Validate each item and collect errors if any
             # Lista para armazenar todos os itens
@@ -1027,11 +1088,18 @@ def save_bulk_imported_item(request):
                     'piscofins_cst': row[11],
                     'pis_aliquota': row[12],
                     'cofins_aliquota': row[13],
-                    'naturezareceita': row[17],
-                    'type_product': row[15],
-                    'fix_item': row[16],  # Get fix_item from the last column
-                    'client_id': row[18]
-                }        
+                    'cst_ibs_cbs': row[14],
+                    'c_class_trib': row[15],
+                    'aliquota_ibs': row[16],
+                    'aliquota_cbs': row[17],
+                    'p_red_aliq_ibs': row[18],
+                    'p_red_aliq_cbs': row[19],                   
+                    'naturezareceita': row[20], #sera 20
+                    'type_product': row[21], # sera 21
+                    'fix_item': row[22],  # sera 22
+                    'client_id': row[24]
+                }                        
+                
                 errors = validate_item_data(item_data)
                 if errors:
                     all_errors.extend([f"Linha {i + 1}: {err}" for err in errors])
@@ -1073,18 +1141,22 @@ def save_bulk_imported_item(request):
                 itens_filtrados_tuples = ImportedItem.objects.filter(
                     Q(code__in=codes_unicos) & 
                     Q(client_id__in=client_id_unicos)
-                ).values_list('id', 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege', 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita')
+                ).values_list('id', 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege', 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs', 'p_red_aliq_ibs', 'p_red_aliq_cbs')
 
                 # Convertendo as tuplas em dicionários
-                field_names = ['id', 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege', 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita']
+                field_names = ['id', 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida', 'cbenef', 'protege', 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita', 'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs', 'p_red_aliq_ibs', 'p_red_aliq_cbs']
                 itens_filtrados_dict = [{field: value for field, value in zip(field_names, item)} for item in itens_filtrados_tuples]
-            
-            # If all items are valid, process them
+
+# [['77', '7898910808839', 'VITAMINA JABORANDI FIOTRAT x10ML', '33059000', '2002000', '5102', '0', '21', '21', '', '0', '04', '0,0', '0,0',
+# '', '', '0,00', '0,00', '0,00', '0,00', '', 'Revenda', '1', '', 4]]
+# [['79', '7898949840053', 'VINAGRE TOSCANO ALCOOL COL. 750ML', '22090000', '', '5102', '20', '12', '7', 'GO821019', '0', '01', '0,65', '3,0',
+# '', '', '0,00', '0,00', '0,00', '0,00', '', 'Revenda', '1', '', 4]]            
+            # If all items are valid, process them           
             with transaction.atomic():
                 for row in data:
-                    tipo_produto = row[16]
+                    tipo_produto = row[22]
                     code = row[0]
-                    client_id = row[18]
+                    client_id = row[24]
                     barcode = row[1]
                     description = row[2]
                     ncm = row[3]
@@ -1099,9 +1171,36 @@ def save_bulk_imported_item(request):
                     piscofins_cst = row[11]
                     pis_aliquota_str = row[12]
                     cofins_aliquota_str = row[13]
-                    naturezareceita_id = row[17]
+                    naturezareceita_id = row[20]
                     naturezareceita_instance = None
-                    type_product = row[15]
+                    cst_ibs_cbs = row[14]
+                    c_class_trib = row[15]
+                    aliquota_ibs = None if row[14] == '' else row[16]
+                    aliquota_cbs = None if row[14] == '' else row[17]
+                    p_red_aliq_ibs = None if row[14] == '' else row[18]
+                    p_red_aliq_cbs = None if row[14] == '' else row[19]
+                    type_product = row[21]
+                    
+                    # tipo_produto = row[16]
+                    # code = row[0]
+                    # client_id = row[18]
+                    # barcode = row[1]
+                    # description = row[2]
+                    # ncm = row[3]
+                    # cest = row[4]
+                    # cfop_code = row[5]
+                    # icms_cst_code = row[6]
+                    # icms_aliquota_code = row[7]
+                    # icms_aliquota_reduzida = row[8]
+                    # cbenef_code = row[9]
+                    # cbenef_instance = None
+                    # protege = row[10]
+                    # piscofins_cst = row[11]
+                    # pis_aliquota_str = row[12]
+                    # cofins_aliquota_str = row[13]
+                    # naturezareceita_id = row[17]
+                    # naturezareceita_instance = None
+                    # type_product = row[15]                    
                     
                     pis_aliquota = convert_to_decimal(pis_aliquota_str)
                     cofins_aliquota = convert_to_decimal(cofins_aliquota_str)
@@ -1124,9 +1223,10 @@ def save_bulk_imported_item(request):
                     if cbenef_code:
                         cbenef_instance = get_object_or_404(CBENEF, code=cbenef_code)
                     
-                    print('105')
+                    print('105.1')
                     
                     if naturezareceita_id:
+                        print(f'105.2 - naturezareceita_id: {naturezareceita_id}')
                         naturezareceita_instance = get_object_or_404(NaturezaReceita, id=naturezareceita_id)                    
                         naturezareceita_code = naturezareceita_instance.code
                     else:
@@ -1138,6 +1238,7 @@ def save_bulk_imported_item(request):
                     print('104')
 
                     if tipo_produto == '1':
+                        print('106.1')
                         variavel_oriontax = {
                             'code': code,
                             'barcode': barcode,
@@ -1154,6 +1255,12 @@ def save_bulk_imported_item(request):
                             'pis_aliquota': pis_aliquota,
                             'cofins_aliquota': cofins_aliquota,
                             'naturezareceita': naturezareceita_code,
+                            'cst_ibs_cbs': cst_ibs_cbs,
+                            'c_class_trib': c_class_trib,
+                            'aliquota_ibs': None if aliquota_ibs == '' else aliquota_ibs,
+                            'aliquota_cbs': None if aliquota_cbs == '' else aliquota_cbs,
+                            'p_red_aliq_ibs': None if p_red_aliq_ibs == '' else p_red_aliq_ibs,
+                            'p_red_aliq_cbs': None if p_red_aliq_cbs == '' else p_red_aliq_cbs,
                         }
                         variavel_oriontax['cfop'] = int(variavel_oriontax['cfop'])
                         variavel_oriontax['icms_cst'] = int(variavel_oriontax['icms_cst'])
@@ -1175,6 +1282,7 @@ def save_bulk_imported_item(request):
                         # Se o tipo de produto for IMOBILIZADO OU INSUMO, ir direto para 3
                         # Obs.: Quando o sistema do cliente for SYSMO
                         # Para os casos de CST ICMS 40,41,60 ignorar as aliquotas de ICMS
+                        print('106.2')
                         
                         # Atualiza o item existente se tipo_produto for igual a 1
                         item = get_object_or_404(Item, code=code, client=client)
@@ -1192,6 +1300,12 @@ def save_bulk_imported_item(request):
                         item.pis_aliquota = pis_aliquota
                         item.cofins_aliquota = cofins_aliquota
                         item.naturezareceita = naturezareceita_instance
+                        item.cst_ibs_cbs = cst_ibs_cbs
+                        item.c_class_trib = c_class_trib
+                        item.aliquota_ibs = None if aliquota_ibs == '' else aliquota_ibs
+                        item.aliquota_cbs = None if aliquota_cbs == '' else aliquota_cbs
+                        item.p_red_aliq_ibs = None if p_red_aliq_ibs == '' else p_red_aliq_ibs
+                        item.p_red_aliq_cbs = None if p_red_aliq_cbs == '' else p_red_aliq_cbs
                         item.type_product = type_product
                         item.status_item = var_status_item  # Verifique se precisa atualizar o status do item
                         item.updated_at= current_time
@@ -1206,9 +1320,10 @@ def save_bulk_imported_item(request):
                         # Update the ImportedItem model
                         ImportedItem.objects.filter(code=code, client=client).update(is_pending=False)
                     else:
-                        sequencial = row[19]
-                        estado_origem = row[20]
-                        estado_destino = row[21]
+                        print('107')
+                        sequencial = row[25]
+                        estado_origem = row[26]
+                        estado_destino = row[27]
                         
                         if type_product != 'Revenda':
                             var_status_item = 3 
@@ -1233,6 +1348,12 @@ def save_bulk_imported_item(request):
                             pis_aliquota=pis_aliquota,
                             cofins_aliquota=cofins_aliquota,
                             naturezareceita=naturezareceita_instance,
+                            cst_ibs_cbs=cst_ibs_cbs,
+                            c_class_trib=c_class_trib,
+                            aliquota_ibs=None if aliquota_ibs == '' else aliquota_ibs,
+                            aliquota_cbs=None if aliquota_cbs == '' else aliquota_cbs,
+                            p_red_aliq_ibs=None if p_red_aliq_ibs == '' else p_red_aliq_ibs,
+                            p_red_aliq_cbs=None if p_red_aliq_cbs == '' else p_red_aliq_cbs,
                             type_product=type_product,
                             sequencial=sequencial,
                             estado_origem=estado_origem,
@@ -1624,7 +1745,9 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita'
+            'cofins_aliquota', 'naturezareceita',
+            'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs',
+            'p_red_aliq_ibs', 'p_red_aliq_cbs'
         )     
         
         # Separar filtros baseados nos parâmetros GET
@@ -1654,7 +1777,13 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             'barcode', 'description', 'ncm', 'cest', 'cfop__cfop', 'icms_cst__code',
             'icms_aliquota__code', 'icms_aliquota_reduzida', 'protege__code',
             'cbenef__code', 'piscofins_cst_code', 'pis_aliquota', 'cofins_aliquota',
-            'naturezareceita__code', 'type_product'
+            'naturezareceita__code', 'type_product',
+            'cst_ibs_cbs',
+            'c_class_trib',
+            'aliquota_ibs',
+            'aliquota_cbs',
+            'p_red_aliq_ibs',
+            'p_red_aliq_cbs',            
         )        
         
         # Aplicar filtros ao items_queryset
@@ -1684,7 +1813,13 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             pis_aliquota_base=Subquery(items_subquery.values('pis_aliquota')[:1]),
             cofins_aliquota_base=Subquery(items_subquery.values('cofins_aliquota')[:1]),
             naturezareceita_base=Subquery(items_subquery.values('naturezareceita__code')[:1]), 
-            type_product_base=Subquery(items_subquery.values('type_product')[:1]),       
+            type_product_base=Subquery(items_subquery.values('type_product')[:1]), 
+            cst_ibs_cbs_base=Subquery(items_subquery.values('cst_ibs_cbs')[:1]),
+            c_class_trib_base=Subquery(items_subquery.values('c_class_trib')[:1]),
+            aliquota_ibs_base=Subquery(items_subquery.values('aliquota_ibs')[:1]),
+            aliquota_cbs_base=Subquery(items_subquery.values('aliquota_cbs')[:1]),
+            p_red_aliq_ibs_base=Subquery(items_subquery.values('p_red_aliq_ibs')[:1]),
+            p_red_aliq_cbs_base=Subquery(items_subquery.values('p_red_aliq_cbs')[:1]),                     
         ).annotate(
             description_cliente=F('description')
         ).filter(
@@ -1723,7 +1858,19 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
             'cofins_aliquota',
             'naturezareceita_base',
             'naturezareceita',
-            'type_product_base'
+            'type_product_base',
+            'cst_ibs_cbs_base',
+            'cst_ibs_cbs',
+            'c_class_trib_base',
+            'c_class_trib',
+            'aliquota_ibs_base',
+            'aliquota_ibs',
+            'aliquota_cbs_base',
+            'aliquota_cbs',
+            'p_red_aliq_ibs_base',
+            'p_red_aliq_ibs',
+            'p_red_aliq_cbs_base',
+            'p_red_aliq_cbs'             
         )
         
         # Salva o total de itens no queryset combinado
@@ -1754,7 +1901,7 @@ class ImportedItemListViewDivergentItemExcelVersion(ListView):
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
         context['protege_choices'] = Protege.objects.all()
-        # context['piscofins_choices'] = PisCofinsCst.objects.all()
+        context['reforma_tributaria'] = ReformaTributaria.objects.all()
         piscofins_qs = PisCofinsCst.objects.all()
         type_company = client.type_company
 
@@ -1826,7 +1973,9 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             'client__name', 'code', 'barcode', 'description', 'ncm', 'cest',
             'cfop', 'icms_cst', 'icms_aliquota', 'icms_aliquota_reduzida',
             'protege', 'cbenef', 'piscofins_cst', 'pis_aliquota',
-            'cofins_aliquota', 'naturezareceita'
+            'cofins_aliquota', 'naturezareceita',
+            'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs',
+            'p_red_aliq_ibs', 'p_red_aliq_cbs'
         )
         
         print(f"Quantidade retornada no imported_items_queryset: {imported_items_queryset.count()}")
@@ -1848,8 +1997,7 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             origem=Value('Base', output_field=CharField()),
             piscofins_cst_code=F('piscofins_cst__code')  # Acesso ao campo 'code' de piscofins_cst
         ).order_by('description')
-        print(f"Quantidade retornada no items_queryset: {items_queryset.count()}")
-        print(f"Quantidade retornada no imported_items_queryset: {imported_items_queryset.count()}")
+
         # Subquery para obter os dados da base de itens correspondentes
         items_subquery = Item.objects.filter(
             client=client, code=OuterRef('code'), status_item__in=[1,2,3]
@@ -1859,9 +2007,14 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             'barcode', 'description', 'ncm', 'cest', 'cfop__cfop', 'icms_cst__code',
             'icms_aliquota__code', 'icms_aliquota_reduzida', 'protege__code',
             'cbenef__code', 'piscofins_cst_code', 'pis_aliquota', 'cofins_aliquota',
-            'naturezareceita__code', 'type_product'
-        )   
-        # print(f"Quantidade retornada no items_subquery: {items_subquery.count()}")     
+            'naturezareceita__code', 'type_product', 
+            'cst_ibs_cbs',
+            'c_class_trib',
+            'aliquota_ibs',
+            'aliquota_cbs',
+            'p_red_aliq_ibs',
+            'p_red_aliq_cbs',
+        )    
         
         # Aplicar filtros ao items_queryset
         for key, value in base_filters.items():
@@ -1869,7 +2022,7 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
                 items_subquery = items_subquery.filter(Q(**{f'{key}__icontains': value}))
             else:
                 items_subquery = items_subquery.filter(Q(**{key: value}))            
-        # print(f"Quantidade retornada no items_subquery2..: {items_subquery.count()}")   
+  
         # Combinar os querysets usando um left outer join
         combined_queryset = imported_items_queryset.annotate(
             barcode_base=Subquery(items_subquery.values('barcode')[:1]),
@@ -1886,14 +2039,18 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             pis_aliquota_base=Subquery(items_subquery.values('pis_aliquota')[:1]),
             cofins_aliquota_base=Subquery(items_subquery.values('cofins_aliquota')[:1]),
             naturezareceita_base=Subquery(items_subquery.values('naturezareceita__code')[:1]), 
-            type_product=Subquery(items_subquery.values('type_product')[:1]),       
+            type_product=Subquery(items_subquery.values('type_product')[:1]),  
+            cst_ibs_cbs_base=Subquery(items_subquery.values('cst_ibs_cbs')[:1]),
+            c_class_trib_base=Subquery(items_subquery.values('c_class_trib')[:1]),
+            aliquota_ibs_base=Subquery(items_subquery.values('aliquota_ibs')[:1]),
+            aliquota_cbs_base=Subquery(items_subquery.values('aliquota_cbs')[:1]),
+            p_red_aliq_ibs_base=Subquery(items_subquery.values('p_red_aliq_ibs')[:1]),
+            p_red_aliq_cbs_base=Subquery(items_subquery.values('p_red_aliq_cbs')[:1]), 
         ).annotate(
             description_cliente=F('description')
         ).filter(
             ~Q(description_base=F('description_cliente'))
-        ).order_by('description', 'origem')     
-        
-        print(f"Quantidade retornada no combined_queryset..: {combined_queryset.count()}")   
+        ).order_by('description', 'origem')      
         
         # Reorganizar e renomear colunas adicionando sufixo _cliente, exceto para 'code' e 'client__name'
         combined_queryset = combined_queryset.values(
@@ -1927,7 +2084,19 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
             'cofins_aliquota',
             'naturezareceita_base',
             'naturezareceita',
-            'type_product'
+            'type_product',
+            'cst_ibs_cbs_base',
+            'cst_ibs_cbs',
+            'c_class_trib_base',
+            'c_class_trib',
+            'aliquota_ibs_base',
+            'aliquota_ibs',
+            'aliquota_cbs_base',
+            'aliquota_cbs',
+            'p_red_aliq_ibs_base',
+            'p_red_aliq_ibs',
+            'p_red_aliq_cbs_base',
+            'p_red_aliq_cbs'            
         )
         
         # Salva o total de itens no queryset combinado
@@ -1935,13 +2104,35 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
 
         return [
             {
-                **{key + '_cliente' if '_base' not in key and key not in ['code', 'client__name'] else key: value 
-                for key, value in item.items()}
+                # **{key + '_cliente' if '_base' not in key and key not in ['code', 'client__name'] else key: value 
+                # for key, value in item.items()}
+                # Lógica de renomeação da chave (key)
+                # Lógica de renomeação da chave (key)
+                key + '_cliente' if '_base' not in key and key not in ['code', 'client__name'] else key:
+                
+                # NOVO VALOR (Convertendo primeiro para string, depois formatando)
+                (
+                    f"{float(str(value).replace(',', '.')):.2f}"
+                    if value is not None and value != '' and key in ['icms_aliquota_reduzida', 'icms_aliquota_reduzida_base']
+                    else value
+                )
+                
+                # O restante da list comprehension
+                for key, value in item.items()
+                
+                # O restante da list comprehension
+                for key, value in item.items()                
             }
             for item in combined_queryset
-        ]  
+        ]     
     
-   
+                    # df['icms_aliquota_reduzida'] = (
+                    #     df['icms_aliquota_reduzida']
+                    #     .astype(str)  # garante que é string
+                    #     .str.replace(',', '.', regex=False)  # troca vírgula por ponto
+                    #     .astype(float)
+                    #     .round(1)
+                    # )   
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         client = get_object_or_404(Client, id=self.kwargs.get('client_id'))
@@ -1958,6 +2149,7 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
         context['icms_cst_choices'] = icms_cst_choices        
         context['cfop_choices'] = cfop_choices
         context['protege_choices'] = Protege.objects.all()
+        context['reforma_tributaria'] = ReformaTributaria.objects.all()
         piscofins_qs = PisCofinsCst.objects.all()
         type_company = client.type_company
 
@@ -2003,7 +2195,19 @@ class ImportedItemListViewDivergentDescriptionItemExcelVersion(ListView):
         return context    
 
 # Função para validar uma linha do DataFrame
-def validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, valid_icms_aliquotas_reduzidas,   cbenef_data, natureza_receita_dict):
+# Se você usar esta função auxiliar, defina-a fora de validate_row
+def safe_float_conversion(value, default=0.0):
+    """Converte um valor (string, None, ou outro) para float de forma segura."""
+    if value is None or str(value).strip() in ('', 'nan', 'None', 'NaT'):
+        return default
+    try:
+        # Tenta converter o valor após remover espaços em branco
+        return float(str(value).strip())
+    except ValueError:
+        # Em caso de falha na conversão (ex: string não numérica), retorna o default
+        return default
+
+def validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, valid_icms_aliquotas_reduzidas, cbenef_data, natureza_receita_dict, reforma_tributaria_df):
     errors = []
     column_name = None 
 
@@ -2050,6 +2254,69 @@ def validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, valid_icm
             if row['naturezareceita']:
                 errors.append(f"Erro na linha {index + 2} [{column_name}]: Para o PIS/COFINS selecionado, a Natureza Receita não deve ser preenchida.")
 
+    # --- NOVA VALIDAÇÃO: cruzar com reforma_tributaria_df ---
+    # Pega os valores que serão comparados
+    cst_ibs_cbs_val = str(row.get('cst_ibs_cbs') or '').strip()
+    c_class_trib_val = str(row.get('c_class_trib') or '').strip()
+    aliquota_ibs_val = safe_float_conversion(row.get('aliquota_ibs'))
+    aliquota_cbs_val = safe_float_conversion(row.get('aliquota_cbs'))
+    p_red_aliq_ibs_val = safe_float_conversion(row.get('p_red_aliq_ibs'))
+    p_red_aliq_cbs_val = safe_float_conversion(row.get('p_red_aliq_cbs'))
+
+    # Se todos os valores estiverem vazios ou zero, pula a validação
+    aliquotas_reforma_tributaria_empty = False
+    if not any([
+        cst_ibs_cbs_val,
+        c_class_trib_val,
+        aliquota_ibs_val,
+        aliquota_cbs_val,
+        p_red_aliq_ibs_val,
+        p_red_aliq_cbs_val
+    ]):
+        aliquotas_reforma_tributaria_empty = True
+      
+    if not reforma_tributaria_df.empty and not aliquotas_reforma_tributaria_empty:
+        print(f"Validando linha {index + 2} contra Reforma Tributária")
+
+        # --- Normalização do DataFrame ---
+        numeric_cols = ['aliquota_ibs', 'aliquota_cbs', 'p_red_aliq_ibs', 'p_red_aliq_cbs']
+        for col in numeric_cols:
+            reforma_tributaria_df[col] = (
+                reforma_tributaria_df[col]
+                .astype(str)
+                .str.replace(',', '.')
+                .str.strip()
+                .replace(['nan', 'None', 'NaT', ''], np.nan)
+            )
+            reforma_tributaria_df[col] = pd.to_numeric(reforma_tributaria_df[col], errors='coerce').fillna(0)
+
+        reforma_tributaria_df['cst_ibs_cbs'] = reforma_tributaria_df['cst_ibs_cbs'].astype(str).str.strip()
+        reforma_tributaria_df['c_class_trib'] = reforma_tributaria_df['c_class_trib'].astype(str).str.strip()
+
+        # --- Conversão robusta ---
+        aliquota_ibs_val = safe_float_conversion(row.get('aliquota_ibs'))
+        aliquota_cbs_val = safe_float_conversion(row.get('aliquota_cbs'))
+        p_red_aliq_ibs_val = safe_float_conversion(row.get('p_red_aliq_ibs'))
+        p_red_aliq_cbs_val = safe_float_conversion(row.get('p_red_aliq_cbs'))
+
+        # --- Filtro com todas as condições ---
+        filtros = (
+            (reforma_tributaria_df['cst_ibs_cbs'] == str(row.get('cst_ibs_cbs')).strip()) &
+            (reforma_tributaria_df['c_class_trib'] == str(row.get('c_class_trib')).strip()) &
+            (reforma_tributaria_df['aliquota_ibs'] == aliquota_ibs_val) &
+            (reforma_tributaria_df['aliquota_cbs'] == aliquota_cbs_val) &
+            (reforma_tributaria_df['p_red_aliq_ibs'] == p_red_aliq_ibs_val) &
+            (reforma_tributaria_df['p_red_aliq_cbs'] == p_red_aliq_cbs_val)
+        )
+
+        if not reforma_tributaria_df.loc[filtros].any().any():
+            errors.append(
+                f"Erro na linha {index + 2}: Não foi encontrada correspondência na Reforma Tributária para os valores informados "
+                f"(cst_ibs_cbs={row.get('cst_ibs_cbs')}, c_class_trib={row.get('c_class_trib')}, "
+                f"aliquota_ibs={row.get('aliquota_ibs')}, aliquota_cbs={row.get('aliquota_cbs')}, "
+                f"p_red_aliq_ibs={row.get('p_red_aliq_ibs')}, p_red_aliq_cbs={row.get('p_red_aliq_cbs')})."
+            )
+
     return errors
 
 class XLSXUploadDivergentView(View):
@@ -2065,8 +2332,10 @@ class XLSXUploadDivergentView(View):
     REQUIRED_COLUMNS = [
         'codigo', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
         'icms_aliquota', 'icms_aliquota_reduzida', 'piscofins_cst', 'naturezareceita', 
-        'protege', 'cbenef', 'tipo_produto', 'outros_detalhes'
-    ]     
+        'protege', 'cbenef', 'tipo_produto', 'outros_detalhes',
+        'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs',	'aliquota_cbs',	
+        'p_red_aliq_ibs', 'p_red_aliq_cbs'         
+    ]    
 
     def post(self, request, client_id):
         start_time = time.time()
@@ -2163,6 +2432,7 @@ class XLSXUploadDivergentView(View):
 
                 pd.set_option('display.max_columns', None)
                 # Verificação das colunas obrigatórias
+                print(df.columns.tolist())
                 missing_columns = [col for col in self.REQUIRED_COLUMNS if col not in df.columns]
                 if missing_columns:
                     end_time = time.time()
@@ -2205,6 +2475,15 @@ class XLSXUploadDivergentView(View):
 
                 piscofins_cst_df = pd.DataFrame(list(PisCofinsCst.objects.values('code', 'pis_aliquota', 'cofins_aliquota')))
                 natureza_receita_df = pd.DataFrame(list(NaturezaReceita.objects.values('code', 'id', 'piscofins_cst_id')))
+
+                reforma_tributaria_data = list(
+                    ReformaTributaria.objects.values(
+                        'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs', 
+                        'p_red_aliq_ibs', 'p_red_aliq_cbs'
+                    )
+                )
+
+                reforma_tributaria_df = pd.DataFrame(reforma_tributaria_data)
                 
                 cbenef_choices = CBENEF.objects.select_related('icms_cst').all()
                 cbenef_data = {cbenef.code: {'code': cbenef.code, 'icmsCst': cbenef.icms_cst.code if cbenef.icms_cst else None} for cbenef in cbenef_choices}                
@@ -2215,8 +2494,13 @@ class XLSXUploadDivergentView(View):
                 def get_natureza_receita_id(code, piscofins_cst_code):
                     return natureza_receita_dict.get((code, piscofins_cst_code), {}).get('id')            
 
-                print('caiu aqui6')
-                # df['barcode'] = df['barcode'].fillna(0).astype(int).astype(str)
+                df['cst_ibs_cbs'] = df['cst_ibs_cbs'].fillna('').astype(str)
+                df['c_class_trib'] = df['c_class_trib'].fillna('').astype(str)
+                df['aliquota_ibs'] = df['aliquota_ibs'].fillna(0).astype(float)
+                df['aliquota_cbs'] = df['aliquota_cbs'].fillna(0).astype(float)
+                df['p_red_aliq_ibs'] = df['p_red_aliq_ibs'].fillna(0).astype(float)
+                df['p_red_aliq_cbs'] = df['p_red_aliq_cbs'].fillna(0).astype(float)                
+
                 df['barcode'] = df['barcode'].fillna('').astype(str)
                 df['ncm'] = df['ncm'].astype(str)
                 # df['cest'] = df['cest'].fillna(0).astype(int).astype(str)
@@ -2281,10 +2565,8 @@ class XLSXUploadDivergentView(View):
                     }, status=400)                
 
                 invalid_details = []
-                print('caiu aqui102')
+                
                 def check_invalid_rows(df, column_name, valid_set=None, length=None, allow_empty=False):
-                    if column_name == 'description':
-                        print(f'chegou o description0: {length}-{allow_empty}')
                     if valid_set == 'not_empty':
                         col_str = df[column_name].fillna('').astype(str)
                         invalid_rows = df[col_str.str.strip() == '']  # vazios ou só espaços
@@ -2294,8 +2576,6 @@ class XLSXUploadDivergentView(View):
                             )
                         return invalid_rows
                     if length is not None:
-                        if column_name == 'description':
-                            print(f'chegou o description1: {length}-{allow_empty}')                        
                         if allow_empty:
                             invalid_rows = df[(df[column_name].apply(lambda x: len(x) != length and x != ''))]
                         else:
@@ -2305,8 +2585,6 @@ class XLSXUploadDivergentView(View):
                             error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]} não tem {length} dígitos."
                             invalid_details.append(error_message)
                     elif valid_set is not None:
-                        if column_name == 'description':
-                            print(f'chegou o description2: {length}-{allow_empty}')                        
                         invalid_rows = df[(~df[column_name].isin(valid_set)) & (~df[column_name].isnull())]
                         for index, row in invalid_rows.iterrows():
                             valor = row[column_name]
@@ -2314,17 +2592,10 @@ class XLSXUploadDivergentView(View):
                                 f"Erro na linha {index + 2} [{column_name}]: {valor} ({type(valor).__name__}) é um valor inválido."
                             )
                             invalid_details.append(error_message)                        
-                        # for index, row in invalid_rows.iterrows():
-                        #     error_message = f"Erro na linha {index + 2} [{column_name}]: {row[column_name]}  é um valor inválido."
-                        #     invalid_details.append(error_message)
-                    elif length is None and valid_set is None and allow_empty == False:
-                        if column_name == 'description':
-                            print(f'chegou o description3: {length}-{allow_empty}')                        
+                    elif length is None and valid_set is None and allow_empty == False:                       
                         invalid_rows = df[df[column_name].apply(lambda x: len(x) != length)]
                         
-                    else:
-                        if column_name == 'description':
-                            print(f'chegou o description4: {length}-{allow_empty}')                        
+                    else:                       
                         invalid_rows = pd.DataFrame()
                     return invalid_rows
 
@@ -2341,30 +2612,25 @@ class XLSXUploadDivergentView(View):
                     ('cest', None, 7, True),
                     ('description', 'not_empty')   
                 ]
-                # ('description', None, None, False) 
+
                 for column_name, valid_set, *length in columns_to_check:
-                    print(f'Validando coluna: {column_name}')
                     if len(length) == 2:  # Se fornecidos length e allow_empty
-                        print(f'length: {length}')
                         invalid_rows = check_invalid_rows(df, column_name, valid_set, length[0], length[1])
-                        print('passou no invalid_rows')
                     elif length:  # Se fornecido apenas length
-                        print(f'length2: {length}')
                         invalid_rows = check_invalid_rows(df, column_name, valid_set, length[0])
-                        print('passou no invalid_rows2')
                     else:  # Se não fornecido length
-                        print(f'Else: {column_name}')
                         invalid_rows = check_invalid_rows(df, column_name, valid_set)
-                        print('passou no invalid_rows3')
                     
                     if not invalid_rows.empty:
                         break
 
-                print('caiu aqui 201')
                 # Validando todas as linhas
+                print('validando todas as linhas')
+                print(reforma_tributaria_df.head())
+                reforma_tributaria_df.info()
                 all_errors = []
                 for index, row in df.iterrows():
-                    errors = validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, valid_icms_aliquotas_reduzidas, cbenef_data, natureza_receita_dict)
+                    errors = validate_row(row, index, unnecessary_fields, valid_icms_aliquotas, valid_icms_aliquotas_reduzidas, cbenef_data, natureza_receita_dict, reforma_tributaria_df)
                     if errors:
                         all_errors.extend(errors)
 
@@ -2445,6 +2711,12 @@ class XLSXUploadDivergentView(View):
                                 'naturezareceita_id': natureza_receita_id,
                                 'type_product': self.TYPE_PRODUCT_CHOICES[row['tipo_produto']], 
                                 'other_information': row['outros_detalhes'],
+                                'cst_ibs_cbs': row['cst_ibs_cbs'],
+                                'c_class_trib': row['c_class_trib'],
+                                'aliquota_ibs': row['aliquota_ibs'],
+                                'aliquota_cbs': row['aliquota_cbs'],
+                                'p_red_aliq_ibs': row['p_red_aliq_ibs'],
+                                'p_red_aliq_cbs': row['p_red_aliq_cbs'],                             
                                 'is_active': True,
                                 'is_pending_sync': True,
                                 'updated_at': current_time,
@@ -2490,6 +2762,8 @@ class XLSXUploadDivergentView(View):
                                     'icms_aliquota_id', 'icms_aliquota_reduzida', 'protege_id', 'cbenef_id', 
                                     'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_id', 
                                     'type_product', 'other_information',
+                                    'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs',	'aliquota_cbs',
+                                    'p_red_aliq_ibs', 'p_red_aliq_cbs',
                                     'is_active', 'is_pending_sync', 'updated_at', 'user_updated'
                                 ])
 

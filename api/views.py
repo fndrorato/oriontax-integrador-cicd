@@ -29,7 +29,7 @@ from clients.utils import (
 )
 from items.models import Item, ImportedItem
 from api.authentication import ClientTokenAuthentication, IsAuthenticatedClient
-from api.serializers import ItemModelSerializer, ItemImportedModelSerializer
+from api.serializers import ItemModelSerializer, ItemImportedModelSerializer, ItemImportedV2ModelSerializer, ItemModelV2Serializer
 from sales.models import SalesPedido, SalesDetalhe
 from django.db import connection
 from rest_framework.views import APIView
@@ -139,136 +139,132 @@ class ImportItemView(APIView):
             status=status.HTTP_201_CREATED
         )
 
-# class ImportItemView(APIView):
-#     authentication_classes = [ClientTokenAuthentication]
-#     permission_classes = [IsAuthenticatedClient]
+class ImportItemV2View(APIView):
+    authentication_classes = [ClientTokenAuthentication]
+    permission_classes = [IsAuthenticatedClient]
 
-#     def post(self, request):
-#         client = request.user
-#         initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Cliente: {client.name} enviando dados através da API\n"
-#         data_json = request.data
-#         # Mapeia os campos do JSON recebido para os campos esperados pelo serializer
-#         def rename_fields(data):
-#             return {
-#                 'code': data.get('codigo'),
-#                 'barcode': data.get('codigo_barras'),
-#                 'description': data.get('descricao'),
-#                 'ncm': data.get('ncm'),
-#                 'cest': data.get('cest'),
-#                 'cfop': data.get('cfop'),
-#                 'icms_cst': data.get('icms_cst'),
-#                 'icms_aliquota': data.get('icms_aliquota'),
-#                 'icms_aliquota_reduzida': data.get('icms_aliquota_reduzida'),
-#                 'cbenef': data.get('cbenef'),
-#                 'protege': data.get('protege'),
-#                 'piscofins_cst': data.get('pis_cst'),
-#                 'pis_aliquota': data.get('pis_aliquota'),
-#                 'cofins_aliquota': data.get('cofins_aliquota'),
-#                 'naturezareceita': data.get('natureza_receita'),
-#                 'percentual_redbcde': data.get('percentual_redbcde'),
-#             }
+    def post(self, request):
+        client = request.user
+        initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Cliente: {client.name} enviando dados através da API v2\n"
+        data_json = request.data
 
-#         # Renomeia os campos em todos os itens da lista
-#         renamed_data = [rename_fields(item) for item in request.data]        
-        
-#         # Serializa os dados recebidos
-#         serializer = ItemImportedModelSerializer(data=renamed_data, many=True)
-        
-#         if not serializer.is_valid():        
-#             # Consolida os erros em um único objeto
-#             error_dict = {}
-#             for i, errors in enumerate(serializer.errors):
-#                 for field, error in errors.items():
-#                     if field not in error_dict:
-#                         error_dict[field] = []
-#                     error_dict[field].extend(error)
-
-#             return Response({"errors": error_dict}, status=status.HTTP_400_BAD_REQUEST)            
-     
-#         if serializer.is_valid():
-#             # Transforma os dados validados em um dataframe
-#             df_json_recebido = pd.DataFrame(serializer.validated_data)
-#             # Obtendo a data e hora atual para o timestamp
-#             now = datetime.now()
-#             timestamp = now.strftime("%Y%m%d_%H%M%S")  # Formato yyyymmdd_hhmmss
-            
-#             # Diretório para salvar os arquivos
-#             save_dir = "logs/api"
-#             os.makedirs(save_dir, exist_ok=True)  # Cria o diretório se não existir
-            
-#             # Criando o nome do arquivo dinâmico (sem a extensão)
-#             file_base_name = f"{client.id}_{timestamp}"
-            
-#             # Caminho completo para o arquivo JSON
-#             json_file_path = os.path.join(save_dir, f"{file_base_name}.json")
-#             with open(json_file_path, 'w') as json_file:
-#                 json.dump(data_json, json_file, indent=4)           
-            
-#             df_json_recebido['sequencial'] = 0
-#             df_json_recebido['estado_origem'] = ''
-#             df_json_recebido['estado_destino'] = ''            
-            
-#             # Pega todos os itens relacionados a esse cliente
-#             items_queryset = Item.objects.filter(client=client).values(
-#                 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
-#                 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
-#                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'type_product',
-#                 naturezareceita_code=F('naturezareceita__code')
-#             )        
-#             if items_queryset:
-#                 items_df = pd.DataFrame(list(items_queryset.values()))  
-#                 items_df = items_df.astype({'icms_aliquota_reduzida': 'float'})
-
-#                 # Opcional: se quiser preencher com zeros inicialmente
-#                 items_df['icms_aliquota_reduzida'] = items_df['icms_aliquota_reduzida'].fillna(0).round(2)                           
-#             else: 
-#                 # Lista das colunas desejadas
-#                 colunas_desejadas = [
-#                     'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst',
-#                     'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
-#                     'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_code',
-#                     'id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 
-#                     'is_pending_sync', 'history', 'other_information', 'type_product'
-#                 ]
-
-#                 # Criar um DataFrame vazio com as colunas desejadas
-#                 items_df = pd.DataFrame(columns=colunas_desejadas)
-                           
-#             items_df.drop(columns=['id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 'is_pending_sync', 'history', 'other_information'], inplace=True)            
-
-#             try:
-#                 # Chama a função de validação
-#                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Validando dados recebidos através da API\n"
-#                 validation_result = validateSelect(client.id, items_df, df_json_recebido, initial_log)
+        # ---- mapping igual ao seu ----
+        def rename_fields(data):
+            return {
+                'code': data.get('codigo'),
+                'barcode': data.get('codigo_barras'),
+                'description': data.get('descricao'),
+                'ncm': data.get('ncm'),
+                'cest': data.get('cest'),
+                'cfop': data.get('cfop'),
+                'icms_cst': data.get('icms_cst'),
+                'icms_aliquota': data.get('icms_aliquota'),
+                'icms_aliquota_reduzida': data.get('icms_aliquota_reduzida'),
+                'cbenef': data.get('cbenef'),
+                'protege': data.get('protege'),
+                'piscofins_cst': data.get('pis_cst'),
+                'pis_aliquota': data.get('pis_aliquota'),
+                'cofins_aliquota': data.get('cofins_aliquota'),
+                'naturezareceita': data.get('natureza_receita'),
+                'percentual_redbcde': data.get('percentual_redbcde'),
                 
-#             except Exception as e:  # Catch any unexpected exceptions
-#                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao validar as comparações do cliente {client.name}: {e}\n"
-#                 save_imported_logs(client.id, initial_log)
-#                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-#             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Finalizando recepção através da API\n"
-#             save_imported_logs(client.id, initial_log)
-#             update_client_data_get(client.id, '1')
-#             return Response({"message": "Dados recebidos e processados com sucesso."}, status=status.HTTP_201_CREATED)
-#         else:
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # campos reforma tributária
+                'cst_ibs_cbs': data.get('cst_ibs_cbs'),
+                'c_class_trib': data.get('c_class_trib'),
+                'aliquota_ibs': data.get('aliquota_ibs'),
+                'aliquota_cbs': data.get('aliquota_cbs'),
+                'p_red_aliq_ibs': data.get('p_red_aliq_ibs'),
+                'p_red_aliq_cbs': data.get('p_red_aliq_cbs'),                
+            }
+
+        renamed_data = [rename_fields(item) for item in request.data]
+        serializer = ItemImportedV2ModelSerializer(data=renamed_data, many=True)
+
+        if not serializer.is_valid():
+            error_dict = {}
+            for i, errors in enumerate(serializer.errors):
+                for field, error in errors.items():
+                    error_dict.setdefault(field, []).extend(error)
+            return Response({"errors": error_dict}, status=status.HTTP_400_BAD_REQUEST)
+
+        # --------- A PARTIR DAQUI: salva arquivos para o watcher ---------
+        df_json_recebido = pd.DataFrame(serializer.validated_data)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_dir   = os.path.join("logs", "api")
+        inbox_dir  = os.path.join(base_dir, "inbox")
+        os.makedirs(inbox_dir, exist_ok=True)
+
+        file_base = f"{client.id}_{timestamp}"  # <- o watcher extrai o client_id daqui
+
+        # 1) JSON bruto
+        json_path = os.path.join(inbox_dir, f"{file_base}.json")
+        with open(json_path, "w", encoding="utf-8") as jf:
+            json.dump(data_json, jf, indent=4, ensure_ascii=False)
+
+        # 2) Payload validado (df_json_recebido)
+        df_json_recebido['sequencial'] = 0
+        df_json_recebido['estado_origem'] = ''
+        df_json_recebido['estado_destino'] = ''
+
+        # 3) items_df do cliente
+        items_queryset = Item.objects.filter(client=client).values(
+            'code','barcode','description','ncm','cest','cfop','icms_cst',
+            'icms_aliquota','icms_aliquota_reduzida','protege','cbenef',
+            'piscofins_cst','pis_aliquota','cofins_aliquota','type_product',
+            'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs',
+            'p_red_aliq_ibs', 'p_red_aliq_cbs',
+            naturezareceita_code=F('naturezareceita__code')           
+        )
+
+        if items_queryset:
+            items_df = pd.DataFrame(list(items_queryset))
+            if 'icms_aliquota_reduzida' in items_df.columns:
+                items_df['icms_aliquota_reduzida'] = pd.to_numeric(
+                    items_df['icms_aliquota_reduzida'], errors='coerce'
+                ).fillna(0).round(2)
+        else:
+            items_df = pd.DataFrame(columns=[
+                'code','barcode','description','ncm','cest','cfop','icms_cst',
+                'icms_aliquota','icms_aliquota_reduzida','protege','cbenef',
+                'piscofins_cst','pis_aliquota','cofins_aliquota',
+                'naturezareceita_code','type_product',
+                'cst_ibs_cbs','c_class_trib','aliquota_ibs','aliquota_cbs',
+                'p_red_aliq_ibs','p_red_aliq_cbs'
+            ])
+
+        # 4) Escreve CSVs de forma atômica (.tmp -> rename) para o watcher não pegar arquivo incompleto
+        items_tmp   = os.path.join(inbox_dir, f"{file_base}_items.csv.tmp")
+        payload_tmp = os.path.join(inbox_dir, f"{file_base}_payload.csv.tmp")
+
+        items_df.to_csv(items_tmp, index=False, encoding="utf-8")
+        df_json_recebido.to_csv(payload_tmp, index=False, encoding="utf-8")
+
+        os.replace(items_tmp,   items_tmp.replace(".tmp", ""))
+        os.replace(payload_tmp, payload_tmp.replace(".tmp", ""))
+        # log de recebimento
+        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Arquivos gravados em {inbox_dir}\n"
+        save_imported_logs(client.id, initial_log)
+        # Responde ASSÍNCRONO
+        return Response(
+            {"message": "Arquivo recebido. Processamento em background.", "job_id": file_base},
+            status=status.HTTP_201_CREATED
+        )    
     
-class ClientItemView(APIView):
+class ClientItemV2View(APIView):
     authentication_classes = [ClientTokenAuthentication]
     permission_classes = [IsAuthenticatedClient]
 
     def get(self, request):
         client = request.user
-        initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Verificando se há atualizações para o cliente: {client.name}... executando API\n"  
-        print("=== Primeiro Log ===")
-        print(initial_log)
-        # items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2])
+        initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Verificando se há atualizações para o cliente: {client.name}... executando API v2\n"  
+
         items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).select_related(
-            'piscofins_cst',  # Para get_cofins_cst e get_pis_cst
-            'cbenef',         # Para get_cbenef
-            'naturezareceita',# Para get_natureza_receita
-            'client',         # Se 'client' for acessado diretamente no ItemModelSerializer ou em .client.erp
-            'client__erp',    # Para acessar obj.client.erp em get_redbcde e get_redbcpara
+            'piscofins_cst',
+            'cbenef',
+            'naturezareceita',
+            'client',
+            'client__erp',
         )        
         
         current_time = timezone.now()
@@ -285,17 +281,50 @@ class ClientItemView(APIView):
         else:
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"      
         
-        print("=== Segundo Log ===")
-        print(initial_log)
+        serializer = ItemModelV2Serializer(items_queryset, many=True)
+        total_items = len(serializer.data)
+        initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Total de itens retornados {total_items} para o cliente através da API.\n"
+
+        save_imported_logs(client.id, initial_log) 
+        update_client_data_send(client.id, '1')   
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class ClientItemView(APIView):
+    authentication_classes = [ClientTokenAuthentication]
+    permission_classes = [IsAuthenticatedClient]
+
+    def get(self, request):
+        client = request.user
+        initial_log = f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Verificando se há atualizações para o cliente: {client.name}... executando API\n"  
+
+        items_queryset = Item.objects.filter(client=client, status_item__in=[1, 2]).select_related(
+            'piscofins_cst',
+            'cbenef',
+            'naturezareceita',
+            'client',
+            'client__erp',
+        )        
+        
+        current_time = timezone.now()
+        num_updated = Item.objects.filter(
+            status_item=1, 
+            client=client
+        ).update(
+            status_item=2,
+            sync_at=current_time
+        )          
+
+        if num_updated > 0:
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - {num_updated} itens aguardando validação.\n"
+        else:
+            initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"      
+        
         serializer = ItemModelSerializer(items_queryset, many=True)
         total_items = len(serializer.data)
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Total de itens retornados {total_items} para o cliente através da API.\n"
-        print("=== Terceiro Log ===")
-        print(initial_log)
+
         save_imported_logs(client.id, initial_log) 
         update_client_data_send(client.id, '1')   
-        print("=== Quarto Log ===")     
-        print(initial_log)
         return Response(serializer.data, status=status.HTTP_200_OK) 
    
 class ClientOneItemView(APIView):

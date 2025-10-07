@@ -111,6 +111,26 @@ class NaturezaReceita(models.Model):
             models.UniqueConstraint(fields=['code', 'piscofins_cst'], name='unique_code_piscofins_cst')
         ]
 
+class ReformaTributaria(models.Model):
+    cst_ibs_cbs = models.CharField(max_length=10, help_text="Código de Situação Tributária do IBS e da CBS")
+    description_cst_ibs_cbs = models.CharField(max_length=255, null=True, blank=True, help_text="Descrição do Código de Situação Tributária do IBS e da CBS")
+    c_class_trib = models.CharField(max_length=20, null=True, blank=True, help_text="Classificação Tributária do IBS e da CBS, sendo os três primeiros dígitos idênticos ao CST-IBS/CBS")
+    name_c_class_trib = models.CharField(max_length=100, null=True, blank=True, help_text="Nome da Classificação Tributária do IBS e da CBS")
+    description_c_class_trib = models.TextField(null=True, blank=True, help_text="Descrição da Classificação Tributária do IBS e da CBS")
+    text_ec = models.CharField(max_length=100, null=True, blank=True)
+    text_lc = models.TextField(null=True, blank=True)
+    tipo_aliquota = models.CharField(max_length=20, null=True, blank=True, help_text="Define o tipo de alíquota aplicável, conforme disposto na Lei Complementar")
+    aliquota_ibs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    aliquota_cbs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    p_red_aliq_ibs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    p_red_aliq_cbs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+
+    def __str__(self):
+        return f"{self.cst_ibs_cbs} - {self.c_class_trib}"
+
 auditlog.register(Cfop)
 auditlog.register(IcmsCst)
 auditlog.register(CBENEF)

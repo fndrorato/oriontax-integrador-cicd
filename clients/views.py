@@ -23,7 +23,7 @@ from items.models import Item
 from items.forms import CSVUploadForm
 from rolepermissions.decorators import has_role_decorator
 from rolepermissions.checkers import has_role
-from .utils import validateSysmo
+from clients.services.validate_sysmo import validateSysmo
 from django.db.models import F
 
 logger = logging.getLogger(__name__)

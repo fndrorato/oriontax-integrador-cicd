@@ -91,6 +91,12 @@ def process_job(file_base):
                 'cofins_aliquota': data.get('cofins_aliquota'),
                 'naturezareceita': data.get('natureza_receita'),
                 'percentual_redbcde': data.get('percentual_redbcde'),
+                'cst_ibs_cbs': data.get('cst_ibs_cbs', ''),
+                'c_class_trib': data.get('c_class_trib', ''),
+                'aliquota_ibs': data.get('aliquota_ibs', ''),
+                'aliquota_cbs': data.get('aliquota_cbs', ''),
+                'p_red_aliq_ibs': data.get('p_red_aliq_ibs', ''),
+                'p_red_aliq_cbs': data.get('p_red_aliq_cbs', ''),
             }
 
         # Renomeia os campos em todos os itens da lista
@@ -112,6 +118,8 @@ def process_job(file_base):
                 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
                 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'type_product',
+                'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs', 
+                'p_red_aliq_ibs', 'p_red_aliq_cbs',                   
                 naturezareceita_code=F('naturezareceita__code')
             )        
             if items_queryset:
@@ -127,7 +135,9 @@ def process_job(file_base):
                     'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
                     'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_code',
                     'id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 
-                    'is_pending_sync', 'history', 'other_information', 'type_product'
+                    'is_pending_sync', 'history', 'other_information', 'type_product',
+                    'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs', 
+                    'p_red_aliq_ibs', 'p_red_aliq_cbs'                    
                 ]
 
                 # Criar um DataFrame vazio com as colunas desejadas

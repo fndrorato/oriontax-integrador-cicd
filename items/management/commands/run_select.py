@@ -24,8 +24,9 @@ from django.conf import settings
 from django.db.models import F
 from django.utils import timezone
 from clients.models import Client  # Importe o modelo Client
+from clients.services.validate_sysmo import validateSysmo
 from clients.utils import (
-    validateSysmo, save_imported_logs, update_client_data_get, create_notification
+    save_imported_logs, update_client_data_get, create_notification
 )
 from items.models import Item
 from django.contrib.auth import get_user_model

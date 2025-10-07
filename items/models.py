@@ -1,7 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
 from clients.models import Client, Store
-from impostos.models import Cfop, IcmsCst, CBENEF, PisCofinsCst, NaturezaReceita, Protege, IcmsAliquota, IcmsAliquotaReduzida  # Supondo que os outros modelos estejam em app2
+from impostos.models import (
+    Cfop, 
+    IcmsCst, 
+    CBENEF, 
+    PisCofinsCst, 
+    NaturezaReceita, 
+    Protege, 
+    IcmsAliquota, 
+    IcmsAliquotaReduzida,
+    ReformaTributaria
+)
 from django.core.exceptions import ValidationError
 from auditlog.registry import auditlog
 
@@ -39,6 +49,15 @@ class Item(models.Model):
     pis_aliquota = models.FloatField()
     cofins_aliquota = models.FloatField()
     naturezareceita = models.ForeignKey(NaturezaReceita, on_delete=models.SET_NULL, null=True, blank=True)
+    # reforma_tributaria = models.ForeignKey(ReformaTributaria, on_delete=models.RESTRICT, null=True, blank=True)
+    
+    cst_ibs_cbs = models.CharField(max_length=10, blank=True, null=True, help_text="Código de Situação Tributária do IBS e da CBS")
+    c_class_trib = models.CharField(max_length=20, null=True, blank=True, help_text="Classificação Tributária do IBS e da CBS, sendo os três primeiros dígitos idênticos ao CST-IBS/CBS")
+    aliquota_ibs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    aliquota_cbs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    p_red_aliq_ibs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    p_red_aliq_cbs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)    
+    
     type_product = models.CharField(max_length=20, choices=TYPE_PRODUCT_CHOICES, default='', blank=True)
     other_information = models.CharField(max_length=255, default='', null=True, blank=True)
     status_item = models.IntegerField(choices=STATUS_CHOICES, default=3)
@@ -89,6 +108,14 @@ class ImportedItem(models.Model):
     cofins_aliquota = models.FloatField(null=True, blank=True, default=0)
     naturezareceita = models.IntegerField(null=True, blank=True, default=0)
     status_item = models.IntegerField(choices=STATUS_CHOICES, default=1)
+
+    cst_ibs_cbs = models.CharField(max_length=10, blank=True, null=True, help_text="Código de Situação Tributária do IBS e da CBS")
+    c_class_trib = models.CharField(max_length=20, null=True, blank=True, help_text="Classificação Tributária do IBS e da CBS, sendo os três primeiros dígitos idênticos ao CST-IBS/CBS")
+    aliquota_ibs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    aliquota_cbs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    p_red_aliq_ibs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    p_red_aliq_cbs = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    
     is_pending = models.BooleanField(default=True)
     divergent_columns = models.CharField(max_length=255, null=True, blank=True, default='')
     estado_origem = models.CharField(max_length=3, default='', null=True, blank=True)

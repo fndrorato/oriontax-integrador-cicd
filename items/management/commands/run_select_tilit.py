@@ -466,6 +466,9 @@ if __name__ == "__main__":
                 'code', 'barcode', 'description', 'ncm', 'cest', 'cfop', 'icms_cst', 
                 'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef', 
                 'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'type_product',
+                'reforma_tributaria__cst_ibs_cbs', 'reforma_tributaria__c_class_trib',
+                'reforma_tributaria__aliquota_ibs', 'reforma_tributaria__aliquota_cbs',
+                'reforma_tributaria__p_red_aliq_ibs', 'reforma_tributaria__p_red_aliq_cbs',                 
                 naturezareceita_code=F('naturezareceita__code')
             )        
             if items_queryset:
@@ -480,7 +483,9 @@ if __name__ == "__main__":
                     'icms_aliquota', 'icms_aliquota_reduzida', 'protege', 'cbenef',
                     'piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'naturezareceita_code',
                     'id', 'client_id', 'user_updated_id', 'user_created_id', 'created_at', 
-                    'is_pending_sync', 'history', 'other_information', 'type_product'
+                    'is_pending_sync', 'history', 'other_information', 'type_product',
+                    'cst_ibs_cbs', 'c_class_trib', 'aliquota_ibs', 'aliquota_cbs', 
+                    'p_red_aliq_ibs', 'p_red_aliq_cbs'
                 ]
 
                 # Criar um DataFrame vazio com as colunas desejadas

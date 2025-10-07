@@ -8,8 +8,28 @@ from django.views.generic import TemplateView, ListView, UpdateView, DetailView
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from .models import Cfop, IcmsCst, IcmsAliquota, IcmsAliquotaReduzida, CBENEF, Protege, PisCofinsCst, NaturezaReceita
-from .forms import CfopForm, IcmsCstForm, IcmsAliquotaForm, IcmsAliquotaReduzForm, CBENEFForm, ProtegeForm, PisCofinsCstForm, NaturezaReceitaForm
+from impostos.models import (
+    Cfop, 
+    IcmsCst, 
+    IcmsAliquota, 
+    IcmsAliquotaReduzida, 
+    CBENEF, 
+    Protege, 
+    PisCofinsCst, 
+    NaturezaReceita,
+    ReformaTributaria
+)
+from impostos.forms import (
+    CfopForm, 
+    IcmsCstForm, 
+    IcmsAliquotaForm, 
+    IcmsAliquotaReduzForm, 
+    CBENEFForm, 
+    ProtegeForm, 
+    PisCofinsCstForm, 
+    NaturezaReceitaForm,
+    ReformaTributariaForm
+)
 
 def get_piscofins_aliquota(request):
     piscofins_cst_code = request.GET.get('piscofins_cst')
@@ -624,4 +644,92 @@ class NaturezaReceitaDeleteView(View):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500) 
         
-           
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class ReformaTributariaListView(ListView):
+    model = ReformaTributaria
+    form_class = ReformaTributariaForm
+    template_name = 'reforma_tributaria.html' # Nome do template adaptado
+    context_object_name = 'reformas_tributarias' # Nome do objeto no contexto para o loop no template
+    success_url = '/impostos/reforma-tributaria/'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = ReformaTributariaForm()
+        return context      
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
+class ReformaTributariaCreateView(TemplateView):
+    template_name = 'reforma_tributaria.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = ReformaTributariaForm()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = ReformaTributariaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            # Retorna erros específicos do novo formulário/modelo
+            errors = {field: [str(error) for error in errors] for field, errors in form.errors.items()}
+            return JsonResponse(errors, status=400)
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class ReformaTributariaDetailView(DetailView):
+    model = ReformaTributaria
+    context_object_name = 'reformatributaria'
+
+    def get(self, request, *args, **kwargs):
+        item = self.get_object()
+        
+        # Dicionário com todos os campos do modelo ReformaTributaria
+        data = {
+            'cst_ibs_cbs': item.cst_ibs_cbs,
+            'description_cst_ibs_cbs': item.description_cst_ibs_cbs,
+            'c_class_trib': item.c_class_trib,
+            'name_c_class_trib': item.name_c_class_trib,
+            'description_c_class_trib': item.description_c_class_trib,
+            'text_ec': item.text_ec,
+            'text_lc': item.text_lc,
+            'tipo_aliquota': item.tipo_aliquota,
+            # Converte Decimals para string para serialização segura em JSON
+            'aliquota_ibs': str(item.aliquota_ibs) if item.aliquota_ibs is not None else None,
+            'aliquota_cbs': str(item.aliquota_cbs) if item.aliquota_cbs is not None else None,
+            'p_red_aliq_ibs': str(item.p_red_aliq_ibs) if item.p_red_aliq_ibs is not None else None,
+            'p_red_aliq_cbs': str(item.p_red_aliq_cbs) if item.p_red_aliq_cbs is not None else None,
+        }
+        return JsonResponse(data)
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
+class ReformaTributariaUpdateView(UpdateView):
+    model = ReformaTributaria
+    form_class = ReformaTributariaForm
+
+    def form_valid(self, form):
+        self.object = form.save()
+        return JsonResponse({'success': True, 'message': 'Classificação Tributária atualizada com sucesso!'})
+
+    def form_invalid(self, form):
+        # Retorna erros específicos do novo formulário/modelo
+        errors = {field: [str(error) for error in errors] for field, errors in form.errors.items()}
+        return JsonResponse(errors, status=400)
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+@method_decorator(has_role_decorator('administrador'), name='dispatch')
+class ReformaTributariaDeleteView(View):
+    def delete(self, request, *args, **kwargs):
+        # Assume-se que a chave primária (pk) é passada na URL
+        item_id = kwargs.get('pk') 
+        try:
+            item = ReformaTributaria.objects.get(pk=item_id)
+            item.delete()
+            return JsonResponse({'success': True})
+        except ReformaTributaria.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Classificação Tributária não encontrada'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+     

@@ -10,7 +10,7 @@
 
 {% block customcss %}
     <!-- Handson table css start -->
-    <link rel="stylesheet" type="text/css" href="https://docs.handsontable.com/pro/bower_components/handsontable-pro/dist/handsontable.full.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
     <!-- Notification.css -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/pages/notification/notification.css' %}">
     <!-- Animate.css -->
@@ -104,7 +104,12 @@
                 <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" id="checkAllValidate"> 
                     <i class="icofont icofont-verification-check"></i>
                     Selecionar Todos
-                </button>  
+                </button> 
+                
+                <button type="button" class="btn btn-inverse btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5" data-toggle="modal" data-target="#columnControlModal"> 
+                    <i class="icofont icofont-eye-alt"></i>
+                    Ocultar Colunas
+                </button>                  
                 
                 <button id="btn-validate" class="btn btn-primary btn-sm waves-effect waves-light f-right d-inline-block md-trigger m-r-5">
                     <i class="icofont icofont-save"></i>
@@ -330,12 +335,57 @@
     </div>
   </div>
   
-  
-{% endblock content %}
+  <div class="modal fade" id="columnControlModal" tabindex="-1" role="dialog" aria-labelledby="columnControlModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header p-t-5 p-b-5 color-inverse text-white">
+                <h5 class="modal-title" id="columnControlModalLabel">Controle de Visualização de Colunas</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" class="text-white">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="checkbox-fade fade-in-primary">
+                        <label>
+                            <input type="checkbox" value="ICMS" id="toggle-icms" checked>
+                            <span class="cr"><i class="cr-icon icofont icofont-ui-check txt-primary"></i></span>
+                            <span>Colunas ICMS</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-fade fade-in-primary">
+                        <label>
+                            <input type="checkbox" value="PIS/COFINS" id="toggle-piscofins" checked>
+                            <span class="cr"><i class="cr-icon icofont icofont-ui-check txt-primary"></i></span>
+                            <span>Colunas PIS/COFINS</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-fade fade-in-primary">
+                        <label>
+                            <input type="checkbox" value="IBS/CBS" id="toggle-ibscbs" checked>
+                            <span class="cr"><i class="cr-icon icofont icofont-ui-check txt-primary"></i></span>
+                            <span>Colunas IBS/CBS (Reforma Tributária)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-t-5 p-b-5">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+  {% endblock content %}
 
 {% block anotherjs %}
     <!-- Handson table js -->
-    <script type="text/javascript" src="{% static 'bower_components/handsontable/js/handsontable.full.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@16.0.1/dist/handsontable.full.min.js" integrity="sha256-L78vHxcmyGzLPp8qo/sciazhXl60Bu0/X44FZKSlAO8=" crossorigin="anonymous"></script>    
     <!-- notification js -->
     <script type="text/javascript" src="{% static 'assets/js/bootstrap-growl.min.js' %}"></script>  
     <!-- Validações -->
@@ -426,6 +476,12 @@
                     "{{ item.info }}",
                     "{{ item.divergent_columns }}",
                     false, // valor inicial do checkbox
+                    "{{ item.reforma_tributaria.cst_ibs_cbs|default_if_none:'' }}",
+                    "{{ item.reforma_tributaria.c_class_trib|default_if_none:'' }}",
+                    "{{ item.reforma_tributaria.aliquota_ibs|default_if_none:'' }}",
+                    "{{ item.reforma_tributaria.aliquota_cbs|default_if_none:'' }}",
+                    "{{ item.reforma_tributaria.p_red_aliq_ibs|default_if_none:'' }}",
+                    "{{ item.reforma_tributaria.p_red_aliq_cbs|default_if_none:'' }}"
                 ],
             {% endfor %}
         ];
@@ -447,6 +503,12 @@
                 "pis_aliquota": "{{ item.pis_aliquota }}",
                 "cofins_aliquota": "{{ item.cofins_aliquota }}",
                 "naturezareceita": "{{ item.naturezareceita|default_if_none:'' }}",
+                "cst_ibs_cbs": "{{ item.cst_ibs_cbs|default_if_none:'' }}",
+                "c_class_trib": "{{ item.c_class_trib|default_if_none:'' }}",
+                "aliquota_ibs": "{{ item.aliquota_ibs|default_if_none:'' }}",
+                "aliquota_cbs": "{{ item.aliquota_cbs|default_if_none:'' }}",
+                "p_red_aliq_ibs": "{{ item.p_red_aliq_ibs|default_if_none:'' }}",
+                "p_red_aliq_cbs": "{{ item.p_red_aliq_cbs|default_if_none:'' }}",
                 "divergent_columns": "{{ item.divergent_columns }}"
             },
         {% endfor %}
@@ -456,13 +518,39 @@
             {% for value, label in form.type_product.field.choices %}
                 {value: '{{ value }}', label: '{{ label }}'},
             {% endfor %}
-        ];        
+        ];    
+        /*
+            colHeaders: [
+                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'A Enviar', 'Enviado em', 'Status', 'Há dias', 'Col.Div.', ' '
+            ],  
+        */          
         var hot = new Handsontable(container, {
             data: dataOrigin,
             rowHeaders: true,
-            colHeaders: [
-                'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 'ICMS', 'Al.', 'Al.Red', 'CBENEF', 'Prot.', 'PIS/COFINS', 'PIS', 'COFINS', 'N.Rec.', 'A Enviar', 'Enviado em', 'Status', 'Há dias', 'Col.Div.', ' '
-            ],
+            hiddenColumns: {
+                // A lista inicial de colunas ocultas deve ficar vazia
+                columns: [], 
+                // Útil para mostrar setas que indicam colunas ocultas
+                indicators: true 
+            },             
+            nestedHeaders: [
+                [
+                    { label: '', colspan: 6 },
+                    { label: 'ICMS', colspan: 3 },
+                    { label: '', colspan: 2 },
+                    { label: 'PIS/COFINS', colspan: 3 },
+                    { label: 'IBS/CBS', colspan: 6 }, 
+                    { label: '', colspan: 7 }
+                ],
+                [
+                    'Código', 'Cód.Barras', 'Descrição', 'NCM', 'CEST', 'CFOP', 
+                    'ICMS', 'Al.', 'Al.Red', 
+                    'CBENEF', 'Prot.', 
+                    'PIS/COFINS', 'PIS', 'COFINS',
+                    'CST', 'C.Class', 'Al.IBS', 'Al.CBS', 'P.Red. IBS', 'P.Red. CBS', 
+                    'N.Rec.', 'A Enviar', 'Enviado em', 'Status', 'Há dias', 'Col.Div.', ' '
+                ] 
+            ],             
             columns: [
                 { data: 0, readOnly: true , id:'code'},
                 { data: 1,  id:'barcode' },
@@ -478,6 +566,14 @@
                 { data: 11,  id:'piscofins_cst'},
                 { data: 12,  id:'pis_aliquota'},
                 { data: 13,  id:'cofins_aliquota' },
+
+                { data: 26,  id:'cst_ibs_cbs'},
+                { data: 27,  id:'c_class_trib'},
+                { data: 28,  id:'aliquota_ibs'},
+                { data: 29,  id:'aliquota_cbs'},
+                { data: 30,  id:'p_red_aliq_ibs'},
+                { data: 31,  id:'p_red_aliq_cbs'},
+
                 { data: 14,  id:'naturezareceita'},
                 { data: 19, readOnly: true, id:'a_enviar' },
                 { data: 20, readOnly: true, id:'enviado_em' },
@@ -501,7 +597,8 @@
             allowRemoveRow: false,
             allowInsertColumn: false,
             allowRemoveColumn: false,  
-            selectionMode: 'single',            
+            
+            licenseKey: 'non-commercial-and-evaluation',             
   
             afterInit: function() {
                 var hotInstance = this;
@@ -535,7 +632,7 @@
                 hotInstance.render();
             },
             beforeOnCellMouseDown: function(event, coords, TD) {
-                if (event.button === 0 && coords.col >= 19 && coords.col <= 19) {
+                if (event.button === 0 && coords.col >= 25 && coords.col <= 25) {
                     event.stopImmediatePropagation(); // Impede a propagação do evento
                     var code = this.getDataAtCell(coords.row, 0);
                     fetchInfo(code)
@@ -627,12 +724,37 @@
             td.style.backgroundColor = '#ffffff'; // Cor da linha ímpar
         }
 
+        // Variável de estado para controlar se a validação está ativa
+        let isAllValidated = false;
         $('#checkAllValidate').click(function() {
             const rowCount = hot.countRows();
-            for (let row = 0; row < rowCount; row++) {
-                hot.setDataAtCell(row, 20, true);
+            const $button = $(this); // Armazena o botão em uma variável jQuery para facilitar o acesso
+
+            if (!isAllValidated) {
+                // ESTADO ATUAL: VALIDAR TODOS
+                // Ação: Marcar todos como 'true'
+                for (let row = 0; row < rowCount; row++) {
+                    hot.setDataAtCell(row, 26, true);
+                }
+
+                // Mudar o botão para o novo estado (DESMARCAR)
+                $button.html('<i class="icofont icofont-close-squared-alt"></i> Desmarcar Todos');
+                
+                isAllValidated = true; // Atualiza o estado
+                
+            } else {
+                // ESTADO ATUAL: DESMARCAR TODOS
+                // Ação: Desmarcar todos como 'false'
+                for (let row = 0; row < rowCount; row++) {
+                    hot.setDataAtCell(row, 26, false);
+                }
+
+                // Mudar o botão de volta para o estado inicial (VALIDAR)
+                $button.html('<i class="icofont icofont-verification-check"></i> Validar Todos');
+
+                isAllValidated = false; // Atualiza o estado
             }
-        });         
+        });    
 
         // Adiciona evento de clique ao botão "Validar"
         var btnValidate = document.getElementById('btn-validate');
@@ -650,7 +772,7 @@
         function updateAliquotasPisCofins() {
             const rowCount = hot.countRows();
             for (let row = 0; row < rowCount; row++) {
-                var isChecked = hot.getDataAtCell(row, 20)
+                var isChecked = hot.getDataAtCell(row, 26)
                 var piscofins_cst = hot.getDataAtCell(row, 11)
                 if (isChecked === true || isChecked === 1) {
                     var aliquotas = getAliquotas(piscofins_cst); // Obtém as aliquotas baseado no novo valor
@@ -670,7 +792,7 @@
             updateAliquotasPisCofins();
             var data = hot.getData();
             
-            data = data.filter(row => row[20] === true || row[20] === 1); // Filter based on boolean or 1
+            data = data.filter(row => row[26] === true || row[26] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
             validate_type_product = false;
@@ -693,7 +815,7 @@
                 validationPromise.then(function(result) {
                     var originalRowIndex = hot.toPhysicalRow(rowIndex);
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
-                    if (rowData[20] === true || rowData[20] === 1) { 
+                    if (rowData[26] === true || rowData[26] === 1) { 
                         // Percorre apenas as colunas das linhas com a última coluna marcada
                         for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
                             if (result.isValid) {
@@ -744,9 +866,9 @@
                     } else { // If all fields are valid, proceed with code validation
                         var dataToSend = hot.getData();
                         // Filter rows where checkbox is checked
-                        var filteredDataToSend = dataToSend.filter(row => row[20] === true || row[20] === 1); // Filter based on boolean or 1
+                        var filteredDataToSend = dataToSend.filter(row => row[26] === true || row[26] === 1); // Filter based on boolean or 1
                         // Remove specific columns from each row
-                        const columnsToRemove = [15,16,17,18,19,20];
+                        const columnsToRemove = [21,22,23,24,25,26];
                         filteredDataToSend = filteredDataToSend.map(row => {
                             return row.filter((_, index) => !columnsToRemove.includes(index));
                         });                        
@@ -791,15 +913,15 @@
                                     var formattedDateTime = formatDate(currentDateTime);
 
                                     for (var i = 0; i < hot.countRows(); i++) {
-                                        if (dataToSend[i][20]) { // Check if the checkbox value is true
+                                        if (dataToSend[i][26]) { // Check if the checkbox value is true
                                             for (var j = 0; j < hot.countCols(); j++) {
                                                 hot.getCellMeta(i, j).className = 'success-row'; 
                                                 hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell
                                             }
                                             // Set the content of column 15 to the formatted date and time
-                                            hot.setDataAtCell(i, 15, formattedDateTime);
+                                            hot.setDataAtCell(i, 21, formattedDateTime);
                                             // Set the content of column 16 to be empty
-                                            hot.setDataAtCell(i, 16, '');                                            
+                                            hot.setDataAtCell(i, 22, '');                                            
                                         }
                                     }                                              
                                 } else {
@@ -834,7 +956,7 @@
             updateAliquotasPisCofins();
             var data = hot.getData();
             
-            data = data.filter(row => row[20] === true || row[20] === 1); // Filter based on boolean or 1
+            data = data.filter(row => row[26] === true || row[26] === 1); // Filter based on boolean or 1
             var codes = data.map(rowData => rowData[0]); // Extract codes from column 0
             var promises = [];
             validate_type_product = false;
@@ -857,7 +979,7 @@
                 validationPromise.then(function(result) {
                     var originalRowIndex = hot.toPhysicalRow(rowIndex);
                     // Aplica ou remove o estilo de erro na linha, dependendo da validação
-                    if (rowData[20] === true || rowData[20] === 1) { 
+                    if (rowData[26] === true || rowData[26] === 1) { 
                         // Percorre apenas as colunas das linhas com a última coluna marcada
                         for (var colIndex = 0; colIndex < hot.countCols(); colIndex++) {
                             if (result.isValid) {
@@ -908,9 +1030,9 @@
                     } else { // If all fields are valid, proceed with code validation
                         var dataToSend = hot.getData();
                         // Filter rows where checkbox is checked
-                        var filteredDataToSend = dataToSend.filter(row => row[20] === true || row[20] === 1); // Filter based on boolean or 1
+                        var filteredDataToSend = dataToSend.filter(row => row[26] === true || row[26] === 1); // Filter based on boolean or 1
                         // Remove specific columns from each row
-                        const columnsToRemove = [15,16,17,18,19,20];
+                        const columnsToRemove = [21,22,23,24,25,26];
                         filteredDataToSend = filteredDataToSend.map(row => {
                             return row.filter((_, index) => !columnsToRemove.includes(index));
                         });                        
@@ -956,15 +1078,15 @@
                                     var formattedDateTime = formatDate(currentDateTime);
 
                                     for (var i = 0; i < hot.countRows(); i++) {
-                                        if (dataToSend[i][20]) { // Check if the checkbox value is true
+                                        if (dataToSend[i][26]) { // Check if the checkbox value is true
                                             for (var j = 0; j < hot.countCols(); j++) {
                                                 hot.getCellMeta(i, j).className = 'success-row'; 
                                                 hot.getCellMeta(i, j).readOnly = true; // Set readOnly for each cell
                                             }
                                             // Set the content of column 15 to the formatted date and time
-                                            hot.setDataAtCell(i, 15, formattedDateTime);
+                                            hot.setDataAtCell(i, 21, formattedDateTime);
                                             // Set the content of column 16 to be empty
-                                            hot.setDataAtCell(i, 16, '');                                            
+                                            hot.setDataAtCell(i, 22, '');                                            
                                         }
                                     }                                              
                                 } else {
@@ -1014,7 +1136,33 @@
             return `${day}/${month}/${year} ${hours}:${minutes}`;
         }        
 
+        // NOVA LÓGICA: Controle de Colunas
+        const columnsMap = {
+            'toggle-icms': { start: 6, end: 8 },
+            'toggle-piscofins': { start: 11, end: 13 },
+            'toggle-ibscbs': { start: 14, end: 19 }
+        };
 
+        // Adiciona um listener para cada checkbox
+        $('#columnControlModal input[type="checkbox"]').on('change', function() {
+            const checkboxId = this.id;
+            const isChecked = this.checked;
+            const map = columnsMap[checkboxId];
+
+            if (!map) return;
+
+            // Adicione esta linha ANTES de usar hiddenColumnsPlugin
+            const hiddenColumnsPlugin = hot.getPlugin('hiddenColumns');
+
+            for (let col = map.start; col <= map.end; col++) {
+                if (isChecked) {
+                    hiddenColumnsPlugin.showColumn(col);
+                } else {
+                    hiddenColumnsPlugin.hideColumn(col);
+                }
+            }
+            hot.render();
+        });  
 
     });
     

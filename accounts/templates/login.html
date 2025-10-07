@@ -76,7 +76,8 @@
                                     <div class="form-group form-primary" style="position: relative;">
                                         <input type="password" name="password" id="id_password" class="form-control" required="" placeholder="Senha">
                                         <span class="form-bar"></span>
-                                        <i id="togglePassword" class="ti-eye" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 100;"></i>
+                                        
+                                        <i id="togglePassword" class="icofont icofont-eye" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; z-index: 100;"></i>
                                         {{ form.password.errors }}
                                     </div>
                                     <div class="row m-t-25 text-left">
@@ -218,13 +219,21 @@
             const passwordInput = document.querySelector('#id_password');
 
             togglePassword.addEventListener('click', function (e) {
-                // Alterna o tipo de 'password' para 'text' e vice-versa
+                // 1. Alterna o tipo do input (password <-> text)
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
                 
-                // Altera o ícone: ti-eye (olho aberto) <-> ti-eye-off (olho riscado)
-                this.classList.toggle('ti-eye-off');
-            });            
+                // 2. Troca os ícones
+                if (type === 'text') {
+                    // Senha visível: Mudar para o ícone de 'olho bloqueado'
+                    this.classList.remove('icofont-eye');
+                    this.classList.add('icofont-eye-blocked');
+                } else {
+                    // Senha escondida: Mudar para o ícone de 'olho'
+                    this.classList.remove('icofont-eye-blocked');
+                    this.classList.add('icofont-eye');
+                }
+            });       
         });
     </script>
 </body>

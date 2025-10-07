@@ -63,12 +63,10 @@ def convert_df_otx_version_to_df_client(df_client):
     df_client['icms_cst_int'] = pd.to_numeric(df_client['icms_cst_id'], errors='coerce').astype('Int64')
     df_client['icms_cst_id'] = df_client['icms_cst_id'].str.zfill(3)
     # df_client['icms_aliquota_reduzida'] = pd.to_numeric(df_client['icms_aliquota_reduzida'], errors='coerce').astype('Int64')
-    
     df_client['icms_aliquota_reduzida'] = (
         pd.to_numeric(df_client['icms_aliquota_reduzida'], errors='coerce')  # converte para número (float), nulos viram NaN
         .round(2)  # arredonda para 2 casas decimais
-    )
-    
+    )    
     # Aplicar a função ao DataFrame para criar a coluna 'redbcicms_id'
     df_client['redbcicms_id'] = df_client.apply(calculate_redbcicms_id, axis=1)   
     df_client['piscofins_cst_id'] = pd.to_numeric(df_client['piscofins_cst_id'], errors='coerce').astype('Int64')
@@ -114,13 +112,13 @@ def convert_df_otx_version_to_df_client(df_client):
     CST 40, 60, 41 e red <>0 = traz o %red na alqred
     FÓRMULA: (icms_aliquota_reduzida / RedBCICMS)/100 = ARREDONDAR PARA CIMA    
     '''
+    
+    df_client.head(5)
     # Realizar o merge entre df_client e df_icms com base nas colunas de interesse
     df_merged = pd.merge(df_client, df_icms, on=['cfop', 'icms_cst', 'protege'], how='left')
  
     # Realizar o merge entre df_merged e df_client
     df_final = df_merged
-    pd.set_option('display.max_columns', None)
-    print(df_final.head())
     # Drop redundant columns from the final DataFrame
     df_final.drop(columns=['piscofins_cst', 'pis_aliquota', 'cofins_aliquota', 'cfop', 'icms_cst', 'protege'], inplace=True)
 
@@ -130,6 +128,7 @@ def convert_df_otx_version_to_df_client(df_client):
     df_final['cbenef'] = df_final['cbenef'].fillna('')
 
     # Ajuste as configurações de exibição para mostrar todas as colunas
+    pd.set_option('display.max_columns', None)
 
     # Imprime as primeiras 5 linhas do DataFrame
     # print(df_final.head())
@@ -139,7 +138,6 @@ def convert_df_otx_version_to_df_client(df_client):
 
 def connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log):
     try:
-        print(f"Conectando ao banco de dados para o cliente {client_name}...")
         connection = mysql.connector.connect(
             user=user,
             password=password,
@@ -147,187 +145,89 @@ def connect_and_update(host, user, password, port, database, client_name, client
             port=port,
             database=database
         )
-        print("Conexão estabelecida com sucesso")
 
         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Conexão estabelecida com sucesso para o cliente {client_name}\n"
 
-        try:
-            print("Colunas do DataFrame:", items_df.columns)
-            print("Primeiras linhas do DataFrame:\n", items_df.head())
-            
-            cursor = connection.cursor()
-            connection.autocommit = False
+        # Cursor de execução
+        cursor = connection.cursor()
+        connection.autocommit = False  # Desabilita o autocommit para transações manuais
 
-            # update_query = """
-            #     UPDATE oriontax.PRODUTO
-            #     SET 
-            #         descricao = CASE codigo 
-            # """
-            # values = []
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['description'])
-            # update_query += " ELSE descricao END, ncm = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['ncm'])
-            # update_query += " ELSE ncm END, cest = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['cest'])
-            # update_query += " ELSE cest END, tributacao = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['tributacao'])
-            # update_query += " ELSE tributacao END, icms = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['icms'])
-            # update_query += " ELSE icms END, cst = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['cst'])
-            # update_query += " ELSE cst END, cstpis = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['cstpis'])
-            # update_query += " ELSE cstpis END, pis = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['pis'])
-            # update_query += " ELSE pis END, cstcofins = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['cstcofins'])
-            # update_query += " ELSE cstcofins END, cofins = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['cofins'])
-            # update_query += " ELSE cofins END, redbcicms = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['redbcicms'])
-            # update_query += " ELSE redbcicms END, codbenef = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(row['cbenef'])
-            # update_query += " ELSE codbenef END, dt_atualizacao = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            # update_query += " ELSE dt_atualizacao END, alterado_orion = CASE codigo"
-            # for _, row in items_df.iterrows():
-            #     update_query += f" WHEN '{row['code']}' THEN %s"
-            #     values.append('S')
-            # update_query += " ELSE alterado_orion END WHERE cnpj = %s"
-            # values.append(client_cnpj)
-            
-            print("Verificando valores NaN no DataFrame:")
-            print(items_df.isna().sum())
-            
-            tributacao_na_df = items_df[items_df['tributacao'].isna()]
-            print("Linhas com 'tributacao' como NaN:")
-            print(tributacao_na_df)
-            
-            
-            
-           # Início da consulta de atualização
+        try:        
+            print("Primeiras linhas do DataFrame:\n", items_df.head())
+            # Gerando a query para o lote atual
             update_query = """
                 UPDATE oriontax.PRODUTO
                 SET 
-                    descricao = CASE 
+                    descricao = CASE numero 
             """
             values = []
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['description'])
-
-            update_query += " ELSE descricao END, ncm = CASE"
+            update_query += " ELSE descricao END, ncm = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['ncm'])
-
-            update_query += " ELSE ncm END, cest = CASE"
+            update_query += " ELSE ncm END, cest = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['cest'])
-
-            update_query += " ELSE cest END, tributacao = CASE"
+            update_query += " ELSE cest END, tributacao = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['tributacao'])
-
-            update_query += " ELSE tributacao END, icms = CASE"
+            update_query += " ELSE tributacao END, icms = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['icms'])
-
-            update_query += " ELSE icms END, cst = CASE"
+            update_query += " ELSE icms END, cst = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['cst'])
-
-            update_query += " ELSE cst END, cstpis = CASE"
+            update_query += " ELSE cst END, cstpis = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['cstpis'])
-
-            update_query += " ELSE cstpis END, pis = CASE"
+            update_query += " ELSE cstpis END, pis = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['pis'])
-
-            update_query += " ELSE pis END, cstcofins = CASE"
+            update_query += " ELSE pis END, cstcofins = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['cstcofins'])
-
-            update_query += " ELSE cstcofins END, cofins = CASE"
+            update_query += " ELSE cstcofins END, cofins = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['cofins'])
-
-            update_query += " ELSE cofins END, redbcicms = CASE"
+            update_query += " ELSE cofins END, redbcicms = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['redbcicms'])
-
-            update_query += " ELSE redbcicms END, codbenef = CASE"
+            update_query += " ELSE redbcicms END, codbenef = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(row['cbenef'])
-
-            update_query += """
-                ELSE codbenef END, 
-                dt_atualizacao = CASE
-            """
+            update_query += " ELSE codbenef END, dt_atualizacao = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-            update_query += """
-                ELSE dt_atualizacao END, 
-                alterado_orion = CASE
-            """
+            update_query += " ELSE dt_atualizacao END, alterado_orion = CASE numero"
             for _, row in items_df.iterrows():
-                update_query += f" WHEN numero = '{row['code']}' AND cnpj = '{client_cnpj}' THEN %s"
+                update_query += f" WHEN '{row['code']}' THEN %s"
                 values.append('S')
-
             update_query += " ELSE alterado_orion END WHERE cnpj = %s"
-            values.append(client_cnpj)            
+            values.append(client_cnpj)
             
-            # Print the query and values for debugging
-            # print("Query gerada:\n", update_query)
-            # print("Valores associados:\n", values)            
-            with open("debug_log.txt", "a") as f:
-                f.write(f"Query gerada:\n{update_query}\n")
-                f.write(f"Valores associados:\n{values}\n")
-            
+            # Executa a query do lote atual
             cursor.execute(update_query, values)
             connection.commit()
 
+            # Log do progresso
             initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Atualização realizada com sucesso para o cliente {client_name}\n"
             print(f"Atualização realizada com sucesso para o cliente {client_name}")
+            
+            # Se tudo correr bem, retorna sucesso
             code_mensagem = "Atualização realizada com sucesso."
             return True, initial_log, code_mensagem
 
@@ -379,7 +279,7 @@ if __name__ == "__main__":
     else:
         print("ℹ️ Nenhum usuário fornecido. Executando como processo do sistema.")
         user = None   
-        user_id = None  
+        user_id = None      
        
     # clients = get_clients()
     initial_log = ''
@@ -448,20 +348,20 @@ if __name__ == "__main__":
                 title=title,
                 message=message,
                 notification_type='warning',
-            )                  
+            )   
             if args.client_id:
                 sys.exit(2)  # Sair com código de erro 1 
         else:               
             items_df = items_df.drop(columns=columns_to_remove)  
-            items_df = items_df[items_df["code"] == "036916"]
             print('Convertendo o DF para a versao do clinte')
             timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             initial_log += f'[{timestamp}] - Iniciando conversão  dos dados para o cliente: {client.name} \n'
-            items_df = convert_df_otx_version_to_df_client(items_df) 
-                     
+            items_df = convert_df_otx_version_to_df_client(items_df)    
+            print('DF convertido')
+            # sys.exit(1)                         
             try:
                 timestamp = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-                initial_log += f'[{timestamp}] - Conectando e atuaizando... \n' 
+                initial_log += f'[{timestamp}] - Conectando e atuaizando... \n'                
                 result, initial_log, mensagem_resultante = connect_and_update(host, user, password, port, database, client_name, client_cnpj, items_df, initial_log)
             except Exception as e:  # Catch any unexpected exceptions
                 initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Erro ao conectar ao cliente {client_name}: {e}\n"
@@ -474,7 +374,7 @@ if __name__ == "__main__":
                     title=title,
                     message=message,
                     notification_type='danger',
-                )                   
+                )                  
                 if args.client_id:
                     sys.exit(1)  # Sair com código de erro 1 
             print('Resultado do UPDATE:', result)
@@ -503,6 +403,7 @@ if __name__ == "__main__":
                         initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - Nenhum item atualizado\n"
                         print("Nenhum item foi atualizado.")
 
+                    initial_log += f"[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] - FIM.\n"
                     save_imported_logs(client_id, initial_log)
                     update_client_data_send(client_id, '4')
                     message = f"Dados enviados em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} ao cliente {client_name}"
@@ -527,7 +428,7 @@ if __name__ == "__main__":
                         title=title,
                         message=message,
                         notification_type='danger',
-                    )                     
+                    )                      
                     if args.client_id: 
                         sys.exit(1)  # Sair com código de erro 1        
             else:
@@ -543,7 +444,7 @@ if __name__ == "__main__":
                             title=title,
                             message=message,
                             notification_type='danger',
-                        )                            
+                        )                          
                         sys.exit(3)
                     elif mensagem_resultante == 4:
                         message = f"Nao foi possível estabelecer conexão em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} com o cliente {client_name}"
@@ -553,7 +454,7 @@ if __name__ == "__main__":
                             title=title,
                             message=message,
                             notification_type='danger',
-                        )                          
+                        )                           
                         sys.exit(4)
                     else:
                         message = f"Ocorreu um erro ao executar a sincronização em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} com o cliente {client_name}"
@@ -563,6 +464,6 @@ if __name__ == "__main__":
                             title=title,
                             message=message,
                             notification_type='danger',
-                        )                         
+                        )                          
                         sys.exit(1)  # Sair com código de erro 1                       
                        

@@ -8,7 +8,8 @@ from psycopg2 import sql
 from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 from clients.models import Client  # Importe o modelo Client
-from clients.utils import validateSysmo, save_imported_logs
+from clients.services.validate_sysmo import validateSysmo
+from clients.utils import save_imported_logs
 from items.models import Item
 from django.db.models import F
 
